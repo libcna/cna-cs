@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": "cna-cs-native-abi/1",
-  "consumerAbi": "0.35.0",
+  "consumerAbi": "0.36.0",
   "versionSemantics": {
     "major": "For ABI 1.x and later, a change permits breaks only at a new major. ABI 0 is experimental and does not provide this guarantee between minors.",
     "minorBefore1": "A reviewed ABI generation that may be additive or incompatible; never accepted as a same-major range.",
@@ -25,10 +25,10 @@
   },
   "acceptedVersions": [
     {
-      "libraryAbi": "0.35.0",
+      "libraryAbi": "0.36.0",
       "classification": "exact",
       "accepted": true,
-      "evidence": "Consumer baseline at CNA next bdf239360 (0.35.0 plus CBIND-128, which DrawableGameComponent.GraphicsDevice from game-driven component callbacks needs; an older 0.35.0 library fails that one integration test with InvalidState). tools/coverage/baselinediff.py 0.21.0 (599d14e54) -> 0.35.0 (bdf239360): 957 consumed exports, 0 absent, 0 changed prototype; 1048 upstream removals/changes of surface this binding does not import or mirror, reviewed in eng/cna-upstream-abi-allowlist.txt (36 entries, 0 stale). tools/abi-verify against the 0.35.0 headers: 895 native and 895 managed layout/type measurements with 0 mismatches other than abi.version itself before this admission, 957 of 957 prototypes compiled, 6 callbacks checked, 350 enum-like constants asserted, 12 of 12 negative controls rejected. The header documentation of all 957 consumed routes was diffed 0.21.0 -> 0.35.0: 14 changed contracts, of which three needed managed changes (Clear(Color) now uses XNA's DefaultClearOptions and depth 1.0 because clear_options refuses a missing plane; ShaderDialect gained HLSL/MSL/WGSL/SPIR-V) and the rest are refusals XNA itself makes (Reach-profile limits, occlusion-query sequencing, whole-frame audio buffers). Native integration 200/200 in Debug and Release against build-probe (OPENGLES3, CNA_EASYGL_COMPILED_EFFECTS=ON)."
+      "evidence": "Consumer baseline at CNA next 402c1aaa9 (0.36.0, CBIND-130: cna_packet_reader_copy_data_ext, which LocalNetworkGamer.ReceiveData(PacketReader) needs to read a received packet into XNA's managed BinaryReader-based PacketReader). tools/coverage/baselinediff.py 0.35.0 (6e0de68e8) -> 0.36.0 (402c1aaa9): 1383 consumed exports, 0 absent, 0 changed prototype; 3202 -> 3203 exports with 1 added and 0 removed; 0 struct, scalar, integer-constant or string-constant differences; 0 breaking differences, so no allowlist entry was needed. The step is the one added route; no consumed route's header documentation changed. tools/abi-verify against the 0.36.0 headers re-run for the 1384 imports this generation is admitted with."
     }
   ],
   "retiredVersions": [
@@ -61,16 +61,21 @@
       "libraryAbi": "0.21.0",
       "retiredBecause": "Superseded by 0.35.0. CNA removed 44 routes this binding imported (the engine-layer post-process, bloom, tonemap, render-target-pool and blit routes, retired upstream in 0.30.0 as MOD-RETIRE-1); the binding dropped them with the CNA.Graphics.Experimental layer that wrapped them. Every route it still imports existed in 0.21.0 with the same prototype, so a 0.21.0 library would pass every symbol and shape probe -- it is refused on the version rule alone, which the retired-0.21.0 fixture proves.",
       "previousClassification": "exact"
+    },
+    {
+      "libraryAbi": "0.35.0",
+      "retiredBecause": "Superseded by 0.36.0. The binding now imports cna_packet_reader_copy_data_ext, which no 0.35.0 library exports; everything else this consumer imports is unchanged between them. The retired-0.35.0 fixture exports every imported route and is refused on the version rule alone.",
+      "previousClassification": "exact"
     }
   ],
   "default": "reject",
   "fixtures": [
     {
-      "name": "exact-0.35.0",
+      "name": "exact-0.36.0",
       "expected": "accept"
     },
     {
-      "name": "exact-0.35.0-extra-symbol",
+      "name": "exact-0.36.0-extra-symbol",
       "expected": "accept"
     },
     {
@@ -82,11 +87,11 @@
       "expected": "reject"
     },
     {
-      "name": "unreviewed-0.34.0",
+      "name": "retired-0.35.0",
       "expected": "reject"
     },
     {
-      "name": "unreviewed-0.36.0",
+      "name": "unreviewed-0.37.0",
       "expected": "reject"
     },
     {
@@ -102,7 +107,7 @@
       "expected": "reject"
     },
     {
-      "name": "structurally-incompatible-0.35.0",
+      "name": "structurally-incompatible-0.36.0",
       "expected": "reject"
     },
     {

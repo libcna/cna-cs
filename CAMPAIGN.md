@@ -66,7 +66,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-041 | `Microsoft.Xna.Framework.GamerServices` runtime profile (Gamer, SignedInGamer, Guide, GamerServicesComponent, profiles, achievements, leaderboards) | done: 55/75 of the GS/Net profile exact; rest is CSX-042/043 |
 | CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | done: 58/75 exact, renderer reaches Ready and draws |
 | CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | todo |
-| CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | todo |
+| CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | doing: packet-reader copy done (CNA 402c1aaa9, ABI 0.36.0); LeaderboardWriter session route and PropertyDictionary stream contents open (Windows XNA throws for the writer too) |
 | CSX-045 | Separate opt-in phone compatibility assembly (`Microsoft.Devices` etc.) only where samples need it | todo |
 
 ### P6 -- samples (`cna-cs-samples`)
@@ -110,6 +110,30 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-044: ABI 0.36.0 for the managed PacketReader; CBIND-131 found on the way
+
+XNA's `PacketReader` is a `BinaryReader`, so `LocalNetworkGamer.ReceiveData(PacketReader, ...)`
+needs the received bytes in managed memory. The C ABI could size a native reader to the next packet
+but not read it back, and the byte-array route refuses a buffer smaller than a packet whose size no
+route reports. CNA `402c1aaa9` (CBIND-130) adds `cna_packet_reader_copy_data_ext`, ABI 0.35.0 ->
+0.36.0, one export added and nothing else (`NetSmoke.c` copies a received packet byte-exactly).
+
+Verifying it, `CApi_TeardownLifetime_cycles` segfaulted intermittently at exit: EasyGL's context
+lease state was a `static thread_local` that `exit()` had destroyed before the handle registry's
+fallback disposed a live game. CNA `abd005ab8` (CBIND-131) keeps it on the lease control; 40/40
+looped runs clean (crashed at run 13 of 15 before).
+
+cna-cs admits 0.36.0 and retires 0.35.0: `baselinediff.py` 6e0de68e8 -> 402c1aaa9 has 0 breaking
+differences (allowlist now empty), abi-verify 1119/1119 values and 1384/1384 prototypes, fixtures 2
+accepted / 10 rejected (`retired-0.35.0` refused on the version rule alone), framework 630/630,
+integration 203/203, GamerServices 12/12, package acceptance passed with the reinstalled 0.36.0
+`CNACApi` component. CI pins `402c1aaa9`, previous accepted `6e0de68e8`.
+
+Of the two other gaps, Windows XNA's own `LeaderboardWriter.GetLeaderboard` and
+`Gamer.LeaderboardWriter` throw `NotSupportedException` (a Pro feature there), so the facade already
+matches the reference profile; CNA's C++ does write leaderboards and a session route would go beyond
+it.
 
 ### 2026-10-01 -- CSX-042: Avatar description, animation and renderer
 

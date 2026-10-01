@@ -59,7 +59,7 @@ runtimes/linux-x64/native/libSDL3_mixer.so.0
 runtimes/linux-x64/native/libSDL3_image.so.0
 ```
 
-Re-measured 2026-10-01 against CNA `6e0de68e8` (C ABI 0.35.0, OPENGLES3, compiled effects): the
+Re-measured 2026-10-01 against CNA `402c1aaa9` (C ABI 0.36.0, OPENGLES3, compiled effects): the
 consumer's packaged `libcna_c_api.so` resolves SDL from its own `runtimes/linux-x64/native`, with no
 path into the CNA tree.
 

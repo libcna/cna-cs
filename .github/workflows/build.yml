@@ -12,14 +12,15 @@ permissions:
 env:
   DOTNET_NOLOGO: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  # The CNA generation this binding is written against: ABI 0.35.0 on the `next` branch, at the
-  # commit that carries CBIND-128 (component device borrow).
+  # The CNA generation this binding is written against: ABI 0.36.0 on the `next` branch, at the
+  # commit that adds cna_packet_reader_copy_data_ext (CBIND-130); it also carries CBIND-128/129
+  # (component callbacks) and CBIND-131 (exit-time teardown).
   # Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails the ABI gates
   # by design -- which is the gates working, and not something to fix by tracking the branch.
-  CNA_UPSTREAM_COMMIT: bdf23936005e39d25ce367198e53943b026f61f1
-  # The generation the reviewed matrix accepted immediately before this one. The upstream diff gate
-  # measures forward from here, which is what the ABI policy asks for.
-  CNA_PREVIOUS_ACCEPTED_COMMIT: 599d14e54e073b566d77b3d6fb30ac52d3d810b7
+  CNA_UPSTREAM_COMMIT: 402c1aaa9a3e02a6eff3d6aa70a8c4ff402f6c08
+  # The generation the reviewed matrix accepted immediately before this one (0.35.0). The upstream
+  # diff gate measures forward from here, which is what the ABI policy asks for.
+  CNA_PREVIOUS_ACCEPTED_COMMIT: 6e0de68e8570faa1066f089d3693e19e215e246b
   CNA_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_number }}
 
 jobs:

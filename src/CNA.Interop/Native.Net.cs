@@ -122,6 +122,9 @@ internal static partial class Native
     internal static unsafe partial CnaResult cna_packet_reader_set_data_ext(CnaHandle reader, byte* data, ulong count);
 
     [LibraryImport(LibraryName)]
+    internal static unsafe partial CnaResult cna_packet_reader_copy_data_ext(CnaHandle reader, byte* destination, ulong capacity, out ulong outBytes);
+
+    [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_packet_reader_get_length(CnaHandle reader, out int outLength);
 
     [LibraryImport(LibraryName)]
