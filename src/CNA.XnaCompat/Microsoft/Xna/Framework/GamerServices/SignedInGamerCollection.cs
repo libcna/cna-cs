@@ -51,7 +51,8 @@ public sealed class SignedInGamerCollection : GamerCollection<SignedInGamer>
         for (int index = 0; index < count; index++)
         {
             GamerServicesInterop.Check(Native.cna_gamer_get_signed_in_gamer_at(index, out CnaHandle handle), nameof(SignedInGamerCollection));
-            current.Add(Gamer.Wrap(handle, ownsHandle: true, static (h, owned) => new SignedInGamer(h, owned)));
+            current.Add(Gamer.Wrap(
+                handle, ownsHandle: true, static (h, owned) => new SignedInGamer(h, owned), Native.cna_signed_in_gamer_destroy));
         }
 
         foreach (SignedInGamer previous in s_gamers)

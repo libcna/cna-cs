@@ -6,7 +6,7 @@ namespace Microsoft.Xna.Framework.GamerServices;
 public sealed unsafe class FriendGamer : Gamer
 {
     internal FriendGamer(CnaHandle handle, bool ownsHandle)
-        : base(handle, ownsHandle)
+        : base(handle, ownsHandle, Native.cna_gamer_destroy)
     {
     }
 

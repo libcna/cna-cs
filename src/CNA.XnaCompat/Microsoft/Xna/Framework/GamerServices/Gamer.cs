@@ -22,12 +22,17 @@ public abstract unsafe class Gamer
     private readonly CnaHandle _borrowedHandle;
     private readonly ulong _identity;
 
-    internal Gamer(CnaHandle handle, bool ownsHandle)
+    /// <summary>
+    /// Wraps <paramref name="handle"/>, releasing it with <paramref name="destroy"/> when
+    /// <paramref name="ownsHandle"/>: a signed-in gamer, a network gamer and a plain gamer are
+    /// different native kinds, and each kind's release route refuses the others'.
+    /// </summary>
+    internal Gamer(CnaHandle handle, bool ownsHandle, Func<CnaHandle, CnaResult> destroy)
     {
         if (ownsHandle)
         {
             _ownedHandle = new NativeResourceHandle(
-                handle.AsNint, value => Native.cna_gamer_destroy(new CnaHandle(value)).IsSuccess());
+                handle.AsNint, value => destroy(new CnaHandle(value)).IsSuccess());
         }
         else
         {
@@ -58,9 +63,11 @@ public abstract unsafe class Gamer
     /// <summary>
     /// The managed gamer for a native handle: the existing object when this gamer was wrapped before,
     /// otherwise a new one from <paramref name="create"/>. An owned handle to an already-wrapped gamer
-    /// is released here, because the existing object keeps its own.
+    /// is released here through <paramref name="destroy"/>, because the existing object keeps its
+    /// own.
     /// </summary>
-    internal static T Wrap<T>(CnaHandle handle, bool ownsHandle, Func<CnaHandle, bool, T> create)
+    internal static T Wrap<T>(
+        CnaHandle handle, bool ownsHandle, Func<CnaHandle, bool, T> create, Func<CnaHandle, CnaResult> destroy)
         where T : Gamer
     {
         GamerServicesInterop.Check(Native.cna_gamer_get_tag(handle, out ulong tag), nameof(Wrap));
@@ -76,7 +83,7 @@ public abstract unsafe class Gamer
             {
                 if (ownsHandle)
                 {
-                    _ = Native.cna_gamer_destroy(handle);
+                    GamerServicesInterop.Check(destroy(handle), nameof(Wrap));
                 }
 
                 return typed;
@@ -172,7 +179,7 @@ public abstract unsafe class Gamer
     public static Gamer EndGetFromGamertag(IAsyncResult result)
     {
         GamerServicesAsyncResult ours = GamerServicesAsyncResult.ForEnd(result, s_getFromGamertagOwner);
-        return Wrap((CnaHandle)ours.Payload!, ownsHandle: true, static (h, owned) => new RemoteGamer(h, owned));
+        return Wrap((CnaHandle)ours.Payload!, ownsHandle: true, static (h, owned) => new RemoteGamer(h, owned), Native.cna_gamer_destroy);
     }
 
     public static Gamer GetFromGamertag(string gamertag)
@@ -182,7 +189,7 @@ public abstract unsafe class Gamer
         GamerServicesInterop.Check(
             GamerServicesInterop.WithString(gamertag, view => Native.cna_gamer_get_from_gamertag(view, out gamer)),
             nameof(GetFromGamertag));
-        return Wrap(gamer, ownsHandle: true, static (h, owned) => new RemoteGamer(h, owned));
+        return Wrap(gamer, ownsHandle: true, static (h, owned) => new RemoteGamer(h, owned), Native.cna_gamer_destroy);
     }
 
     public static IAsyncResult BeginGetPartnerToken(string audienceUri, AsyncCallback callback, object asyncState)
@@ -233,7 +240,7 @@ public abstract unsafe class Gamer
 internal sealed class RemoteGamer : Gamer
 {
     internal RemoteGamer(CnaHandle handle, bool ownsHandle)
-        : base(handle, ownsHandle)
+        : base(handle, ownsHandle, Native.cna_gamer_destroy)
     {
     }
 }

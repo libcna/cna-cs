@@ -39,7 +39,7 @@ public sealed class FriendCollection : GamerCollection<FriendGamer>, IDisposable
         for (int index = 0; index < count; index++)
         {
             GamerServicesInterop.Check(Native.cna_gamer_collection_get_at(collection, index, out CnaHandle gamer), nameof(FriendCollection));
-            friends.Add(Gamer.Wrap(gamer, ownsHandle: false, static (h, owned) => new FriendGamer(h, owned)));
+            friends.Add(Gamer.Wrap(gamer, ownsHandle: false, static (h, owned) => new FriendGamer(h, owned), Native.cna_gamer_destroy));
         }
 
         return friends;

@@ -27,7 +27,7 @@ public sealed class LeaderboardEntry
                     Native.cna_leaderboard_entry_get_gamer(Handle, out byte hasGamer, out CnaHandle gamer), nameof(Gamer));
                 if (hasGamer != 0)
                 {
-                    _gamer = GamerServices.Gamer.Wrap(gamer, ownsHandle: false, static (h, owned) => new RemoteGamer(h, owned));
+                    _gamer = GamerServices.Gamer.Wrap(gamer, ownsHandle: false, static (h, owned) => new RemoteGamer(h, owned), Native.cna_gamer_destroy);
                 }
             }
 

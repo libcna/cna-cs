@@ -58,6 +58,26 @@ public class GamerServicesTests(GamerServicesGameFixture fixture, ITestOutputHel
         });
     }
 
+    /// <summary>
+    /// Every lookup gets a fresh native handle to an already-wrapped gamer, which the facade releases
+    /// at once. A signed-in gamer's handle is its own native kind and only its own release route
+    /// takes it; the plain gamer route used to be called and refused silently, leaking a handle per
+    /// gamer per lookup. A refused release now throws, so this loop fails on the old route.
+    /// </summary>
+    [NativeFact]
+    public void SignedInGamerLookups_ReleaseEveryDuplicateHandle()
+    {
+        fixture.InsideAFrame(_ =>
+        {
+            SignedInGamer first = Gamer.SignedInGamers[PlayerIndex.One];
+            for (int lookup = 0; lookup < 200; lookup++)
+            {
+                Assert.Same(first, Gamer.SignedInGamers[PlayerIndex.One]);
+                Assert.Same(first, Gamer.SignedInGamers[0]);
+            }
+        });
+    }
+
     [NativeFact]
     public void Profile_AndAchievements_AreReadable()
     {

@@ -17,7 +17,7 @@ public sealed class SignedInGamer : Gamer
     private GamerPresence? _presence;
 
     internal SignedInGamer(CnaHandle handle, bool ownsHandle)
-        : base(handle, ownsHandle)
+        : base(handle, ownsHandle, Native.cna_signed_in_gamer_destroy)
     {
     }
 
@@ -212,7 +212,7 @@ public sealed class SignedInGamer : Gamer
             SignedInGamerCollection.Refresh();
         }
 
-        return Wrap(handle, ownsHandle: false, static (h, owned) => new SignedInGamer(h, owned));
+        return Wrap(handle, ownsHandle: false, static (h, owned) => new SignedInGamer(h, owned), Native.cna_signed_in_gamer_destroy);
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
