@@ -125,10 +125,11 @@ public class CnaAbiTests
         // cna_packet_reader_copy_data_ext, which XNA's managed PacketReader receives through (1384),
         // plus the 21 devices.h/sensors.h routes of the opt-in phone assembly CNA.PhoneCompat (1405),
         // plus 0.37.0's four routes naming the canonical exception behind a failure (1409),
-        // plus 0.38.0's cna_game_run_frame_ext, the run a browser host drives.
+        // plus 0.38.0's cna_game_run_frame_ext, the run a browser host drives (1410),
+        // plus the touch panel's mouse-as-touch bridge a phone title turns on (1412, CSX-098).
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(1410, declared.Length);
+        Assert.Equal(1412, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 
