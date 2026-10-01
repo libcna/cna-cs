@@ -70,6 +70,10 @@ public sealed class LaunchingEventArgs : EventArgs
 /// <summary>Arguments of <see cref="PhoneApplicationService.Activated"/>.</summary>
 public sealed class ActivatedEventArgs : EventArgs
 {
+    /// <summary>Whether the application's process outlived its deactivation (Windows Phone 7.5's
+    /// fast application switching), so nothing needs restoring from
+    /// <see cref="PhoneApplicationService.State"/>. A desktop process always does.</summary>
+    public bool IsApplicationInstancePreserved => true;
 }
 
 /// <summary>Arguments of <see cref="PhoneApplicationService.Deactivated"/>.</summary>

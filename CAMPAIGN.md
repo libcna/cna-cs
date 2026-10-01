@@ -124,6 +124,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-102 | A content reader is found by its assembly's simple name, as .NET Framework bound an unsigned assembly | done |
 | CSX-103 | `PhoneApplicationService.StartupMode`: a desktop process is always launched | done |
 | CSX-105 | A song whose `.wma` was converted plays from the `.ogg`/`.oga`/`.qoa` beside it, as in CNA and FNA | done |
+| CSX-106 | `ActivatedEventArgs.IsApplicationInstancePreserved` (Windows Phone 7.5): a desktop process always is | done |
 
 ### P9 -- portability
 
@@ -133,6 +134,13 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-106: Kosmic Warz's activation handler
+
+ActiveNick/KosmicWarz-WP (a Windows Phone 7.5 shooter) did not compile: its `Activated` handler passes
+`e.IsApplicationInstancePreserved` to its screen manager. CNA.PhoneCompat's `ActivatedEventArgs` now
+has it, answering `true` -- a desktop process outlives anything that would deactivate it, and
+`Activated` is never raised here. `PhoneApplicationServiceTests.Activated_InstanceIsPreserved`.
 
 ### 2026-10-02 -- CSX-105: an XNA game's music
 

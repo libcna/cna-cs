@@ -98,4 +98,25 @@ public class PhoneApplicationServiceTests
     {
         Assert.Equal(StartupMode.Launch, PhoneApplicationService.Current.StartupMode);
     }
+
+    /// <summary>Kosmic Warz hands this to its screen manager, which rebuilds its screens from State
+    /// only for an instance that was not preserved; a desktop process always is.</summary>
+    [NativeFact]
+    public void Activated_InstanceIsPreserved()
+    {
+        ActivatedEventArgs? seen = null;
+        EventHandler<ActivatedEventArgs> handler = (_, e) => seen = e;
+        PhoneApplicationService.Current.Activated += handler;
+        try
+        {
+            PhoneApplicationService.Current.RaiseActivated();
+        }
+        finally
+        {
+            PhoneApplicationService.Current.Activated -= handler;
+        }
+
+        Assert.NotNull(seen);
+        Assert.True(seen.IsApplicationInstancePreserved);
+    }
 }
