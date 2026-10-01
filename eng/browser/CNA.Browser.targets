@@ -1,0 +1,32 @@
+<Project>
+  <!--
+    A CNA.NET game in a browser. Import from a Microsoft.NET.Sdk.WebAssembly project that
+    references the CNA.NET assemblies; the page needs nothing but runMain() (Game.Run asks for
+    animation frames itself).
+
+    CNA is linked statically into dotnet.native.wasm, so this must be a native relink, compiled with
+    the Emscripten of the project's own wasm-tools workload: scripts/Build-BrowserNative.sh builds
+    and stages the archive this links. CnaBrowserNativeArchive points elsewhere if needed; the file
+    must keep the name cna-native.a, the library name CNA.Interop's imports bind to.
+  -->
+  <PropertyGroup>
+    <WasmBuildNative>true</WasmBuildNative>
+    <!-- CNA's Emscripten exception ABI is the JS-lowered one (-fexceptions); .NET must match it. -->
+    <WasmEnableExceptionHandling>false</WasmEnableExceptionHandling>
+    <!-- CNA's static data alone is about 37 MB. -->
+    <EmccInitialHeapSize Condition="'$(EmccInitialHeapSize)' == ''">67108864</EmccInitialHeapSize>
+    <EmccExtraLDFlags>$(EmccExtraLDFlags) -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2</EmccExtraLDFlags>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <CnaBrowserNativeArchive Condition="'$(CnaBrowserNativeArchive)' == ''">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-browser-wasm/cna-native.a</CnaBrowserNativeArchive>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <NativeFileReference Include="$(CnaBrowserNativeArchive)" />
+    <StaticWebAssetFingerprintPattern Include="CnaBrowserScripts" Pattern="*.js" Expression="#[.{fingerprint}]!" />
+  </ItemGroup>
+
+  <Target Name="CnaBrowserRequireNativeArchive" BeforeTargets="Build">
+    <Error Condition="!Exists('$(CnaBrowserNativeArchive)')"
+           Text="No CNA browser archive at $(CnaBrowserNativeArchive). Build it with scripts/Build-BrowserNative.sh." />
+  </Target>
+</Project>

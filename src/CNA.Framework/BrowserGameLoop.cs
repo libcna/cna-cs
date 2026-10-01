@@ -58,6 +58,9 @@ internal static partial class BrowserGameLoop
                 Action ended = _ended!;
                 _game = null;
                 _ended = null;
+                // A game that exits leaves its last frame on the canvas; there is no window to
+                // close. Say so where a page and its developer can see it.
+                Console.WriteLine("CNA: the game's run has ended.");
                 ended();
             }
         }

@@ -84,7 +84,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | --- | --- | --- |
 | CSX-060 | Experiment: .NET wasm + `wasm-tools` workload + static CNA via `NativeFileReference` | done: .NET 11 (emscripten 6.0.3, libc++ 21) links CNA's WebGL2 archives; a C# XNA game draws in headless Chromium. .NET 10/8 pin emscripten 3.1.56/3.1.34, whose libc++ 17 has no `std::jthread` |
 | CSX-061 | Frame-stepped game loop on browser event loop | done: `Game.Run` on the browser runs CNA's host-driven run (ABI 0.38.0) from `requestAnimationFrame`; an unchanged XNA `Main` (`using (game) game.Run();`) runs to `Disposed` in Chromium |
-| CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | todo |
+| CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | done in headless Chromium: AimingSample unchanged, 0 px from its C++ port; keys, mouse, its Escape exit and a reload driven. Desktop Chrome with a GPU not run here |
 | CSX-063 | Browser sample corpus | todo |
 
 ### P8 -- Android
@@ -114,6 +114,30 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-062: an unchanged XNA sample in Chromium
+
+Tooling, all checked in: `scripts/Build-BrowserNative.sh` builds CNA's WebGL2 C API with the .NET 11
+workload's own Emscripten and stages the merged archive (CNA CBIND-135) as
+`build-consumer/cna-native-browser-wasm/cna-native.a` with a provenance file;
+`eng/browser/CNA.Browser.targets` makes a `Microsoft.NET.Sdk.WebAssembly` project link it (native
+relink, JS exceptions, 64 MB initial heap, WebGL2); `eng/browser/wwwroot` is the default page
+(`#canvas`, `runMain()`); `scripts/Run-BrowserPage.mjs` serves a bundle to headless Chromium, drives
+`CNA_ACTIONS` (mouse, keys, reload) and captures the canvas. cna-cs-samples'
+`scripts/browser-sample.sh` generates a browser project from a sample's evaluated properties and
+Compile items, so the sample's own files stay as they are.
+
+AimingSample, unchanged: its XNBs load from the browser's file system; the capture is 853x480, the
+back buffer the sample asks for, and **0 pixels** differ from its C++ port's desktop capture (a
+2,666-pixel difference was Chromium's focus ring on the canvas perimeter -- the default page now
+turns it off). Held ArrowRight moves the cat right; a held left button pulls it toward the pointer;
+holding Escape takes the sample's own exit, and `CNA: the game's run has ended.` (the loop now says so,
+as an exited game otherwise just freezes its canvas); a reload starts it again. A key pressed and
+released inside one animation frame is not seen, as with any XNA game polling its keyboard once
+per update.
+
+Not run: Chrome on a desktop with a GPU (SwiftShader here); audio in the browser; a game with
+compiled effects.
 
 ### 2026-10-01 -- CSX-061: Game.Run in a browser
 
