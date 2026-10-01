@@ -16,7 +16,7 @@ public class SpriteBatch : GraphicsResource
     public SpriteBatch(GraphicsDevice graphicsDevice)
         : base(graphicsDevice)
     {
-        _inner = new CNA.Graphics.SpriteBatch(graphicsDevice.Framework);
+        _inner = CNA.GameThread.Invoke(() => new CNA.Graphics.SpriteBatch(graphicsDevice.Framework));
     }
 
     public void Begin()

@@ -13,16 +13,16 @@ public class Texture3D : Texture
     /// out of a shader parameter. <c>protected internal</c> so <see cref="EffectParameter"/> can
     /// reach it, matching <see cref="Texture2D"/>'s own raw-handle constructor.</summary>
     internal Texture3D(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
-        : this(graphicsDevice, new CNA.Graphics.Texture3D(
+        : this(graphicsDevice, CNA.GameThread.Invoke(() => new CNA.Graphics.Texture3D(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
-            nativeHandleValue))
+            nativeHandleValue)))
     {
     }
 
     internal Texture3D(GraphicsDevice graphicsDevice, int width, int height, int depth)
-        : this(graphicsDevice, new CNA.Graphics.Texture3D(
+        : this(graphicsDevice, CNA.GameThread.Invoke(() => new CNA.Graphics.Texture3D(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
-            width, height, depth))
+            width, height, depth)))
     {
     }
 
@@ -34,9 +34,8 @@ public class Texture3D : Texture
     private Texture3D(GraphicsDevice graphicsDevice, CNA.Graphics.Texture3D frameworkTexture)
         : base(graphicsDevice, frameworkTexture)
     {
-        _width = frameworkTexture.Width;
-        _height = frameworkTexture.Height;
-        _depth = frameworkTexture.Depth;
+        (_width, _height, _depth) = CNA.GameThread.Invoke(
+            () => (frameworkTexture.Width, frameworkTexture.Height, frameworkTexture.Depth));
     }
 
     private CNA.Graphics.Texture3D FrameworkTexture3D => (CNA.Graphics.Texture3D)FrameworkTexture;
@@ -74,6 +73,12 @@ public class Texture3D : Texture
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.level, a.left, a.top, a.right, a.bottom, a.front, a.back, a.data, a.startIndex, a.elementCount), (this, level, left, top, right, bottom, front, back, data, startIndex, elementCount));
+            return;
+        }
+
         ValidateTransfer(level, left, top, right, bottom, front, back, data, startIndex, elementCount);
 
         // One route for every element type, including Color. The Color branch that used to sit
@@ -101,6 +106,12 @@ public class Texture3D : Texture
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.GetData(a.level, a.left, a.top, a.right, a.bottom, a.front, a.back, a.data, a.startIndex, a.elementCount), (this, level, left, top, right, bottom, front, back, data, startIndex, elementCount));
+            return;
+        }
+
         ValidateTransfer(level, left, top, right, bottom, front, back, data, startIndex, elementCount);
         CNA.Graphics.Texture3D.GetBoxDataInto(
             NativeHandleValue, level, left, top, right, bottom, front, back,
@@ -137,9 +148,9 @@ public class Texture3D : Texture
             throw new NotSupportedException($"The surface format value {(int)format} is not supported.");
         }
 
-        return new CNA.Graphics.Texture3D(
+        return CNA.GameThread.Invoke(() => new CNA.Graphics.Texture3D(
             graphicsDevice.Framework, width, height, depth, mipMap,
-            (CNA.Graphics.SurfaceFormat)(int)format);
+            (CNA.Graphics.SurfaceFormat)(int)format));
     }
 
     private void ValidateTransfer<T>(

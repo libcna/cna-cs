@@ -6,8 +6,8 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class BasicEffect : Effect, IEffectMatrices, IEffectFog, IEffectLights
 {
     public BasicEffect(GraphicsDevice device)
-        : base(device, new CNA.Graphics.BasicEffect(
-            (device ?? throw new ArgumentNullException(nameof(device))).Framework))
+        : base(device, CNA.GameThread.Invoke(() => new CNA.Graphics.BasicEffect(
+            (device ?? throw new ArgumentNullException(nameof(device))).Framework)))
     {
     }
 
@@ -142,7 +142,7 @@ public class BasicEffect : Effect, IEffectMatrices, IEffectFog, IEffectLights
     protected BasicEffect(BasicEffect cloneSource)
         : this(
             (cloneSource ?? throw new ArgumentNullException(nameof(cloneSource))).GraphicsDevice,
-            (CNA.Graphics.BasicEffect)cloneSource.Typed.Clone())
+            (CNA.Graphics.BasicEffect)CNA.GameThread.Invoke(() => cloneSource.Typed.Clone()))
     {
     }
 

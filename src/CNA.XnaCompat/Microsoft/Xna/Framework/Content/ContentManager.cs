@@ -79,6 +79,13 @@ public class ContentManager : IDisposable
 
         ThrowIfDisposed();
 
+        // XNA let a game load on its own worker thread (a loading screen); CNA's handles belong to
+        // the game thread, so the load runs there while the worker waits.
+        return CNA.GameThread.IsCurrent ? LoadCached<T>(assetName) : CNA.GameThread.Invoke(() => LoadCached<T>(assetName));
+    }
+
+    private T LoadCached<T>(string assetName)
+    {
         string key = assetName.Replace('\\', '/');
         if (_loadedAssets.TryGetValue(key, out object? cached))
         {

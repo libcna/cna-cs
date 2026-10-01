@@ -15,8 +15,8 @@ public abstract class Texture : GraphicsResource
     {
         ArgumentNullException.ThrowIfNull(frameworkTexture);
         _frameworkTexture = frameworkTexture;
-        _levelCount = frameworkTexture.LevelCount;
-        _format = (SurfaceFormat)(int)frameworkTexture.Format;
+        (_levelCount, _format) = CNA.GameThread.Invoke(
+            () => (frameworkTexture.LevelCount, (SurfaceFormat)(int)frameworkTexture.Format));
         FrameworkFacades.Add(frameworkTexture, this);
     }
 

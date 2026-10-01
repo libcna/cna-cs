@@ -120,13 +120,13 @@ public class RenderTargetCube : TextureCube, IDynamicGraphicsResource
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         TextureCube.ValidateSize(size);
         int selectedMultiSampleCount = preferredMultiSampleCount <= 1 ? 0 : preferredMultiSampleCount;
-        return new CNA.Graphics.RenderTargetCube(
+        return CNA.GameThread.Invoke(() => new CNA.Graphics.RenderTargetCube(
             graphicsDevice.Framework,
             size,
             mipMap,
             (CNA.Graphics.SurfaceFormat)(int)preferredFormat,
             (CNA.Graphics.DepthFormat)(int)preferredDepthFormat,
             selectedMultiSampleCount,
-            (CNA.Graphics.RenderTargetUsage)(int)usage);
+            (CNA.Graphics.RenderTargetUsage)(int)usage));
     }
 }

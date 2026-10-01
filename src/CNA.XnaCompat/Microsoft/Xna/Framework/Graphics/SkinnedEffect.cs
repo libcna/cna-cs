@@ -6,8 +6,8 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class SkinnedEffect : Effect, IEffectMatrices, IEffectFog, IEffectLights
 {
     public SkinnedEffect(GraphicsDevice device)
-        : base(device, new CNA.Graphics.SkinnedEffect(
-            (device ?? throw new ArgumentNullException(nameof(device))).Framework))
+        : base(device, CNA.GameThread.Invoke(() => new CNA.Graphics.SkinnedEffect(
+            (device ?? throw new ArgumentNullException(nameof(device))).Framework)))
     {
     }
 
@@ -171,7 +171,7 @@ public class SkinnedEffect : Effect, IEffectMatrices, IEffectFog, IEffectLights
     protected SkinnedEffect(SkinnedEffect cloneSource)
         : this(
             (cloneSource ?? throw new ArgumentNullException(nameof(cloneSource))).GraphicsDevice,
-            (CNA.Graphics.SkinnedEffect)cloneSource.Typed.Clone())
+            (CNA.Graphics.SkinnedEffect)CNA.GameThread.Invoke(() => cloneSource.Typed.Clone()))
     {
     }
 

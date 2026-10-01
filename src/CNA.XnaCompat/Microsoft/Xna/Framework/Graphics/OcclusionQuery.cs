@@ -7,7 +7,7 @@ public class OcclusionQuery : GraphicsResource
     public OcclusionQuery(GraphicsDevice graphicsDevice)
         : base(graphicsDevice)
     {
-        _query = new CNA.Graphics.OcclusionQuery(graphicsDevice.Framework);
+        _query = CNA.GameThread.Invoke(() => new CNA.Graphics.OcclusionQuery(graphicsDevice.Framework));
     }
 
     public bool IsComplete => _query.IsComplete;

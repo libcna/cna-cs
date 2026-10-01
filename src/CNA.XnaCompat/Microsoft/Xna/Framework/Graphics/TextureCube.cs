@@ -7,9 +7,9 @@ public class TextureCube : Texture
     private readonly int _size;
 
     internal TextureCube(GraphicsDevice graphicsDevice, int size)
-        : this(graphicsDevice, new CNA.Graphics.TextureCube(
+        : this(graphicsDevice, CNA.GameThread.Invoke(() => new CNA.Graphics.TextureCube(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
-            size))
+            size)))
     {
     }
 
@@ -21,16 +21,16 @@ public class TextureCube : Texture
     /// <summary>Forwards an already-created handle, for <see cref="RenderTargetCube"/> -- see the
     /// base class's own equivalent constructor.</summary>
     internal TextureCube(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
-        : this(graphicsDevice, new CNA.Graphics.TextureCube(
+        : this(graphicsDevice, CNA.GameThread.Invoke(() => new CNA.Graphics.TextureCube(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
-            nativeHandleValue))
+            nativeHandleValue)))
     {
     }
 
     internal TextureCube(GraphicsDevice graphicsDevice, CNA.Graphics.TextureCube frameworkTexture)
         : base(graphicsDevice, frameworkTexture)
     {
-        _size = frameworkTexture.Size;
+        _size = CNA.GameThread.Invoke(() => frameworkTexture.Size);
     }
 
     private CNA.Graphics.TextureCube FrameworkTextureCube => (CNA.Graphics.TextureCube)FrameworkTexture;
@@ -69,6 +69,12 @@ public class TextureCube : Texture
         int elementCount)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.cubeMapFace, a.level, a.rect, a.data, a.startIndex, a.elementCount), (this, cubeMapFace, level, rect, data, startIndex, elementCount));
+            return;
+        }
+
         ValidateTransfer(cubeMapFace, level, rect, data, startIndex, elementCount);
         CNA.Graphics.TextureCube.SetFaceDataFrom(
             NativeHandleValue,
@@ -103,6 +109,12 @@ public class TextureCube : Texture
         int elementCount)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.GetData(a.cubeMapFace, a.level, a.rect, a.data, a.startIndex, a.elementCount), (this, cubeMapFace, level, rect, data, startIndex, elementCount));
+            return;
+        }
+
         ValidateTransfer(cubeMapFace, level, rect, data, startIndex, elementCount);
         CNA.Graphics.TextureCube.GetFaceDataInto(
             NativeHandleValue,
@@ -133,8 +145,8 @@ public class TextureCube : Texture
             throw new NotSupportedException($"The surface format value {(int)format} is not supported.");
         }
 
-        return new CNA.Graphics.TextureCube(
-            graphicsDevice.Framework, size, mipMap, (CNA.Graphics.SurfaceFormat)(int)format);
+        return CNA.GameThread.Invoke(() => new CNA.Graphics.TextureCube(
+            graphicsDevice.Framework, size, mipMap, (CNA.Graphics.SurfaceFormat)(int)format));
     }
 
     private void ValidateTransfer<T>(

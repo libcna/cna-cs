@@ -44,8 +44,7 @@ public class Texture2D : Texture
     internal Texture2D(GraphicsDevice graphicsDevice, CNA.Graphics.Texture2D frameworkTexture)
         : base(graphicsDevice, frameworkTexture)
     {
-        _width = frameworkTexture.Width;
-        _height = frameworkTexture.Height;
+        (_width, _height) = CNA.GameThread.Invoke(() => (frameworkTexture.Width, frameworkTexture.Height));
     }
 
     private CNA.Graphics.Texture2D FrameworkTexture2D => (CNA.Graphics.Texture2D)FrameworkTexture;
@@ -76,6 +75,12 @@ public class Texture2D : Texture
     public void SetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.level, a.rect, a.data, a.startIndex, a.elementCount), (this, level, rect, data, startIndex, elementCount));
+            return;
+        }
+
         ValidateTransfer(level, rect, data, startIndex, elementCount);
         CNA.Graphics.Texture2D.SetDataFrom(
             NativeHandleValue,
@@ -117,6 +122,12 @@ public class Texture2D : Texture
     public void GetData<T>(int level, Rectangle? rect, T[] data, int startIndex, int elementCount)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.GetData(a.level, a.rect, a.data, a.startIndex, a.elementCount), (this, level, rect, data, startIndex, elementCount));
+            return;
+        }
+
         ValidateTransfer(level, rect, data, startIndex, elementCount);
 
         CNA.Rectangle? converted = rect is { } r ? new CNA.Rectangle(r.X, r.Y, r.Width, r.Height) : null;
@@ -135,6 +146,10 @@ public class Texture2D : Texture
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         ArgumentNullException.ThrowIfNull(stream);
+        if (!CNA.GameThread.IsCurrent)
+        {
+            return CNA.GameThread.Invoke(() => FromStream(graphicsDevice, stream));
+        }
 
         using CNA.Graphics.Texture2D decoded = CNA.Graphics.Texture2D.FromStream(graphicsDevice.Framework, stream);
         return new Texture2D(graphicsDevice, decoded.DetachNativeHandle());
@@ -145,6 +160,10 @@ public class Texture2D : Texture
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         ArgumentNullException.ThrowIfNull(stream);
+        if (!CNA.GameThread.IsCurrent)
+        {
+            return CNA.GameThread.Invoke(() => FromStream(graphicsDevice, stream, width, height, zoom));
+        }
 
         using CNA.Graphics.Texture2D decoded =
             CNA.Graphics.Texture2D.FromStream(graphicsDevice.Framework, stream, width, height, zoom);
@@ -152,10 +171,10 @@ public class Texture2D : Texture
     }
 
     public void SaveAsPng(Stream stream, int width, int height) =>
-        FrameworkTexture2D.SaveAsPng(stream, width, height);
+        CNA.GameThread.Invoke(() => FrameworkTexture2D.SaveAsPng(stream, width, height));
 
     public void SaveAsJpeg(Stream stream, int width, int height) =>
-        FrameworkTexture2D.SaveAsJpeg(stream, width, height);
+        CNA.GameThread.Invoke(() => FrameworkTexture2D.SaveAsJpeg(stream, width, height));
 
     /// <summary>This namespace's own <c>Rectangle</c>. Not a <c>new</c> override: this class
     /// derives from its own namespace's texture base rather than from
@@ -185,8 +204,8 @@ public class Texture2D : Texture
             throw new NotSupportedException($"The surface format value {(int)format} is not supported.");
         }
 
-        return new CNA.Graphics.Texture2D(
-            graphicsDevice.Framework, width, height, mipMap, (CNA.Graphics.SurfaceFormat)(int)format);
+        return CNA.GameThread.Invoke(() => new CNA.Graphics.Texture2D(
+            graphicsDevice.Framework, width, height, mipMap, (CNA.Graphics.SurfaceFormat)(int)format));
     }
 
     private void ValidateTransfer<T>(

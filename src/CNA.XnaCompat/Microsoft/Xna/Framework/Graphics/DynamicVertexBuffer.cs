@@ -63,6 +63,12 @@ public class DynamicVertexBuffer : VertexBuffer, IDynamicGraphicsResource
         SetDataOptions options)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.offsetInBytes, a.data, a.startIndex, a.elementCount, a.vertexStride, a.options), (this, offsetInBytes, data, startIndex, elementCount, vertexStride, options));
+            return;
+        }
+
         FrameworkBuffer.SetDataWithOptions(
             offsetInBytes,
             data,

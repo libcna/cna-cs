@@ -146,7 +146,7 @@ public class RenderTarget2D : Texture2D, IDynamicGraphicsResource
 
         // XNA's adapter query maps every request of one sample or less to no multisampling.
         int selectedMultiSampleCount = preferredMultiSampleCount <= 1 ? 0 : preferredMultiSampleCount;
-        return new CNA.Graphics.RenderTarget2D(
+        return CNA.GameThread.Invoke(() => new CNA.Graphics.RenderTarget2D(
             graphicsDevice.Framework,
             width,
             height,
@@ -154,6 +154,6 @@ public class RenderTarget2D : Texture2D, IDynamicGraphicsResource
             (CNA.Graphics.SurfaceFormat)(int)preferredFormat,
             (CNA.Graphics.DepthFormat)(int)preferredDepthFormat,
             selectedMultiSampleCount,
-            (CNA.Graphics.RenderTargetUsage)(int)usage);
+            (CNA.Graphics.RenderTargetUsage)(int)usage));
     }
 }

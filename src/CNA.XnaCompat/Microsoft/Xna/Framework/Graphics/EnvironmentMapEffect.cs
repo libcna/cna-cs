@@ -6,8 +6,8 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class EnvironmentMapEffect : Effect, IEffectMatrices, IEffectFog, IEffectLights
 {
     public EnvironmentMapEffect(GraphicsDevice device)
-        : base(device, new CNA.Graphics.EnvironmentMapEffect(
-            (device ?? throw new ArgumentNullException(nameof(device))).Framework))
+        : base(device, CNA.GameThread.Invoke(() => new CNA.Graphics.EnvironmentMapEffect(
+            (device ?? throw new ArgumentNullException(nameof(device))).Framework)))
     {
     }
 
@@ -136,7 +136,7 @@ public class EnvironmentMapEffect : Effect, IEffectMatrices, IEffectFog, IEffect
     protected EnvironmentMapEffect(EnvironmentMapEffect cloneSource)
         : this(
             (cloneSource ?? throw new ArgumentNullException(nameof(cloneSource))).GraphicsDevice,
-            (CNA.Graphics.EnvironmentMapEffect)cloneSource.Typed.Clone())
+            (CNA.Graphics.EnvironmentMapEffect)CNA.GameThread.Invoke(() => cloneSource.Typed.Clone()))
     {
     }
 

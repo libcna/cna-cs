@@ -6,8 +6,8 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class DualTextureEffect : Effect, IEffectMatrices, IEffectFog
 {
     public DualTextureEffect(GraphicsDevice device)
-        : base(device, new CNA.Graphics.DualTextureEffect(
-            (device ?? throw new ArgumentNullException(nameof(device))).Framework))
+        : base(device, CNA.GameThread.Invoke(() => new CNA.Graphics.DualTextureEffect(
+            (device ?? throw new ArgumentNullException(nameof(device))).Framework)))
     {
     }
 
@@ -92,7 +92,7 @@ public class DualTextureEffect : Effect, IEffectMatrices, IEffectFog
     protected DualTextureEffect(DualTextureEffect cloneSource)
         : this(
             (cloneSource ?? throw new ArgumentNullException(nameof(cloneSource))).GraphicsDevice,
-            (CNA.Graphics.DualTextureEffect)cloneSource.Typed.Clone())
+            (CNA.Graphics.DualTextureEffect)CNA.GameThread.Invoke(() => cloneSource.Typed.Clone()))
     {
     }
 

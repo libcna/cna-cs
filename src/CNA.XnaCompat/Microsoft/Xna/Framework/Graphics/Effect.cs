@@ -19,16 +19,16 @@ public class Effect : GraphicsResource
     }
 
     public Effect(GraphicsDevice graphicsDevice, byte[] effectCode)
-        : this(graphicsDevice, new CNA.Graphics.Effect(
+        : this(graphicsDevice, CNA.GameThread.Invoke(() => new CNA.Graphics.Effect(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
-            effectCode))
+            effectCode)))
     {
     }
 
     protected Effect(Effect cloneSource)
         : this(
             (cloneSource ?? throw new ArgumentNullException(nameof(cloneSource))).GraphicsDevice,
-            cloneSource.Inner.Clone())
+            CNA.GameThread.Invoke(() => cloneSource.Inner.Clone()))
     {
     }
 

@@ -65,6 +65,12 @@ public class DynamicIndexBuffer : IndexBuffer, IDynamicGraphicsResource
         SetDataOptions options)
         where T : struct
     {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.offsetInBytes, a.data, a.startIndex, a.elementCount, a.options), (this, offsetInBytes, data, startIndex, elementCount, options));
+            return;
+        }
+
         FrameworkBuffer.SetDataWithOptions(offsetInBytes, data, startIndex, elementCount, (uint)options);
     }
 

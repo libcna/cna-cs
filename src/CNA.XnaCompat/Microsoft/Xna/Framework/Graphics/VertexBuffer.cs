@@ -38,12 +38,12 @@ public class VertexBuffer : GraphicsResource
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         _vertexDeclaration = vertexDeclaration;
-        _frameworkBuffer = new CNA.Graphics.VertexBuffer(
+        _frameworkBuffer = CNA.GameThread.Invoke(() => new CNA.Graphics.VertexBuffer(
             graphicsDevice.Framework,
             ToFramework(vertexDeclaration),
             vertexCount,
             (CNA.Graphics.BufferUsage)(int)bufferUsage,
-            dynamic);
+            dynamic));
         FrameworkFacades.Add(_frameworkBuffer, this);
     }
 
@@ -62,23 +62,71 @@ public class VertexBuffer : GraphicsResource
 
     public int VertexCount => _frameworkBuffer.VertexCount;
 
-    public void SetData<T>(T[] data) where T : struct => _frameworkBuffer.SetData(data);
+    public void SetData<T>(T[] data) where T : struct
+    {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.data), (this, data));
+            return;
+        }
 
-    public void SetData<T>(T[] data, int startIndex, int elementCount) where T : struct =>
+        _frameworkBuffer.SetData(data);
+    }
+
+    public void SetData<T>(T[] data, int startIndex, int elementCount) where T : struct
+    {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.data, a.startIndex, a.elementCount), (this, data, startIndex, elementCount));
+            return;
+        }
+
         _frameworkBuffer.SetData(data, startIndex, elementCount);
+    }
 
-    public void SetData<T>(int offsetInBytes, T[] data, int startIndex, int elementCount, int vertexStride)
-        where T : struct =>
+    public void SetData<T>(int offsetInBytes, T[] data, int startIndex, int elementCount, int vertexStride) where T : struct
+    {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.SetData(a.offsetInBytes, a.data, a.startIndex, a.elementCount, a.vertexStride), (this, offsetInBytes, data, startIndex, elementCount, vertexStride));
+            return;
+        }
+
         _frameworkBuffer.SetData(offsetInBytes, data, startIndex, elementCount, vertexStride);
+    }
 
-    public void GetData<T>(T[] data) where T : struct => _frameworkBuffer.GetData(data);
+    public void GetData<T>(T[] data) where T : struct
+    {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.GetData(a.data), (this, data));
+            return;
+        }
 
-    public void GetData<T>(T[] data, int startIndex, int elementCount) where T : struct =>
+        _frameworkBuffer.GetData(data);
+    }
+
+    public void GetData<T>(T[] data, int startIndex, int elementCount) where T : struct
+    {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.GetData(a.data, a.startIndex, a.elementCount), (this, data, startIndex, elementCount));
+            return;
+        }
+
         _frameworkBuffer.GetData(data, startIndex, elementCount);
+    }
 
-    public void GetData<T>(int offsetInBytes, T[] data, int startIndex, int elementCount, int vertexStride)
-        where T : struct =>
+    public void GetData<T>(int offsetInBytes, T[] data, int startIndex, int elementCount, int vertexStride) where T : struct
+    {
+        if (!CNA.GameThread.IsCurrent)
+        {
+            CNA.GameThread.Invoke(static a => a.Item1.GetData(a.offsetInBytes, a.data, a.startIndex, a.elementCount, a.vertexStride), (this, offsetInBytes, data, startIndex, elementCount, vertexStride));
+            return;
+        }
+
         _frameworkBuffer.GetData(offsetInBytes, data, startIndex, elementCount, vertexStride);
+    }
 
     protected override void Dispose(bool arg0)
     {

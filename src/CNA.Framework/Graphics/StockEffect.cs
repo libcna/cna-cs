@@ -134,6 +134,11 @@ public abstract class StockEffect : Effect
 
     private protected bool GetBool(GetBoolFunc getter, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            return GameThread.Invoke(static a => a.Item1.GetBool(a.getter, a.propertyName), (this, getter, propertyName));
+        }
+
         CnaResult result = getter(Handle, out byte value);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -142,6 +147,12 @@ public abstract class StockEffect : Effect
 
     private protected void SetBool(SetBoolFunc setter, bool value, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            GameThread.Invoke(static a => a.Item1.SetBool(a.setter, a.value, a.propertyName), (this, setter, value, propertyName));
+            return;
+        }
+
         CnaResult result = setter(Handle, (byte)(value ? 1 : 0));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -149,6 +160,11 @@ public abstract class StockEffect : Effect
 
     private protected float GetFloat(GetFloatFunc getter, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            return GameThread.Invoke(static a => a.Item1.GetFloat(a.getter, a.propertyName), (this, getter, propertyName));
+        }
+
         CnaResult result = getter(Handle, out float value);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -157,6 +173,12 @@ public abstract class StockEffect : Effect
 
     private protected void SetFloat(SetFloatFunc setter, float value, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            GameThread.Invoke(static a => a.Item1.SetFloat(a.setter, a.value, a.propertyName), (this, setter, value, propertyName));
+            return;
+        }
+
         CnaResult result = setter(Handle, value);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -164,6 +186,11 @@ public abstract class StockEffect : Effect
 
     private protected int GetInt(GetIntFunc getter, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            return GameThread.Invoke(static a => a.Item1.GetInt(a.getter, a.propertyName), (this, getter, propertyName));
+        }
+
         CnaResult result = getter(Handle, out int value);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -172,6 +199,12 @@ public abstract class StockEffect : Effect
 
     private protected void SetInt(SetIntFunc setter, int value, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            GameThread.Invoke(static a => a.Item1.SetInt(a.setter, a.value, a.propertyName), (this, setter, value, propertyName));
+            return;
+        }
+
         CnaResult result = setter(Handle, value);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -179,6 +212,11 @@ public abstract class StockEffect : Effect
 
     private protected Vector3 GetVector3(GetVector3Func getter, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            return GameThread.Invoke(static a => a.Item1.GetVector3(a.getter, a.propertyName), (this, getter, propertyName));
+        }
+
         CnaResult result = getter(Handle, out CnaVector3 value);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -187,6 +225,12 @@ public abstract class StockEffect : Effect
 
     private protected void SetVector3(SetVector3Func setter, Vector3 value, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            GameThread.Invoke(static a => a.Item1.SetVector3(a.setter, a.value, a.propertyName), (this, setter, value, propertyName));
+            return;
+        }
+
         CnaResult result = setter(Handle, value.ToNative());
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, propertyName);
@@ -199,6 +243,12 @@ public abstract class StockEffect : Effect
     /// texture reference rather than re-reading it.</summary>
     private protected void SetTexture(SetTextureFunc setter, Texture? value, string propertyName)
     {
+        if (!GameThread.IsCurrent)
+        {
+            GameThread.Invoke(static a => a.Item1.SetTexture(a.setter, a.value, a.propertyName), (this, setter, value, propertyName));
+            return;
+        }
+
         CnaHandle handle = value is null ? CnaHandle.Zero : new CnaHandle(value.NativeHandleValue);
         CnaResult result = setter(Handle, handle);
         GC.KeepAlive(value);

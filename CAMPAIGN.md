@@ -117,6 +117,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-096 | File paths given to XNA's file-taking APIs resolve as on Windows (separators, case) | done |
 | CSX-097 | `Microsoft.Phone.Shell.PhoneApplicationService` in CNA.PhoneCompat: Launching after LoadContent, Closing at exit | done |
 | CSX-098 | A Windows Phone title off a phone gets the mouse as a finger, as in the emulator | done |
+| CSX-100 | A game's own worker thread loads content, creates resources and moves their data, as XNA allowed | done |
 
 ### P9 -- portability
 
@@ -126,6 +127,23 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-100: loading on a worker thread
+
+resonance-game (`cna-cs-samples/games`, real game) loads its level on its own `Thread` while the
+loading screen draws, as XNA 4.0 allowed. On CNA.NET the first `Content.Load` from that thread
+failed with `CNA_RESULT_THREAD`: every CNA handle belongs to the thread that created the game, by
+the C ABI's design. CNA.Framework's new `GameThread` runs such work on the game thread: the caller
+blocks, the game thread runs queued calls at the start of each Update and Draw (draining for up to
+8 ms while the worker keeps asking), and calls still waiting when the game is disposed fail. The
+facade sends whole operations through it -- `ContentManager.Load`, every resource constructor and
+the reads its facade constructor makes, `SetData`/`GetData`, `Texture2D.FromStream`/`SaveAs*`,
+`Effect.Clone` -- and CNA.Framework's stock-effect property funnels, so the managed half of each
+operation also runs on the game thread and CNA.NET's caches see one thread. On the game thread the
+guards allocate nothing (static lambdas with a state tuple). `CompatWorkerThreadTests` does all of
+it from a worker while the game runs. Integration 224, Framework 643, XnaCompat 285. Not covered
+yet: the long tail (device getters such as `Viewport`, effect matrices, `EffectParameter`) --
+resonance-game's next call is `GraphicsDevice.Viewport`; see CBIND-141.
 
 ### 2026-10-01 -- CSX-098: the mouse is the finger for a phone title off a phone
 

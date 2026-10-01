@@ -151,6 +151,8 @@ public class Game : IDisposable
                 _lastDestroyFailure is { } previous ? $"cna_game_create ({previous})" : "cna_game_create");
         }
 
+        GameThread.Enter();
+
         var hooks = new CnaGameFrameHooks
         {
             Initialize = &OnInitialize,
@@ -844,6 +846,7 @@ public class Game : IDisposable
         }
 
         _disposed = true;
+        GameThread.Exit();
 
         try
         {
@@ -1155,6 +1158,7 @@ public class Game : IDisposable
 
         try
         {
+            GameThread.RunPending();
             game.Update(GameTime.FromNative(*gameTime));
             return CnaResult.Success;
         }
@@ -1174,6 +1178,7 @@ public class Game : IDisposable
 
         try
         {
+            GameThread.RunPending();
             game.Draw(GameTime.FromNative(*gameTime));
             return CnaResult.Success;
         }

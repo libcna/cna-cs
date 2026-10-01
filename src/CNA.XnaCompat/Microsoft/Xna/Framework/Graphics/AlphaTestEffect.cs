@@ -6,8 +6,8 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class AlphaTestEffect : Effect, IEffectMatrices, IEffectFog
 {
     public AlphaTestEffect(GraphicsDevice device)
-        : base(device, new CNA.Graphics.AlphaTestEffect(
-            (device ?? throw new ArgumentNullException(nameof(device))).Framework))
+        : base(device, CNA.GameThread.Invoke(() => new CNA.Graphics.AlphaTestEffect(
+            (device ?? throw new ArgumentNullException(nameof(device))).Framework)))
     {
     }
 
@@ -98,7 +98,7 @@ public class AlphaTestEffect : Effect, IEffectMatrices, IEffectFog
     protected AlphaTestEffect(AlphaTestEffect cloneSource)
         : this(
             (cloneSource ?? throw new ArgumentNullException(nameof(cloneSource))).GraphicsDevice,
-            (CNA.Graphics.AlphaTestEffect)cloneSource.Typed.Clone())
+            (CNA.Graphics.AlphaTestEffect)CNA.GameThread.Invoke(() => cloneSource.Typed.Clone()))
     {
     }
 
