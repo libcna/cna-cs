@@ -50,10 +50,46 @@ internal sealed class SongContentReader : ContentTypeReader<Song>
         ArgumentNullException.ThrowIfNull(input);
 
         string reference = input.ReadString();
-        string path = ContentReferencePaths.Resolve(input, reference);
+        string path = PlayablePath(ContentReferencePaths.Resolve(input, reference));
         int durationMilliseconds = ReadFieldInt32(input);
 
         return new Song(new CNA.Media.Song(path, input.AssetName, durationMilliseconds));
+    }
+
+    /// <summary>The formats a song plays from in place of the one XNA's pipeline wrote.</summary>
+    private static readonly string[] SupportedExtensions = [".ogg", ".oga", ".qoa"];
+
+    /// <summary>
+    /// The file a song actually plays from.
+    ///
+    /// XNA's pipeline writes every song as Windows Media Audio and names that <c>.wma</c>, which
+    /// nothing here decodes. A game brought over converts it (to Ogg Vorbis, usually) and leaves the
+    /// <c>.xnb</c> as it was, so the reference still says <c>.wma</c>. The last four characters are
+    /// therefore dropped and the stem probed, exactly as CNA's own <c>SongReader</c> and FNA's
+    /// <c>Normalize</c> do; with nothing beside it the reference is kept as written.
+    /// </summary>
+    internal static string PlayablePath(string path)
+    {
+        if (path.Length <= 4)
+        {
+            return path;
+        }
+
+        string stem = path[..^4];
+        if (File.Exists(stem))
+        {
+            return stem;
+        }
+
+        foreach (string extension in SupportedExtensions)
+        {
+            if (File.Exists(stem + extension))
+            {
+                return stem + extension;
+            }
+        }
+
+        return path;
     }
 }
 

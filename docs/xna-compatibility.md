@@ -149,6 +149,10 @@ collection identity, isolated Storage CRUD, Video stopped-state behavior, and de
 reset order. Coverage remains asset-blocked for authored XACT/Song/Video success, ABI-blocked for
 exact Video frame identity and true cross-device/lost routes, and hook-blocked for deterministic
 native input transitions.
+A song plays from the `.ogg`, `.oga` or `.qoa` file beside the `.wma` its `.xnb` names, as in CNA
+and FNA: XNA's pipeline writes every song as Windows Media Audio, which CNA does not decode, so a
+game's music is converted once and its `.xnb` kept. A song left as `.wma` alone loads and plays
+nothing.
 Unsupported exceptions are assessed case by case; their presence alone neither proves a bug nor
 compatibility. Exact native capability blockers live in `docs/native-behavior-blockers.md`.
 

@@ -123,6 +123,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-101 | ABI 0.39.0: the rest of a loading thread's calls run on the game thread (CNA CBIND-141) | done |
 | CSX-102 | A content reader is found by its assembly's simple name, as .NET Framework bound an unsigned assembly | done |
 | CSX-103 | `PhoneApplicationService.StartupMode`: a desktop process is always launched | done |
+| CSX-105 | A song whose `.wma` was converted plays from the `.ogg`/`.oga`/`.qoa` beside it, as in CNA and FNA | done |
 
 ### P9 -- portability
 
@@ -132,6 +133,18 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-105: an XNA game's music
+
+XNA's pipeline writes every song as Windows Media Audio and the `.xnb` names that `.wma`; nothing in
+CNA decodes WMA. FNA's `SongReader` and CNA's own therefore drop the reference's last four characters
+and play the `.ogg`/`.oga`/`.qoa` beside it, so a port converts its music and keeps its `.xnb`. CNA.NET's
+managed reader passed the `.wma` straight through: with a converted file beside it the game was still
+silent, and without the `.wma` the load failed. Found with Mavinkea/XNASidescroller (its shipped
+`nbinstrumental.wma`): SDL's disk audio driver recorded 6.9 s of zeros. `SongContentReader.PlayablePath`
+now probes the same way; `SongWireFormatTests.WmaReference_PlaysFromTheConvertedFileBesideIt` fails
+without it. Integration 226/226 (Debug). With `nbinstrumental.ogg` converted beside it the game's
+music plays (99.4% non-zero samples, peak 6914 at the game's own volume 0.4).
 
 ### 2026-10-01 -- CSX-103: Microsoft's XNA Solitaire
 

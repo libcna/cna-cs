@@ -109,6 +109,44 @@ public class SongWireFormatTests(ITestOutputHelper output, NativeGameFixture fix
         });
     }
 
+    /// <summary>XNA's pipeline names every song's media <c>.wma</c>, which nothing here decodes; a
+    /// game brought over converts it and keeps its <c>.xnb</c>. The converted file beside the
+    /// reference is the one the song plays from -- and with the <c>.wma</c> gone it still loads.
+    /// Equality is by file path, so it says which file was chosen.</summary>
+    [NativeFact]
+    public void WmaReference_PlaysFromTheConvertedFileBesideIt()
+    {
+        File.WriteAllBytes(Path.Combine(_root, "track.wma"), [0, 1, 2, 3]);
+        File.WriteAllBytes(Path.Combine(_root, "track.ogg"), [0, 1, 2, 3]);
+        File.WriteAllBytes(Path.Combine(_root, "only.ogg"), [0, 1, 2, 3]);
+        foreach (string name in new[] { "track", "only" })
+        {
+            WriteAsset(
+                name,
+                ["Microsoft.Xna.Framework.Content.SongReader" + Xna,
+                 "Microsoft.Xna.Framework.Content.Int32Reader" + Corlib],
+                writer =>
+                {
+                    writer.Write7BitEncodedInt(1);
+                    writer.Write(name + ".wma");
+                    writer.Write7BitEncodedInt(2);
+                    writer.Write(1000);
+                });
+        }
+
+        fixture.InsideAFrame(game =>
+        {
+            using var content = new ContentManager(game.Services, _root);
+
+            Song track = content.Load<Song>("track");
+            Song only = content.Load<Song>("only");
+
+            Assert.Equal(Song.FromUri("ogg", new Uri(Path.Combine(_root, "track.ogg"))), track);
+            Assert.NotEqual(Song.FromUri("wma", new Uri(Path.Combine(_root, "track.wma"))), track);
+            Assert.Equal(Song.FromUri("ogg", new Uri(Path.Combine(_root, "only.ogg"))), only);
+        });
+    }
+
     private static string Flatten(Exception failure)
     {
         var text = new StringBuilder();
