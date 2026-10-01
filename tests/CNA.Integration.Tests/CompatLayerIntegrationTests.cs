@@ -307,6 +307,34 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         });
     }
 
+    /// <summary>
+    /// cna-cs-samples CNA-REPORT-002, which was this binding and not CNA: <c>ModelMesh.Draw</c>
+    /// disposed the technique, pass collection and passes it read, but the effect caches those
+    /// wrappers and hands the same ones back, so the second draw used a released technique handle --
+    /// "frame 1 OK, frame 2 The EffectTechnique handle is invalid" in every sample that draws a Model.
+    /// </summary>
+    [global::CNA.Integration.Tests.Native3DFact]
+    public void CompatModel_DrawsRepeatedlyWithTheEffectsOwnTechnique()
+    {
+        InsideACompatFrame(game =>
+        {
+            game.Content.RootDirectory = Path.Combine(AppContext.BaseDirectory, "assets", "xnb");
+            Model model = game.Content.Load<Model>("BlenderDefaultCube");
+            Effect effect = model.Meshes[0].MeshParts[0].Effect;
+            EffectTechnique technique = effect.CurrentTechnique;
+
+            for (int frame = 0; frame < 3; frame++)
+            {
+                model.Meshes[0].Draw();
+                model.Draw(Matrix.Identity, Matrix.Identity, Matrix.Identity);
+            }
+
+            Assert.Same(technique, effect.CurrentTechnique);
+            Assert.NotNull(effect.CurrentTechnique.Passes[0]);
+            game.Content.Unload();
+        });
+    }
+
     /// <summary>Exercises the raw-byte Texture3D ABI route through XNA's generic overload. A
     /// uint is intentionally used for a four-byte Color texel so this cannot fall back to the
     /// managed Color conversion path.</summary>

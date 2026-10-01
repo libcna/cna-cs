@@ -55,15 +55,11 @@ public sealed class ModelMesh
             Effect effect = part.Effect ?? throw new InvalidOperationException(
                 $"Model mesh '{Name}' contains a part with no effect.");
 
-            using CNA.Graphics.EffectTechnique technique = effect.Inner.CurrentTechnique;
-            using CNA.Graphics.EffectPassCollection passes = technique.Passes;
-            foreach (CNA.Graphics.EffectPass pass in passes)
+            // The effect owns its technique, pass collection and passes; see CNA.Graphics.ModelMesh.
+            foreach (CNA.Graphics.EffectPass pass in effect.Inner.CurrentTechnique.Passes)
             {
-                using (pass)
-                {
-                    pass.Apply();
-                    part.Draw();
-                }
+                pass.Apply();
+                part.Draw();
             }
         }
     }

@@ -67,26 +67,19 @@ public class ModelMesh : IDisposable
             _graphicsDevice.SetVertexBuffer(part.VertexBuffer);
             _graphicsDevice.Indices = part.IndexBuffer;
 
-            // CurrentTechnique, its Passes collection, and every pass are OWNED native handles
-            // minted per call (see EffectPass's doc comment), so this per-frame path disposes them
-            // rather than leaving them to the SafeHandle finalizers -- otherwise a 60 fps draw
-            // queues hundreds of native handles per second for finalization.
-            using EffectTechnique technique = effect.CurrentTechnique;
-            using EffectPassCollection passes = technique.Passes;
-
-            foreach (EffectPass pass in passes)
+            // CurrentTechnique, its Passes and every pass are wrappers the effect caches and owns,
+            // as XNA's are: disposing them here released the effect's own technique, and the next
+            // frame drew with a dead handle (cna-cs-samples CNA-REPORT-002, which was this).
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
-                using (pass)
-                {
-                    pass.Apply();
-                    _graphicsDevice.DrawIndexedPrimitives(
-                        PrimitiveType.TriangleList,
-                        part.VertexOffset,
-                        0,
-                        part.NumVertices,
-                        part.StartIndex,
-                        part.PrimitiveCount);
-                }
+                pass.Apply();
+                _graphicsDevice.DrawIndexedPrimitives(
+                    PrimitiveType.TriangleList,
+                    part.VertexOffset,
+                    0,
+                    part.NumVertices,
+                    part.StartIndex,
+                    part.PrimitiveCount);
             }
         }
     }
