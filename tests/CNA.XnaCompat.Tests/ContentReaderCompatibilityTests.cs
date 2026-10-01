@@ -35,6 +35,59 @@ public class ContentReaderCompatibilityTests
         Assert.Equal(1, TestContent.DisposeCount);
     }
 
+    /// <summary>
+    /// XNA's pipeline names a game's reader "Game.Reader, Game, Version=1.0.0.0, Culture=neutral";
+    /// the game built here may carry another version, and the browser runtime refused that spelling
+    /// outright (HeightmapCollision's terrain). The reader's simple assembly name decides.
+    /// </summary>
+    [Fact]
+    public void Load_ReaderNamedWithAnotherVersionAndNoPublicKeyToken_ResolvesBySimpleName()
+    {
+        string type = typeof(SimpleValueReader).FullName!;
+        string assembly = typeof(SimpleValueReader).Assembly.GetName().Name!;
+        using var content = new MemoryContentManager(BuildSingleReaderAsset($"{type}, {assembly}, Version=99.0.0.0, Culture=neutral", 42));
+
+        Assert.Equal(42, content.Load<SimpleValue>("custom").Value);
+    }
+
+    private static byte[] BuildSingleReaderAsset(string readerName, int value)
+    {
+        using var payload = new MemoryStream();
+        using (var writer = new BinaryWriter(payload, Encoding.UTF8, leaveOpen: true))
+        {
+            writer.Write7BitEncodedInt(1);
+            writer.Write(readerName);
+            writer.Write(0);
+            writer.Write7BitEncodedInt(0);
+            writer.Write7BitEncodedInt(1);
+            writer.Write(value);
+        }
+
+        byte[] bytes = payload.ToArray();
+        using var container = new MemoryStream();
+        using (var writer = new BinaryWriter(container, Encoding.UTF8, leaveOpen: true))
+        {
+            writer.Write("XNBw"u8);
+            writer.Write((byte)5);
+            writer.Write((byte)0);
+            writer.Write(10 + bytes.Length);
+            writer.Write(bytes);
+        }
+
+        return container.ToArray();
+    }
+
+    private sealed class SimpleValue
+    {
+        public int Value { get; init; }
+    }
+
+    private sealed class SimpleValueReader : ContentTypeReader<SimpleValue>
+    {
+        protected override SimpleValue Read(ContentReader input, SimpleValue existingInstance) =>
+            new() { Value = input.ReadInt32() };
+    }
+
     private static byte[] BuildCustomAsset()
     {
         using var payload = new MemoryStream();

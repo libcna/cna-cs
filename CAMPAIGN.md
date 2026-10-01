@@ -120,6 +120,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-099 | A library compiled against XNA 4.0 runs unchanged: XNA-named forwarders, no Microsoft key | done |
 | CSX-100 | A game's own worker thread loads content, creates resources and moves their data, as XNA allowed | done |
 | CSX-101 | ABI 0.39.0: the rest of a loading thread's calls run on the game thread (CNA CBIND-141) | done |
+| CSX-102 | A content reader is found by its assembly's simple name, as .NET Framework bound an unsigned assembly | done |
 
 ### P9 -- portability
 
@@ -129,6 +130,21 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-102: a game's own content reader in a browser
+
+HeightmapCollision failed in the browser corpus: "Could not find ContentTypeReader Type
+'HeightmapCollision.HeightMapInfoReader, HeightmapCollision, Version=1.0.0.0, Culture=neutral'",
+the first gallery row to run a reader of its own in a browser. A browser probe
+(`build-probe/browser-reader-probe`) showed the class loads, and that the browser runtime's
+`Type.GetType` refuses exactly that spelling -- `Culture=neutral` without `PublicKeyToken=null` --
+while accepting it with the token or without the culture; CoreCLR accepts all of them. XNA's
+pipeline writes it for every unsigned game, and .NET Framework bound an unsigned assembly by simple
+name alone, so `ContentTypeReaderManager` now resolves reader assemblies by simple name (loaded
+first), for the reader and its type arguments, and its error carries the runtime's own reason.
+`ContentReaderCompatibilityTests.Load_ReaderNamedWithAnotherVersionAndNoPublicKeyToken_ResolvesBySimpleName`
+pins the policy on the desktop (where it passed before too); the browser row is the regression
+evidence: HeightmapCollision draws its terrain and ball. XnaCompat 286.
 
 ### 2026-10-01 -- CSX-099: XNA-compiled libraries run unchanged
 

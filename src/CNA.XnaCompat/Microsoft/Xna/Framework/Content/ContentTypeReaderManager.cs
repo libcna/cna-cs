@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Microsoft.Xna.Framework.Content;
 
 /// <summary>Builds and owns the type-reader table for one XNB asset.</summary>
@@ -82,6 +84,26 @@ public sealed class ContentTypeReaderManager
         }
     }
 
+    /// <summary>
+    /// XNA's pipeline names a reader by its assembly's full name ("Game.Reader, Game,
+    /// Version=1.0.0.0, Culture=neutral" for an unsigned game), and .NET Framework bound an unsigned
+    /// assembly by its simple name alone. A game built here may carry another version, and the
+    /// browser runtime refuses <c>Culture=neutral</c> without <c>PublicKeyToken=null</c> outright, so
+    /// the simple name decides, for the reader and for every type argument it names.
+    /// </summary>
+    private static Assembly? AssemblyBySimpleName(AssemblyName name)
+    {
+        foreach (Assembly loaded in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (string.Equals(loaded.GetName().Name, name.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                return loaded;
+            }
+        }
+
+        return name.Name is null ? null : Assembly.Load(new AssemblyName(name.Name));
+    }
+
     private static ContentTypeReader CreateReader(string serializedName, string assetName)
     {
         if (string.IsNullOrWhiteSpace(serializedName))
@@ -94,12 +116,27 @@ public sealed class ContentTypeReaderManager
             return builtIn;
         }
 
-        Type? readerType = Type.GetType(serializedName, throwOnError: false);
+        Type? readerType;
+        Exception? loadFailure = null;
+        try
+        {
+            readerType = Type.GetType(serializedName, AssemblyBySimpleName, typeResolver: null, throwOnError: true);
+        }
+        catch (Exception exception) when (exception is TypeLoadException or FileNotFoundException
+                                              or FileLoadException or BadImageFormatException)
+        {
+            readerType = null;
+            loadFailure = exception;
+        }
+
         if (readerType is null || !typeof(ContentTypeReader).IsAssignableFrom(readerType))
         {
-            throw new ContentLoadException(
-                $"Could not find ContentTypeReader Type '{serializedName}' while loading '{assetName}'. " +
-                "Ensure the reader assembly name in the XNB matches the loaded assembly.");
+            // The runtime's own reason, when it gave one: a reader assembly that is missing differs
+            // from one that is present but whose reader type cannot load.
+            string message = $"Could not find ContentTypeReader Type '{serializedName}' while loading '{assetName}'. ";
+            throw loadFailure is null
+                ? new ContentLoadException(message + "Ensure the reader assembly name in the XNB matches the loaded assembly.")
+                : new ContentLoadException(message + $"{loadFailure.GetType().Name}: {loadFailure.Message}", loadFailure);
         }
 
         try
