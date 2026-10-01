@@ -12,6 +12,7 @@
     <!-- The callbacks this binding hands to CNA live in CNA.Framework, and their signatures are
          part of the ABI evidence. Referenced for reflection only; nothing here calls into it. -->
     <ProjectReference Include="../../src/CNA.Framework/CNA.Framework.csproj" />
+    <ProjectReference Include="../../src/CNA.XnaCompat/CNA.XnaCompat.csproj" />
   </ItemGroup>
 
 </Project>

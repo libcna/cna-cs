@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Description>
+      GamerServices and Guide against the real native library, in a process of their own: the
+      dispatcher is process-wide and initializes once, as in an XNA process, so these tests share one
+      game for their whole run. The run settings point every gamer-services store at a private
+      directory and switch the keyring off, so a test never touches the owner's real profiles.
+    </Description>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)/gamerservices.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\CNA.XnaCompat\CNA.XnaCompat.csproj" />
+    <ProjectReference Include="..\..\src\CNA.Interop\CNA.Interop.csproj" />
+    <Compile Include="..\CNA.Integration.Tests\CnaNativeProbe.cs" Link="CnaNativeProbe.cs" />
+  </ItemGroup>
+
+</Project>

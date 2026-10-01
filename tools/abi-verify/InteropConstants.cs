@@ -167,6 +167,39 @@ static class InteropConstants
 
         // CNA writes this one without the separator the derived name inserts.
         ["CnaRendererFormatUsage.MultiSample"] = "CNA_RENDERER_FORMAT_USAGE_MULTISAMPLE",
+
+        // gamer_services.h writes a separator on both sides of the digit in these two groups
+        // (STAND_0, FINGER_INDEX_2_LEFT), where the derivation rule writes none. Spelled from the
+        // header's names, member by member -- never matched up by value, which would make the
+        // check that follows prove nothing.
+        ["AvatarAnimationPreset.Stand0"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_0",
+        ["AvatarAnimationPreset.Stand1"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_1",
+        ["AvatarAnimationPreset.Stand2"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_2",
+        ["AvatarAnimationPreset.Stand3"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_3",
+        ["AvatarAnimationPreset.Stand4"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_4",
+        ["AvatarAnimationPreset.Stand5"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_5",
+        ["AvatarAnimationPreset.Stand6"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_6",
+        ["AvatarAnimationPreset.Stand7"] = "CNA_AVATAR_ANIMATION_PRESET_STAND_7",
+        ["AvatarBone.FingerIndex2Left"] = "CNA_AVATAR_BONE_FINGER_INDEX_2_LEFT",
+        ["AvatarBone.FingerMiddle2Left"] = "CNA_AVATAR_BONE_FINGER_MIDDLE_2_LEFT",
+        ["AvatarBone.FingerRing2Left"] = "CNA_AVATAR_BONE_FINGER_RING_2_LEFT",
+        ["AvatarBone.FingerSmall2Left"] = "CNA_AVATAR_BONE_FINGER_SMALL_2_LEFT",
+        ["AvatarBone.FingerThumb2Left"] = "CNA_AVATAR_BONE_FINGER_THUMB_2_LEFT",
+        ["AvatarBone.FingerIndex2Right"] = "CNA_AVATAR_BONE_FINGER_INDEX_2_RIGHT",
+        ["AvatarBone.FingerMiddle2Right"] = "CNA_AVATAR_BONE_FINGER_MIDDLE_2_RIGHT",
+        ["AvatarBone.FingerRing2Right"] = "CNA_AVATAR_BONE_FINGER_RING_2_RIGHT",
+        ["AvatarBone.FingerSmall2Right"] = "CNA_AVATAR_BONE_FINGER_SMALL_2_RIGHT",
+        ["AvatarBone.FingerThumb2Right"] = "CNA_AVATAR_BONE_FINGER_THUMB_2_RIGHT",
+        ["AvatarBone.FingerIndex3Left"] = "CNA_AVATAR_BONE_FINGER_INDEX_3_LEFT",
+        ["AvatarBone.FingerMiddle3Left"] = "CNA_AVATAR_BONE_FINGER_MIDDLE_3_LEFT",
+        ["AvatarBone.FingerRing3Left"] = "CNA_AVATAR_BONE_FINGER_RING_3_LEFT",
+        ["AvatarBone.FingerSmall3Left"] = "CNA_AVATAR_BONE_FINGER_SMALL_3_LEFT",
+        ["AvatarBone.FingerThumb3Left"] = "CNA_AVATAR_BONE_FINGER_THUMB_3_LEFT",
+        ["AvatarBone.FingerIndex3Right"] = "CNA_AVATAR_BONE_FINGER_INDEX_3_RIGHT",
+        ["AvatarBone.FingerMiddle3Right"] = "CNA_AVATAR_BONE_FINGER_MIDDLE_3_RIGHT",
+        ["AvatarBone.FingerRing3Right"] = "CNA_AVATAR_BONE_FINGER_RING_3_RIGHT",
+        ["AvatarBone.FingerSmall3Right"] = "CNA_AVATAR_BONE_FINGER_SMALL_3_RIGHT",
+        ["AvatarBone.FingerThumb3Right"] = "CNA_AVATAR_BONE_FINGER_THUMB_3_RIGHT",
     };
 
     /// <summary>
@@ -190,7 +223,14 @@ static class InteropConstants
             .Where(type => type is { IsEnum: true, IsPublic: true })
             .Where(type => FrameworkIdentities.Contains(type.Name));
 
-        return interopEnums.Concat(frameworkEnums).OrderBy(type => type.Name, StringComparer.Ordinal);
+        // The XNA GamerServices/Avatar/Net enums: the facade casts these straight to the native
+        // identities (there is no CNA.* layer between them), so they are ABI values the same way.
+        IEnumerable<Type> compatEnums = typeof(Microsoft.Xna.Framework.Game).Assembly
+            .GetTypes()
+            .Where(type => type is { IsEnum: true, IsPublic: true })
+            .Where(type => type.Namespace is "Microsoft.Xna.Framework.GamerServices" or "Microsoft.Xna.Framework.Net");
+
+        return interopEnums.Concat(frameworkEnums).Concat(compatEnums).OrderBy(type => type.Name, StringComparer.Ordinal);
     }
 
     /// <summary>

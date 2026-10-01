@@ -20,10 +20,12 @@ internal sealed class MetadataContractReader
     };
 
     private readonly IReadOnlyList<string> _namespacePrefixes;
+    private readonly IReadOnlyList<string> _excludedNamespacePrefixes;
 
-    public MetadataContractReader(IReadOnlyList<string> namespacePrefixes)
+    public MetadataContractReader(IReadOnlyList<string> namespacePrefixes, IReadOnlyList<string>? excludedNamespacePrefixes = null)
     {
         _namespacePrefixes = namespacePrefixes;
+        _excludedNamespacePrefixes = excludedNamespacePrefixes ?? [];
     }
 
     public ApiContract Read(IEnumerable<string> assemblyPaths)
@@ -561,10 +563,14 @@ internal sealed class MetadataContractReader
             .Order(StringComparer.Ordinal)
             .ToArray();
 
-    private bool IsContractType(string name) => _namespacePrefixes.Any(prefix =>
+    private bool IsContractType(string name) =>
+        _namespacePrefixes.Any(prefix => IsUnder(name, prefix)) &&
+        !_excludedNamespacePrefixes.Any(prefix => IsUnder(name, prefix));
+
+    private static bool IsUnder(string name, string prefix) =>
         name.Equals(prefix, StringComparison.Ordinal) ||
         name.StartsWith(prefix + ".", StringComparison.Ordinal) ||
-        name.StartsWith(prefix + "+", StringComparison.Ordinal));
+        name.StartsWith(prefix + "+", StringComparison.Ordinal);
 
     private static bool IsEffectivelyVisibleType(MetadataReader reader, TypeDefinition definition)
     {

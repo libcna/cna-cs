@@ -262,7 +262,7 @@ jobs:
       - run: dotnet restore CNA.sln
       - run: dotnet build src/CNA.XnaCompat/CNA.XnaCompat.csproj -c Release --no-restore -m:1
       - run: dotnet build tools/api-compat/CNA.ApiCompat.csproj -c Release --no-restore -m:1
-      - name: Require exact 257-type, zero-diagnostic contract
+      - name: Require exact 256-type, zero-diagnostic contract
         shell: pwsh
         run: >-
           dotnet run --project tools/api-compat/CNA.ApiCompat.csproj -c Release --no-build --
@@ -313,6 +313,11 @@ jobs:
           CNA_NATIVE_LIBRARY: ${{ runner.temp }}/libcna_c_api.so
           SDL_AUDIODRIVER: dummy
         run: xvfb-run -a dotnet test tests/CNA.Integration.Tests/CNA.Integration.Tests.csproj -c Release --no-build -m:1
+      - name: GamerServices integration Release (own process; runsettings isolate the keyring)
+        env:
+          CNA_NATIVE_LIBRARY: ${{ runner.temp }}/libcna_c_api.so
+          SDL_AUDIODRIVER: dummy
+        run: xvfb-run -a dotnet test tests/CNA.GamerServices.IntegrationTests/CNA.GamerServices.IntegrationTests.csproj -c Release --no-build -m:1
       - name: Ownership 100 cycles Debug and Release
         env:
           CNA_NATIVE_LIBRARY: ${{ runner.temp }}/libcna_c_api.so

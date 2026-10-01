@@ -161,7 +161,15 @@ public class Game : IDisposable
 
         CnaAmbientGame.Current = _nativeHandle;
         Content = CreateContentManager();
+        Active = this;
     }
+
+    /// <summary>
+    /// Raised at the start of disposal, before any native teardown, for process-wide services that
+    /// hold state against this game (the gamer-services dispatcher, a pending Guide answer) and must
+    /// release it while the game still exists.
+    /// </summary>
+    internal event Action? DisposingNativeState;
 
     /// <summary>
     /// The raw native game handle value, for the small set of CNA types (currently none
@@ -174,6 +182,13 @@ public class Game : IDisposable
     /// rather than an implicit one -- see <see cref="CnaHandle"/>'s own doc comment.
     /// </summary>
     internal nint NativeHandle => _nativeHandle.AsNint;
+
+    /// <summary>
+    /// The game native CNA is running, if any. Native admits one C-owned game at a time, so this
+    /// names state native already holds rather than adding any: it is how process-wide XNA services
+    /// (GamerServicesDispatcher, the Guide) find the game they belong to.
+    /// </summary>
+    internal static Game? Active { get; private set; }
 
     /// <summary>Matches real XNA's <c>Game.Services</c>: the shared service container components
     /// use to find each other. Created eagerly rather than lazily because
@@ -699,6 +714,20 @@ public class Game : IDisposable
         }
 
         _disposed = true;
+
+        try
+        {
+            DisposingNativeState?.Invoke();
+        }
+        catch (Exception)
+        {
+            // Must not throw; see this method's doc comment.
+        }
+
+        if (ReferenceEquals(Active, this))
+        {
+            Active = null;
+        }
 
         // Before cna_game_destroy: the component ABI states "Every component must be released
         // before its game is destroyed", and a component cannot release itself -- its native

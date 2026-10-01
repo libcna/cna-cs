@@ -122,6 +122,10 @@ internal sealed class CompatibilityProfile
     [JsonPropertyName("namespacePrefixes")]
     public List<string> NamespacePrefixes { get; init; } = [];
 
+    /// <summary>Namespaces under <see cref="NamespacePrefixes"/> that another profile owns.</summary>
+    [JsonPropertyName("excludedNamespacePrefixes")]
+    public List<string> ExcludedNamespacePrefixes { get; init; } = [];
+
     [JsonPropertyName("description")]
     public string Description { get; init; } = string.Empty;
 }

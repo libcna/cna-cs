@@ -97,6 +97,14 @@ public class CompatEnumParityTests
 
         if (cnaEnum is null)
         {
+            // GamerServices, Avatar and Net have no CNA.* layer: the facade hands their values
+            // straight to the native identities, and tools/abi-verify proves every member against
+            // the gamer_services.h/net*.h macros instead.
+            if (compatEnum.Namespace is "Microsoft.Xna.Framework.GamerServices" or "Microsoft.Xna.Framework.Net")
+            {
+                return;
+            }
+
             Assert.True(
                 KnownUnpairedCompatEnums.ContainsKey(compatEnum.Name),
                 $"{compatEnum.FullName} has no CNA.* counterpart and is not listed as a deliberate asymmetry. " +

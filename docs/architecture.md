@@ -94,7 +94,23 @@ storage, curves, textures, render targets, effects, graphics states, vertex decl
 SpriteBatch, and the remaining strict collections now use this pattern. No exported type in the
 selected strict profile inherits a `CNA.*` type, and `tools/api-compat --leak-only` reports zero
 public/protected CNA-type signatures. The full seven-assembly strict comparison also reports
-257/257 types and zero metadata diagnostics with an empty allowlist.
+256/256 types and zero metadata diagnostics with an empty allowlist.
+
+#### GamerServices, Avatar and Net: straight to `CNA.Interop`
+
+`Microsoft.Xna.Framework.GamerServices` (with Guide and the Avatar types) and
+`Microsoft.Xna.Framework.Net` are the one exception to the layering above. They exist only to
+satisfy XNA -- CNA has no idiomatic gamer-services API of its own worth giving a `CNA.*` name --
+so the facade calls `CNA.Interop` directly (`GamerServicesInterop.cs`), and `CNA.Framework`
+contributes only the running `Game` they attach to. They are measured by their own profile,
+`xna40-gamerservices-net.json`, which is why the runtime profile above excludes the two
+namespaces (and `GamerServicesComponent`, which XNA declares in `Game.dll`).
+
+Their model is XNA's, as CNA's native implementation provides it: one process-wide dispatcher,
+initialized once; a Guide CNA presents inside the running game; one managed object per native
+gamer (identity is kept through the native gamer tag, never by handle value); and asynchronous
+Begin/End pairs that complete on the game thread, with an exception from a game callback
+rethrown from `Game.Run` rather than unwound through native.
 
 #### Why the XNA value types are not literally the same type as the `CNA` namespace ones
 

@@ -1,7 +1,7 @@
 # CNA.NET
 
 > **Status: exact public metadata for the selected XNA 4.0 Windows runtime profile; not yet
-> behaviorally complete or release-ready.** The strict comparison reports 257/257 types, zero
+> behaviorally complete or release-ready.** The strict comparison reports 256/256 types, zero
 > differences, zero CNA leaks, and an empty allowlist. The binding targets CNA C ABI 0.35.0.
 
 CNA.NET is the C#/.NET binding for [CNA](https://github.com/openeggbert/cna), a native C++ game
@@ -25,16 +25,18 @@ Binary compatibility with Microsoft's strong-named assemblies is not the primary
 
 ## Measured state
 
-As of 2026-10-01, against CNA `next` `bdf239360` (C ABI 0.35.0), OPENGLES3 with
+As of 2026-10-01, against CNA `next` `6e0de68e8` (C ABI 0.35.0), OPENGLES3 with
 `CNA_EASYGL_COMPILED_EFFECTS=ON`, Linux x64:
 
 - Debug and Release solution builds: 0 warnings, 0 errors;
-- managed tests: 629/629 framework and 225/225 XNA-compat;
-- native integration tests: 200/200 in Debug and Release;
-- strict metadata profile: 257 reference types versus 257 target types, 0 differences, 0
-  allowlisted;
-- ABI: 957 imports, all resolving with unchanged prototypes; `tools/abi-verify` measures 895
-  native/managed layout values with 0 mismatches and compiles all 957 prototypes; the
+- managed tests: 629/629 framework and 269/269 XNA-compat;
+- native integration tests: 203/203, plus 7/7 GamerServices integration tests (their own
+  process: the native dispatcher is process-wide, as XNA's is);
+- strict metadata profile: 256 reference types versus 256 target types, 0 differences, 0
+  allowlisted; GamerServices/Avatar/Net profile: 55 of 75 types present and exact, the Avatar
+  rendering types and the Net session types still missing;
+- ABI: 1383 imports, all resolving; `tools/abi-verify` measures 1119 native/managed layout values
+  with 0 mismatches, compiles all 1383 prototypes and asserts 596 constants; the
   `cna-cs-native-abi/1` matrix accepts exactly 0.35.0 and 12 isolated fixtures pass (2 accepted, 10
   rejected). See [`docs/native-abi-compatibility.md`](docs/native-abi-compatibility.md).
 
@@ -63,7 +65,7 @@ CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so \
 The loader also accepts `CNA_NATIVE_DIR`. Explicit configuration is fail-fast and takes precedence
 over package-native lookup. Admission follows
 [`cna-cs-native-abi/1`](docs/native-abi-compatibility.md), not a same-major range: the version must
-have a reviewed matrix entry, all 957 imports must exist, and signature/shape canaries must pass.
+have a reviewed matrix entry, all 1383 imports must exist, and signature/shape canaries must pass.
 The one accepted entry today is C ABI 0.35.0.
 Wrong ABI, missing symbols, conflicts, wrong architecture/load failure, and missing-library cases
 report the attempted configuration, consumer/detected ABI where available, RID, and remediation;

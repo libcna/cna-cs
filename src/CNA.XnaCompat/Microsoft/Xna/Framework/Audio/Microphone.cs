@@ -31,6 +31,9 @@ public sealed class Microphone
     {
     }
 
+    /// <summary>The native capture-device index, which gamer services take to answer IsHeadset.</summary>
+    internal ulong NativeIndex => _microphone.Index;
+
     private static Microphone Wrap(CNA.Audio.Microphone microphone) =>
         Wrappers.GetValue(microphone, static m => new Microphone(m));
 

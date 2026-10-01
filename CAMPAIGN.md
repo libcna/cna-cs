@@ -62,8 +62,8 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-040 | Inventory current CNA GamerServices/Guide/Avatar/Net C API vs XNA 4.0 metadata | todo |
-| CSX-041 | `Microsoft.Xna.Framework.GamerServices` runtime profile (Gamer, SignedInGamer, Guide, GamerServicesComponent, profiles, achievements, leaderboards) | todo |
+| CSX-040 | Inventory current CNA GamerServices/Guide/Avatar/Net C API vs XNA 4.0 metadata | done (fbff5e7): 426 routes bound, abi-verify clean |
+| CSX-041 | `Microsoft.Xna.Framework.GamerServices` runtime profile (Gamer, SignedInGamer, Guide, GamerServicesComponent, profiles, achievements, leaderboards) | done: 55/75 of the GS/Net profile exact; rest is CSX-042/043 |
 | CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | todo |
 | CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | todo |
 | CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | todo |
@@ -74,8 +74,8 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-050 | Requalify existing checked-in C# rows against migrated binding | todo |
-| CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | todo |
-| CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | todo |
+| CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
+| CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | todo |
 
 ### P7 -- browser
@@ -110,6 +110,43 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-040/041: GamerServices and Guide over CNA's native gamer services
+
+cna-cs over CNA `6e0de68e8`. CSX-040 (`fbff5e7`) bound every GamerServices, Guide, Avatar and Net
+route of the 0.35.0 headers: 426 imports, 98 prototype overrides each derived from the compiler's
+diagnostic and limited to the four representational differences abi-verify documents. CSX-041
+puts XNA's `Microsoft.Xna.Framework.GamerServices` on them, member by member against the XNA IL:
+`GamerServicesDispatcher`/`GamerServicesComponent` (process-wide, initialize-once, IL order),
+`Gamer`/`SignedInGamer`/`FriendGamer` (one managed object per native gamer, kept through the native
+gamer tag), collections, presence, profiles, achievements, leaderboards (reader, entry, identity,
+`PropertyDictionary`), `Guide` (message box and keyboard genuinely asynchronous, completing on the
+game thread; `GuideAlreadyVisibleException` checked first), the event args and exceptions, and the
+enums (values asserted against the headers by abi-verify, now 596 constants). Native refusals map
+to XNA's exception types for these calls (`ArgumentException`, `InvalidOperationException`,
+`NotSupportedException`, `ObjectDisposedException`); a game callback's exception is rethrown from
+`Game.Run` (via CSX-082's path) instead of unwinding through native.
+
+Two C ABI gaps refuse explicitly: `LeaderboardWriter.GetLeaderboard` (no session-writer route) and
+a non-empty `PropertyDictionary` stream's contents (only presence and length cross) -- CSX-044.
+
+Tooling: api-compat profiles gained `excludedNamespacePrefixes`; the runtime profile excludes
+GamerServices/Net (256 types: `GamerServicesComponent` lives in `Game.dll` and moved to the GS/Net
+profile). `CompatEnumParityTests` exempts the two namespaces, whose values abi-verify checks
+against the C headers instead.
+
+New `tests/CNA.GamerServices.IntegrationTests` (own process; the dispatcher is process-wide):
+`gamerservices.runsettings` keeps native gamer services off the owner's keyring, profiles and XDG
+directories and auto-signs in `CnaTester` (`Environment.SetEnvironmentVariable` does not reach
+native `getenv` on Unix, so it must be the process environment).
+
+Results: build 0/0; Framework 629/629; XnaCompat 269/269; integration 203/203 and GamerServices
+7/7 on `run_gpu_tests_private.sh`; `Verify-Abi.sh` 1119/1119 values, 1383/1383 prototypes, 0
+mismatches; runtime profile 256/256 with 0 diagnostics; GS/Net profile 55/75 (20 missing:
+`AvatarAnimation`, `AvatarDescription`, `AvatarRenderer`, 17 Net types); leak-only 0.
+
+Known risk, not yet fixed: native keeps the dispatcher initialized after its game is destroyed, so
+a second game in the same process inherits it.
 
 ### 2026-10-01 -- CSX-030: template and package consumers
 

@@ -28,10 +28,12 @@ XNA_REFERENCE_PATH=/path/to/xna-reference-assemblies \
   dotnet run --project tools/api-compat -c Release --no-build -- --format json
 ```
 
-As measured on 2026-08-23:
+As measured on 2026-10-01 (on 2026-08-23 the same profile counted 257 types; the one difference
+is `GamerServicesComponent`, which XNA declares in `Game.dll` and which is now measured with the
+rest of GamerServices -- see *Profile boundaries*):
 
-- reference types: 257;
-- target types: 257;
+- reference types: 256;
+- target types: 256;
 - unallowlisted diagnostics: 0;
 - accidental `CNA.*` public/protected signature findings: 0;
 - reviewed exceptions: 0;
@@ -181,11 +183,17 @@ does not alter the strict XNA contract.
 
 ## Profile boundaries
 
-The current 257-type measurement is specifically the selected Windows runtime assemblies. It is
+The current 256-type measurement is specifically the selected Windows runtime assemblies. It is
 not the entire historical XNA product:
 
 - XACT runtime is included;
-- GamerServices and networking/session APIs need separate inventory;
+- GamerServices, Avatar and Net are measured by their own profile,
+  `tools/api-compat/profiles/xna40-gamerservices-net.json` (75 reference types), and the runtime
+  profile excludes their namespaces. They are backed by CNA's native gamer services, Guide and
+  network session implementation. Two C ABI gaps remain and refuse explicitly rather than
+  pretend: `LeaderboardWriter.GetLeaderboard` (no session-writer route crosses the ABI yet) and
+  the contents of a non-empty `PropertyDictionary` stream value (only its presence and length
+  do);
 - Windows Phone sensor/device APIs need a separate platform profile;
 - Xbox-only APIs need a separate platform profile;
 - Content Pipeline/build-time assemblies are a separate product surface and roadmap.

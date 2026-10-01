@@ -62,6 +62,11 @@ call" would take it.
 | Documented contracts of the 957 routes, header text diffed | 14 changed |
 | Native integration, Debug and Release, OPENGLES3 with compiled effects | 200 of 200 |
 
+The table is the admission as it was made. The same day CSX-040 bound the GamerServices, Guide,
+Avatar and Net routes of the same 0.35.0 headers (426 imports, 239 + 187); the consumed surface is
+now 1383 entry points, and `tools/abi-verify` measures 1119 native and 1119 managed layout/type
+values with 0 mismatches, compiles 1383 of 1383 prototypes and asserts 596 constants.
+
 **The 45 dropped imports.** CNA removed `engine_layer.h` in 0.30.0 (`MOD-RETIRE-1`): the
 post-process chain/pass, bloom, tonemap, render-target pool and blit routes and
 `cna_engine_layer_get_version`, 44 routes this binding imported for its `CNA.Graphics.Experimental`
@@ -104,7 +109,7 @@ An operation is compatible only when it preserves every contract an existing con
 - clarify documentation without changing ownership, error, threading, lifetime, or behavior.
 
 Additional exports are deliberately allowed by the loader. They cannot collide with or substitute
-for the 957 names imported by this build.
+for the 1383 names imported by this build.
 
 ## Breaking operations
 
@@ -156,14 +161,14 @@ error, and lifetime rules are ABI contract just as much as its machine-level pro
 Before returning a library handle, the managed resolver now requires:
 
 1. readable `cna_get_abi_version` metadata and an exact reviewed matrix entry;
-2. every one of the 957 `LibraryImport` entry points declared by `CNA.Interop.Native`;
+2. every one of the 1383 `LibraryImport` entry points declared by `CNA.Interop.Native`;
 3. a successful `cna_error_get_last_message_size` result/out-parameter signature canary;
 4. a successful guarded `cna_touch_capabilities_init` canary proving the 16-byte version-1 shape,
    canonical body, and write bounds.
 
 Version numbers and symbol names cannot describe every native prototype or POD layout. The runtime
 checks therefore complement, rather than replace, `tools/abi-verify`: the platform C compiler
-checks 895 native/managed size, alignment, offset, width and type values, compiles every import's
+checks 1119 native/managed size, alignment, offset, width and type values, compiles every import's
 prototype against the headers, checks the callbacks and asserts the enum-like constants, and rejects
 headers outside this same version matrix. CNA's own ABI baseline supplies the reviewed
 release-to-release shape/export/value diff, which `tools/coverage/baselinediff.py` computes and which

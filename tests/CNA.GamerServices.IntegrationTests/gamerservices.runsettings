@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Native reads these at first use; .NET's Environment.SetEnvironmentVariable does not reach native
+  getenv on Unix, so they have to be in the test host's environment from the start. Relative paths
+  resolve against the test output directory.
+-->
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <CNA_GAMER_SERVICES_KEYRING>0</CNA_GAMER_SERVICES_KEYRING>
+      <CNA_GAMER_SERVICES_PROFILES_DIR>gs-state/profiles</CNA_GAMER_SERVICES_PROFILES_DIR>
+      <CNA_GAMER_SERVICES_CREDENTIALS_DIR>gs-state/credentials</CNA_GAMER_SERVICES_CREDENTIALS_DIR>
+      <CNA_GAMER_SERVICES_CACHE_DIR>gs-state/cache</CNA_GAMER_SERVICES_CACHE_DIR>
+      <XDG_DATA_HOME>gs-state/xdg-data</XDG_DATA_HOME>
+      <XDG_CONFIG_HOME>gs-state/xdg-config</XDG_CONFIG_HOME>
+      <XDG_STATE_HOME>gs-state/xdg-state</XDG_STATE_HOME>
+      <XDG_CACHE_HOME>gs-state/xdg-cache</XDG_CACHE_HOME>
+      <CNA_GAMER_SERVICES_AUTO_SIGN_IN>CnaTester</CNA_GAMER_SERVICES_AUTO_SIGN_IN>
+      <CNA_GAMER_SERVICES_SOUNDS>0</CNA_GAMER_SERVICES_SOUNDS>
+      <SDL_AUDIODRIVER>dummy</SDL_AUDIODRIVER>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

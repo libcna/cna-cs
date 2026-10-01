@@ -16,7 +16,7 @@ internal static class Program
             }
 
             ResolvedInputs inputs = options.Resolve();
-            var reader = new MetadataContractReader(inputs.NamespacePrefixes);
+            var reader = new MetadataContractReader(inputs.NamespacePrefixes, inputs.Profile.ExcludedNamespacePrefixes);
             ApiContract target = reader.Read([inputs.TargetPath]);
             ApiContract? reference = null;
             List<Diagnostic> diagnostics;
