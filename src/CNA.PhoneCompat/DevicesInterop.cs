@@ -29,6 +29,20 @@ internal static class DevicesInterop
 
         string detail = CnaError.GetLastErrorMessage();
         string message = string.IsNullOrEmpty(detail) ? $"{operation} failed with {result}." : detail;
+        string canonical = CnaCanonicalException.LastType();
+        if (canonical is "Microsoft.Devices.Sensors.AccelerometerFailedException" or "Microsoft.Devices.Sensors.SensorFailedException")
+        {
+            int errorId = Native.cna_sensors_get_last_error_id_ext(out int id, out byte hasId).IsSuccess() && hasId != 0 ? id : 0;
+            throw canonical.EndsWith("AccelerometerFailedException", StringComparison.Ordinal)
+                ? new Sensors.AccelerometerFailedException(message, errorId)
+                : new Sensors.SensorFailedException(message, errorId);
+        }
+
+        if (CnaCanonicalException.CreateSystem(canonical, CnaCanonicalException.LastParamName(), message) is { } system)
+        {
+            throw system;
+        }
+
         throw result switch
         {
             CnaResult.InvalidArgument => new ArgumentException(message),

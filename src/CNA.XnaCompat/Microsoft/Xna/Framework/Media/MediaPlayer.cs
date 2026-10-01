@@ -68,7 +68,7 @@ public static class MediaPlayer
     public static void Play(Song song)
     {
         ArgumentNullException.ThrowIfNull(song);
-        CNA.Media.MediaPlayer.Play(song.Inner);
+        XnaExceptions.Guard(() => CNA.Media.MediaPlayer.Play(song.Inner));
     }
 
     /// <summary>Hands the underlying native collection straight through -- no per-element
@@ -77,13 +77,13 @@ public static class MediaPlayer
     public static void Play(SongCollection songs)
     {
         ArgumentNullException.ThrowIfNull(songs);
-        CNA.Media.MediaPlayer.Play(songs.Inner);
+        XnaExceptions.Guard(() => CNA.Media.MediaPlayer.Play(songs.Inner));
     }
 
     public static void Play(SongCollection songs, int index)
     {
         ArgumentNullException.ThrowIfNull(songs);
-        CNA.Media.MediaPlayer.Play(songs.Inner, index);
+        XnaExceptions.Guard(() => CNA.Media.MediaPlayer.Play(songs.Inner, index));
     }
 
     /// <summary>Real now. It was deliberately absent while compat <see cref="Song"/> was a subclass

@@ -14,9 +14,10 @@ namespace Microsoft.Xna.Framework.GamerServices;
 internal static class GamerServicesInterop
 {
     /// <summary>
-    /// Turns a native refusal into the exception XNA throws for the same call. Native reports the
-    /// category; the XNA type is the category's, and the native message is kept. Anything that is
-    /// not one of the four categories XNA has an answer for stays a <see cref="CnaException"/>.
+    /// Turns a native refusal into the exception XNA throws for the same call: the one native names
+    /// (ABI 0.37.0) when it raised the failure from an exception, otherwise the category's nearest
+    /// XNA answer. The native message is kept. A category XNA has no answer for stays a
+    /// <see cref="CnaException"/>.
     /// </summary>
     internal static void Check(CnaResult result, string operation)
     {
@@ -27,6 +28,11 @@ internal static class GamerServicesInterop
 
         string detail = CnaError.GetLastErrorMessage();
         string message = string.IsNullOrEmpty(detail) ? $"{operation} failed with {result}." : detail;
+        if (XnaExceptions.FromLastNativeFailure(message) is { } canonical)
+        {
+            throw canonical;
+        }
+
         throw result switch
         {
             CnaResult.InvalidArgument => new ArgumentException(message),

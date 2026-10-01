@@ -181,6 +181,20 @@ New extensions require an authority, a source-portability use case, an explicit 
 (`implemented`, `unsupported`, `upstream blocker`, `not applicable`, or `planned`), and a home that
 does not alter the strict XNA contract.
 
+## Exceptions
+
+A failure native raised from an exception reaches XNA code as that exception: since C ABI 0.37.0
+CNA names the canonical type behind a failure and an argument exception's parameter name
+(`CnaException.CanonicalExceptionType`/`CanonicalParamName` carry them in the CNA layer). The facade
+re-raises them where it owns the call to native -- all of GamerServices, Guide, Avatar and Net,
+the phone assembly -- and at the boundaries XNA code catches around: `AudioEngine`, `WaveBank` and
+`SoundBank` construction (`NoAudioHardwareException`), `SoundEffect.CreateInstance`/`Play` and
+`SoundEffectInstance.Play` (`InstancePlayLimitException`), `Microphone.Start`
+(`NoMicrophoneConnectedException`), `MediaPlayer.Play` (`InvalidOperationException`), and
+`ContentManager.Load` (`ContentLoadException`, as before). Elsewhere a native refusal still
+surfaces as `CNA.CnaException` (carrying the canonical type), which XNA code catching a specific
+type would miss: the remaining facade calls are converted as they are met (CSX-080).
+
 ## The default graphics profile
 
 `GraphicsDeviceManager` chooses its default `GraphicsProfile` as XNA's does: from the game

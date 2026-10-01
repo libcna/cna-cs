@@ -24,6 +24,20 @@ public class CnaException : Exception
     /// </summary>
     public string? NativeResult { get; private init; }
 
+    /// <summary>
+    /// The .NET type name of the exception the canonical call threw natively
+    /// (<c>System.ArgumentOutOfRangeException</c>, <c>Microsoft.Xna.Framework.Content.ContentLoadException</c>),
+    /// or null when the native layer raised the failure itself. A layer that re-raises CNA failures
+    /// as their canonical exceptions -- the XNA facade does -- reads it here.
+    /// </summary>
+    public string? CanonicalExceptionType { get; private init; }
+
+    /// <summary>The parameter an argument exception named, or null.</summary>
+    public string? CanonicalParamName { get; private init; }
+
+    /// <summary>The native diagnostic alone, without the operation prefix, for a re-raise.</summary>
+    internal string? NativeMessage { get; private init; }
+
     public CnaException(string message, Exception innerException)
         : base(message, innerException)
     {
@@ -37,11 +51,16 @@ public class CnaException : Exception
         }
 
         string detail = CnaError.GetLastErrorMessage();
+        string canonicalType = CnaCanonicalException.LastType();
+        string canonicalParam = CnaCanonicalException.LastParamName();
         throw new CnaException(string.IsNullOrEmpty(detail)
             ? $"{operation} failed with native result {result}."
             : $"{operation} failed with native result {result}: {detail}")
         {
             NativeResult = result.ToString(),
+            CanonicalExceptionType = canonicalType.Length == 0 ? null : canonicalType,
+            CanonicalParamName = canonicalParam.Length == 0 ? null : canonicalParam,
+            NativeMessage = detail,
         };
     }
 }

@@ -78,6 +78,27 @@ public class GamerServicesTests(GamerServicesGameFixture fixture, ITestOutputHel
         });
     }
 
+    /// <summary>
+    /// A refusal native raises from an exception arrives as that exception (ABI 0.37.0 names it):
+    /// the Guide's own argument checks throw XNA's argument exceptions with their parameter names,
+    /// not a category's nearest guess.
+    /// </summary>
+    [NativeFact]
+    public void Guide_RefusesWithXnasOwnArgumentExceptions()
+    {
+        fixture.InsideAFrame(_ =>
+        {
+            ArgumentOutOfRangeException focus = Assert.Throws<ArgumentOutOfRangeException>(() =>
+                Guide.BeginShowMessageBox("Title", "Text", ["OK"], 5, MessageBoxIcon.None, null!, null!));
+            Assert.Equal("focusButton", focus.ParamName);
+
+            ArgumentException title = Assert.Throws<ArgumentException>(() =>
+                Guide.BeginShowMessageBox(string.Empty, "Text", ["OK"], 0, MessageBoxIcon.None, null!, null!));
+            Assert.IsType<ArgumentException>(title);
+            Assert.Equal("title", title.ParamName);
+        });
+    }
+
     [NativeFact]
     public void Profile_AndAchievements_AreReadable()
     {

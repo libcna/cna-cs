@@ -9,13 +9,13 @@ public class WaveBank : IDisposable
     public WaveBank(AudioEngine audioEngine, string nonStreamingWaveBankFilename)
     {
         ArgumentNullException.ThrowIfNull(audioEngine);
-        _waveBank = new CNA.Audio.WaveBank(audioEngine.Framework, nonStreamingWaveBankFilename);
+        _waveBank = XnaExceptions.Guard(() => new CNA.Audio.WaveBank(audioEngine.Framework, nonStreamingWaveBankFilename));
     }
 
     public WaveBank(AudioEngine audioEngine, string streamingWaveBankFilename, int offset, short packetsize)
     {
         ArgumentNullException.ThrowIfNull(audioEngine);
-        _waveBank = new CNA.Audio.WaveBank(audioEngine.Framework, streamingWaveBankFilename, offset, packetsize);
+        _waveBank = XnaExceptions.Guard(() => new CNA.Audio.WaveBank(audioEngine.Framework, streamingWaveBankFilename, offset, packetsize));
     }
 
     ~WaveBank()

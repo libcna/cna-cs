@@ -301,7 +301,11 @@ public class ResourceIntegrationTests(ITestOutputHelper output, NativeGameFixtur
             // always whole frames -- and a buffer that is not is refused, as XNA refuses it.
             dynamicInstance.SubmitBuffer(new byte[dynamicInstance.GetSampleSizeInBytes(TimeSpan.FromMilliseconds(100))]);
             output.WriteLine($"pending buffers: {dynamicInstance.PendingBufferCount}");
-            Assert.Throws<CnaException>(() => dynamicInstance.SubmitBuffer(new byte[3]));
+            CnaException misaligned = Assert.Throws<CnaException>(() => dynamicInstance.SubmitBuffer(new byte[3]));
+            // The CNA layer keeps its own exception, and now says which canonical one native threw
+            // (ABI 0.37.0): what the XNA facade re-raises.
+            output.WriteLine($"canonical: {misaligned.CanonicalExceptionType} param={misaligned.CanonicalParamName}");
+            Assert.Equal("System.ArgumentException", misaligned.CanonicalExceptionType);
         });
     }
 }

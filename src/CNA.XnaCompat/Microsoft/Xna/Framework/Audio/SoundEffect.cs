@@ -107,7 +107,7 @@ public sealed class SoundEffect : IDisposable
     public SoundEffectInstance CreateInstance()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var instance = new SoundEffectInstance(_soundEffect.CreateNativeInstanceHandle(), this);
+        var instance = new SoundEffectInstance(XnaExceptions.Guard(_soundEffect.CreateNativeInstanceHandle), this);
         lock (_children)
         {
             _children.Add(new WeakReference<SoundEffectInstance>(instance));
@@ -124,7 +124,7 @@ public sealed class SoundEffect : IDisposable
         ValidateRange(volume, 0f, 1f, nameof(volume));
         ValidateRange(pitch, -1f, 1f, nameof(pitch));
         ValidateRange(pan, -1f, 1f, nameof(pan));
-        return _soundEffect.Play(volume, pitch, pan);
+        return XnaExceptions.Guard(() => _soundEffect.Play(volume, pitch, pan));
     }
 
     public static TimeSpan GetSampleDuration(int sizeInBytes, int sampleRate, AudioChannels channels) =>

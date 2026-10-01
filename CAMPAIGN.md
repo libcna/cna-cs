@@ -98,7 +98,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | todo: needs a C route naming the XNA exception type (GamerPrivilege/NetworkNotAvailable/GuideAlreadyVisible/ArgumentOutOfRange all collapse into result+category today) |
+| CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | doing: ABI 0.37.0 names the canonical exception (CNA e9dd5d879); GS/Net/Avatar/Guide, PhoneCompat and the audio/media/content boundaries samples catch around re-raise it; other facade calls still leak CnaException |
 | CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | done; samples' Directory.Build.targets import + per-sample XnaProfile is part of CSX-050 |
 
@@ -110,6 +110,37 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-080: XNA's exception types, from the exception native actually threw
+
+Result and category cannot name the exception an XNA call throws: `GamerPrivilegeException`,
+`GuideAlreadyVisibleException` and `InvalidOperationException` are all `INVALID_STATE`;
+`ArgumentOutOfRangeException` is `INVALID_ARGUMENT` like its base. Samples catch exactly these:
+`NetworkException` 10, `GamerPrivilegeException` 10, `NoMicrophoneConnectedException` 6,
+`NoAudioHardwareException` 4, `ContentLoadException` 2, `InstancePlayLimitException` 1 (grep over
+the upstream samples).
+
+CNA `e9dd5d879` (CBIND-132, ABI 0.37.0): the exception barrier notes the dynamic type of the
+exception it translates -- demangled, `::` read as `.`, which is the .NET name because CNA's C++
+namespaces are the .NET ones -- and an argument exception's `ParamName`; four count/copy routes
+read them back. cna-cs admits 0.37.0 (retires 0.36.0; package acceptance refused a stale 0.36.0
+library left in its native directory, by name), `CnaException` gains `CanonicalExceptionType` and
+`CanonicalParamName`, CNA.Interop builds the `System` ones, and CNA.XnaCompat's `XnaExceptions`
+maps the XNA ones. The CNA layer keeps throwing `CnaException` -- its contract -- and the facade
+re-raises where it owns the call: GamerServices/Guide/Avatar/Net (`GamerServicesInterop.Check`),
+CNA.PhoneCompat (sensor failures with their error id), `AudioEngine`/`WaveBank`/`SoundBank`,
+`SoundEffect.CreateInstance`/`Play`, `SoundEffectInstance.Play`, `Microphone.Start`,
+`MediaPlayer.Play`. A global hook was rejected: it would change the CNA layer's exceptions for any
+process that also loads the facade.
+
+Tests: `Guide_RefusesWithXnasOwnArgumentExceptions` (`ArgumentOutOfRangeException` `focusButton`,
+`ArgumentException` `title` -- before, a bare `ArgumentException` without a parameter);
+`ResourceIntegrationTests` asserts a misaligned dynamic buffer's `System.ArgumentException`/`buffer`
+through the CNA layer. Results: framework 631/631, XnaCompat 272/272, integration 206/206,
+GamerServices 24/24, abi-verify 1409 prototypes 0 mismatches, all api-compat profiles 0, package
+acceptance passed. Not yet: the other facade calls (graphics, input, storage...) still surface
+`CnaException`; the audio boundaries are not provoked by a test (no way to exhaust instances or
+lose audio hardware here).
 
 ### 2026-10-01 -- CSX-081: the default GraphicsProfile comes from the project's XnaProfile
 

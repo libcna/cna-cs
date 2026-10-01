@@ -102,7 +102,7 @@ public sealed class Microphone
         }
     }
 
-    public void Start() => _microphone.Start();
+    public void Start() => XnaExceptions.Guard(_microphone.Start);
 
     public void Stop() => _microphone.Stop();
 

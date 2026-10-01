@@ -18,7 +18,7 @@ public class AudioEngine : IDisposable
     public AudioEngine(string settingsFile, TimeSpan lookAheadTime, string rendererId)
     {
         string fullPath = ValidateSettingsFile(settingsFile);
-        _engine = new CNA.Audio.AudioEngine(fullPath, lookAheadTime, rendererId);
+        _engine = XnaExceptions.Guard(() => new CNA.Audio.AudioEngine(fullPath, lookAheadTime, rendererId));
     }
 
     ~AudioEngine()

@@ -104,7 +104,7 @@ public class SoundEffectInstance : IDisposable
     public virtual void Play()
     {
         ThrowIfDisposed();
-        _inner.Play();
+        XnaExceptions.Guard(_inner.Play);
     }
 
     public void Pause()
