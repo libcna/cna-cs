@@ -176,6 +176,10 @@ internal static class BuiltinReaders
             "Microsoft.Xna.Framework.Content.TextureReader" => new AbstractTextureContentReader(),
             "Microsoft.Xna.Framework.Content.EffectReader" => new EffectContentReader(),
             "Microsoft.Xna.Framework.Content.BasicEffectReader" => new BasicEffectContentReader(),
+            "Microsoft.Xna.Framework.Content.SkinnedEffectReader" => new SkinnedEffectContentReader(),
+            "Microsoft.Xna.Framework.Content.AlphaTestEffectReader" => new AlphaTestEffectContentReader(),
+            "Microsoft.Xna.Framework.Content.DualTextureEffectReader" => new DualTextureEffectContentReader(),
+            "Microsoft.Xna.Framework.Content.EnvironmentMapEffectReader" => new EnvironmentMapEffectContentReader(),
             "Microsoft.Xna.Framework.Content.EffectMaterialReader" => new EffectMaterialContentReader(),
             _ => BuiltinGenericReaders.TryCreate(serializedName),
         };

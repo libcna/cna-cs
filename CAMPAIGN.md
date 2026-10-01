@@ -110,6 +110,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-089 | A `Model` whose tag is of the game's own type loads through the game's reader | done |
 | CSX-090 | `base.Update`/`base.Draw` update and draw the components at the call, once per frame | done |
 | CSX-091 | `Color.Transparent` is XNA 4.0's transparent black | done |
+| CSX-092 | The managed model path reads every stock effect XNA writes into a model | done |
 
 ### P9 -- portability
 
@@ -119,6 +120,20 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-092: the managed model path reads the skinned and other stock effects
+
+cna-cs-samples SkinningSample (CSSAMPLE-054) failed to load `dude`: "Could not find
+ContentTypeReader Type 'Microsoft.Xna.Framework.Content.SkinnedEffectReader'". The model's tag is
+the game's own `SkinningData`, so since CSX-089 it loads through the facade's `ContentReader`
+protocol, whose table had `BasicEffectReader` but none of the other stock effect readers XNA's
+pipeline writes into a model. Added `SkinnedEffectReader`, `AlphaTestEffectReader`,
+`DualTextureEffectReader` and `EnvironmentMapEffectReader`, each in the field order of its XNA 4.0
+reader IL (monodis of Microsoft.Xna.Framework.Graphics.dll). Five corpus assets name
+`SkinnedEffectReader` (the dude models, `DudeWalk`); CNA.Framework's own reader note said none did,
+and now says where they go. `CompatStockEffectReaderTests` writes all four with distinct values per
+field (fails without the change on the first reader). SkinningSample now runs and animates; its
+7.78% from the C++ port is the animation phase. Integration 218/218.
 
 ### 2026-10-01 -- CSX-071: every row on the Android emulator
 

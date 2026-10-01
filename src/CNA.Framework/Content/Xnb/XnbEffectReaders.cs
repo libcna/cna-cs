@@ -69,9 +69,10 @@ internal sealed class XnbDualTextureEffectData : XnbEffectData
 /// <c>EnvironmentMapEffectReader</c> and 2 name <c>DualTextureEffectReader</c>.
 ///
 /// They are here rather than in a table of every reader XNA declares, because a reader nothing
-/// reaches is untestable and an untested reader over a byte format is a guess. <c>SkinnedEffect</c>
-/// and <c>AlphaTestEffect</c> have readers in XNA and no asset in any corpus on this machine names
-/// them, so they are deliberately absent.
+/// reaches is untestable and an untested reader over a byte format is a guess. No asset names
+/// <c>AlphaTestEffectReader</c>. The five that name <c>SkinnedEffectReader</c> are skinned models
+/// whose tag is a game's own animation data, which only the XNA facade's <c>ContentReader</c>
+/// protocol can construct, so that path reads them (cna-cs CSX-092) and this one does not.
 /// </summary>
 internal static class XnbEffectReaders
 {

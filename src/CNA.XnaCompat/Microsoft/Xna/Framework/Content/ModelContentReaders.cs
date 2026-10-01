@@ -155,6 +155,85 @@ internal sealed class BasicEffectContentReader : ContentTypeReader<BasicEffect>
     }
 }
 
+/// <summary>
+/// XNA's <c>SkinnedEffectReader</c>: the stock effect a skinned model's mesh parts carry
+/// (cna-cs CSX-092). The field order is the reader's own, read from the XNA 4.0 IL. Constructed
+/// rather than cloned, for the reason <see cref="BasicEffectContentReader"/> gives.
+/// </summary>
+internal sealed class SkinnedEffectContentReader : ContentTypeReader<SkinnedEffect>
+{
+    protected internal override SkinnedEffect Read(ContentReader input, SkinnedEffect existingInstance)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var effect = new SkinnedEffect(GraphicsContentHelper.GraphicsDeviceFromContentReader(input));
+        effect.Texture = input.ReadExternalReference<Texture>() as Texture2D;
+        effect.WeightsPerVertex = input.ReadInt32();
+        effect.DiffuseColor = input.ReadVector3();
+        effect.EmissiveColor = input.ReadVector3();
+        effect.SpecularColor = input.ReadVector3();
+        effect.SpecularPower = input.ReadSingle();
+        effect.Alpha = input.ReadSingle();
+        return effect;
+    }
+}
+
+/// <summary>XNA's <c>AlphaTestEffectReader</c>, in the reader's field order (CSX-092).</summary>
+internal sealed class AlphaTestEffectContentReader : ContentTypeReader<AlphaTestEffect>
+{
+    protected internal override AlphaTestEffect Read(ContentReader input, AlphaTestEffect existingInstance)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var effect = new AlphaTestEffect(GraphicsContentHelper.GraphicsDeviceFromContentReader(input));
+        effect.Texture = input.ReadExternalReference<Texture>() as Texture2D;
+        effect.AlphaFunction = (CompareFunction)input.ReadInt32();
+        effect.ReferenceAlpha = input.ReadInt32();
+        effect.DiffuseColor = input.ReadVector3();
+        effect.Alpha = input.ReadSingle();
+        effect.VertexColorEnabled = input.ReadBoolean();
+        return effect;
+    }
+}
+
+/// <summary>XNA's <c>DualTextureEffectReader</c>, in the reader's field order (CSX-092).</summary>
+internal sealed class DualTextureEffectContentReader : ContentTypeReader<DualTextureEffect>
+{
+    protected internal override DualTextureEffect Read(ContentReader input, DualTextureEffect existingInstance)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var effect = new DualTextureEffect(GraphicsContentHelper.GraphicsDeviceFromContentReader(input));
+        effect.Texture = input.ReadExternalReference<Texture>() as Texture2D;
+        effect.Texture2 = input.ReadExternalReference<Texture>() as Texture2D;
+        effect.DiffuseColor = input.ReadVector3();
+        effect.Alpha = input.ReadSingle();
+        effect.VertexColorEnabled = input.ReadBoolean();
+        return effect;
+    }
+}
+
+/// <summary>XNA's <c>EnvironmentMapEffectReader</c>, in the reader's field order, which is not the
+/// type's property order -- <c>Alpha</c> comes last (CSX-092).</summary>
+internal sealed class EnvironmentMapEffectContentReader : ContentTypeReader<EnvironmentMapEffect>
+{
+    protected internal override EnvironmentMapEffect Read(ContentReader input, EnvironmentMapEffect existingInstance)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var effect = new EnvironmentMapEffect(GraphicsContentHelper.GraphicsDeviceFromContentReader(input));
+        effect.Texture = input.ReadExternalReference<Texture>() as Texture2D;
+        effect.EnvironmentMap = input.ReadExternalReference<Texture>() as TextureCube;
+        effect.EnvironmentMapAmount = input.ReadSingle();
+        effect.EnvironmentMapSpecular = input.ReadVector3();
+        effect.FresnelFactor = input.ReadSingle();
+        effect.DiffuseColor = input.ReadVector3();
+        effect.EmissiveColor = input.ReadVector3();
+        effect.Alpha = input.ReadSingle();
+        return effect;
+    }
+}
+
 /// <summary>See <see cref="VertexDeclarationContentReader"/> for what this path is for.</summary>
 internal sealed class ModelContentReader : ContentTypeReader<Model>
 {
