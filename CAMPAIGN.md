@@ -92,7 +92,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-070 | Toolchain check (`~/Android/Sdk`, NDK, .NET android workload), per-ABI CNA build | done: NDK 29 builds CNA's C API for x86_64 (CBIND-136); `eng/android` runs an unchanged XNA `Main` on SDL's thread; AimingSample draws, takes touch and Back, survives pause/resume and relaunch on the emulator |
-| CSX-071 | Android host + sample, emulator run: lifecycle, graphics recreation, touch, content, audio | todo |
+| CSX-071 | Android host + sample, emulator run: lifecycle, graphics recreation, touch, content, audio | done on the emulator: all 34 rows build, run and end on one Back tap (cna-cs-samples `scripts/android-requalify.sh`); pause/resume, relaunch, touch; audio not heard (`-no-audio`), no physical device |
 
 ### P5b -- behavioural gaps found on the way
 
@@ -117,6 +117,36 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-071: every row on the Android emulator
+
+cna-cs-samples `scripts/android-requalify.sh` builds each manifest row as an app, runs it on the
+emulator (x86_64, read-only and wiped per boot, `swiftshader_indirect`), taps Back, and measures the
+game's frame against the desktop capture. All 34 rows pass: built, ran without a managed exception
+or native crash, drew, and ended on one Back tap. The table is
+`/rv/tmp/cs-samples/android-requal-20261001/android-requalification.md`; the frame differences
+(4-28% for most) are the 2.25x scale and the status bar drawn over a windowed game, and are
+measurements, not verdicts.
+
+What the corpus needed, each fixed where it lives:
+
+* `eng/android`: an APK keeps the title's files as assets, which CNA's native loaders read but
+  `System.IO` cannot, so XNA's managed readers, `TitleContainer` and a game's own file reads found
+  nothing (ContentManifestExtensions). `CnaGameApplication` copies the title asset directories
+  (`Content` by default) into the title directory once per installed APK, on SDL's thread, and makes
+  it the working directory as Windows does for a game it starts (XNA's `AudioEngine` resolves its
+  settings file against it).
+* CSX-087: managed content paths resolve against the title directory (ColorReplacement's model).
+* CNA CBIND-138: a portrait game runs in portrait (SnowShovel, AimingSample's declared `Portrait`).
+* CNA CBIND-139: every `BasicEffect` model drew as scattered triangles on the emulator, whose GLES
+  encoder answers vertex attribute queries from stale state; EasyGL rebases the indices on the CPU
+  there.
+* Test harness: `-wipe-data` (the AVD's userdata left less than Android's install threshold), the
+  app uninstalled after each row, and immersive mode pre-confirmed -- its one-time explanation takes
+  the Back key from a full-screen phone game.
+
+Not covered: audio (the emulator runs `-no-audio`), arm64-v8a, a physical device, and a GL context
+actually lost while paused (SDL kept it here).
 
 ### 2026-10-01 -- CSX-089: a Model tagged with the game's own type
 
