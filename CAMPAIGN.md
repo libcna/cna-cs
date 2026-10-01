@@ -104,6 +104,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-083 | Device state cache coherent with what native SpriteBatch applies; BlendFactor/MultiSampleMask/ReferenceStencil dirty the state as XNA's setters do | done |
 | CSX-084 | SIGTERM/SIGINT during `Run` end the game through its own exit instead of the runtime's `exit()` racing the game thread | done |
 | CSX-085 | A `CNA_Handle` is held as the 64-bit value it is, not narrowed to pointer width (WebAssembly, any 32-bit target) | done |
+| CSX-086 | `Game` lifecycle in XNA's order: `BeginRun` after Initialize/LoadContent, `EndRun` after `Exiting`, `Disposed` raised | done |
 
 ### P9 -- portability
 
@@ -113,6 +114,23 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-086: the game lifecycle arrives in XNA's order, Disposed included
+
+Found by the browser probe's log, true on the desktop as well. The facade's `Run` called `BeginRun`
+itself before handing over to native, so it ran before `Initialize` and `LoadContent`; XNA's
+`RunGame` calls it after them, before the first `Update`. `EndRun` sat in a `finally`, so it also ran
+when a callback threw, which XNA's does not. And no game's `Disposed` ever fired: native raises it
+inside `cna_game_destroy`, after the game has released the event bridges that would deliver it.
+
+Fix: the CNA layer hooks native's `begin_run`/`end_run` (`OnBeginRun`/`OnEndRun`, new `BeginRun` and
+`EndRun` virtuals) and the facade's backend forwards them, so they arrive where native's own run puts
+them -- for `Run` and for any other run alike. `Dispose(true)` raises `Disposed` itself, last, as
+XNA's does.
+
+Tests: `CompatGame_RunDeliversXnasLifecycleOrder` (`Initialize LoadContent BeginRun Update Exiting
+EndRun Disposed`; with the old shape `BeginRun Initialize ...`), `CompatGame_DisposeRaisesDisposedOnce`
+(0 before). Integration 213/213.
 
 ### 2026-10-01 -- CSX-060: a C# XNA game draws in a browser
 

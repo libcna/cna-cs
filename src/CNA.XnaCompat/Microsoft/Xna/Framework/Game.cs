@@ -106,18 +106,9 @@ public class Game : IDisposable
 
     public void ResetElapsedTime() => _backend.ResetElapsedTime();
 
-    public void Run()
-    {
-        BeginRun();
-        try
-        {
-            _backend.Run();
-        }
-        finally
-        {
-            EndRun();
-        }
-    }
+    /// <summary>BeginRun and EndRun arrive from the run itself, where XNA calls them: after
+    /// Initialize and LoadContent, and after the last frame.</summary>
+    public void Run() => _backend.Run();
 
     public void RunOneFrame() => _backend.RunOneFrame();
 
@@ -318,6 +309,10 @@ public class Game : IDisposable
             (_compatGraphicsDevice ??= new Graphics.GraphicsDevice(NativeHandle)).Framework;
 
         protected override void Initialize() => _owner.OnInitializeFromBackend();
+
+        protected override void BeginRun() => _owner.BeginRun();
+
+        protected override void EndRun() => _owner.EndRun();
 
         // Through the guard, not straight to the override: a game whose Initialize called
         // base.Initialize() has already loaded, and XNA loads content once.

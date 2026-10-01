@@ -169,16 +169,16 @@ public class CnaAbiTests
     public void Imports_TakeNoFunctionPointerParameter()
     {
         const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
-        string[] offenders = typeof(CnaHandle).Assembly.GetTypes()
+        MethodInfo[] imports = typeof(CnaHandle).Assembly.GetTypes()
             .SelectMany(type => type.GetMethods(all | BindingFlags.DeclaredOnly))
             .Where(method => method.Attributes.HasFlag(MethodAttributes.PinvokeImpl))
+            .ToArray();
+        string[] offenders = imports
             .Where(method => method.GetParameters().Any(parameter => parameter.ParameterType.IsFunctionPointer))
             .Select(method => method.Name)
             .ToArray();
 
-        Assert.NotEmpty(typeof(CnaHandle).Assembly.GetTypes()
-            .SelectMany(type => type.GetMethods(all | BindingFlags.DeclaredOnly))
-            .Where(method => method.Attributes.HasFlag(MethodAttributes.PinvokeImpl)));
+        Assert.NotEmpty(imports);
         Assert.Empty(offenders);
     }
 }

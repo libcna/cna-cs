@@ -505,6 +505,80 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         });
     }
 
+    private sealed class LifecycleOrderGame : XnaGame
+    {
+        public LifecycleOrderGame()
+        {
+            _ = new GraphicsDeviceManager(this);
+            Exiting += (_, _) => Order.Add("Exiting");
+            Disposed += (_, _) => Order.Add("Disposed");
+        }
+
+        public List<string> Order { get; } = [];
+
+        protected override void Initialize()
+        {
+            Order.Add("Initialize");
+            base.Initialize();
+        }
+
+        protected override void LoadContent() => Order.Add("LoadContent");
+
+        protected override void BeginRun() => Order.Add("BeginRun");
+
+        protected override void Update(GameTime gameTime)
+        {
+            Order.Add("Update");
+            Exit();
+        }
+
+        protected override void EndRun() => Order.Add("EndRun");
+    }
+
+    /// <summary>
+    /// <c>Run</c> delivers XNA's order (its <c>RunGame</c>): Initialize, which loads content, then
+    /// BeginRun, then the first Update; EndRun after Exiting. The facade used to call BeginRun
+    /// itself before handing over to native, so it ran before Initialize and LoadContent -- a game
+    /// that sets something up in LoadContent and starts using it in BeginRun found it missing.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_RunDeliversXnasLifecycleOrder()
+    {
+        var game = new LifecycleOrderGame();
+        using (game)
+        {
+            game.Run();
+        }
+
+        output.WriteLine(string.Join(" ", game.Order));
+        Assert.Equal(
+            ["Initialize", "LoadContent", "BeginRun", "Update", "Exiting", "EndRun", "Disposed"],
+            game.Order);
+    }
+
+    /// <summary>
+    /// XNA's <c>Dispose(true)</c> raises <c>Disposed</c>, once. No game's did: the native event that
+    /// was meant to carry it is raised inside <c>cna_game_destroy</c>, after the game has released
+    /// the bridges that would have delivered it.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_DisposeRaisesDisposedOnce()
+    {
+        int disposed = 0;
+        var game = new CompatProbe(_ => { });
+        game.Disposed += (sender, _) =>
+        {
+            Assert.Same(game, sender);
+            disposed++;
+        };
+
+        game.RunOneFrame();
+        game.Dispose();
+        game.Dispose();
+
+        Assert.Equal(1, disposed);
+    }
+
     /// <summary>
     /// A SpriteBatch's states become the device's, where XNA's <c>SetRenderState</c> assigns them
     /// through the device properties: at End for a deferred batch -- an empty one included -- and at

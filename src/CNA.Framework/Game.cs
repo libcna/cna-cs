@@ -151,6 +151,8 @@ public class Game : IDisposable
         var hooks = new CnaGameFrameHooks
         {
             Initialize = &OnInitialize,
+            BeginRun = &OnBeginRun,
+            EndRun = &OnEndRun,
             Context = context,
         };
 
@@ -644,6 +646,19 @@ public class Game : IDisposable
     {
     }
 
+    /// <summary>Called once a run has initialized the game and loaded its content, before its first
+    /// update -- XNA's order. Native delivers it, so it holds for <see cref="Run"/> and for a
+    /// browser's run alike.</summary>
+    protected virtual void BeginRun()
+    {
+    }
+
+    /// <summary>Called after a run's last frame, once <c>Exiting</c> has been raised; not when the
+    /// run ends because a callback threw, as in XNA.</summary>
+    protected virtual void EndRun()
+    {
+    }
+
     protected virtual void LoadContent()
     {
     }
@@ -883,6 +898,16 @@ public class Game : IDisposable
         {
             _selfHandle.Free();
         }
+
+        // XNA's Dispose(true) raises Disposed itself, last. Native raises its own during
+        // cna_game_destroy, but this game's event bridges were released before that call -- they
+        // must be, since they name the game -- so the native one never reached a handler: no game's
+        // Disposed ever fired. Raised here once teardown is complete, so a handler that throws
+        // cannot leave the native game behind.
+        if (disposing)
+        {
+            _disposedEvent?.Invoke(this, EventArgs.Empty);
+        }
     }
 
     private static bool TryResolve(nint context, out Game game)
@@ -949,6 +974,44 @@ public class Game : IDisposable
         try
         {
             game.RunInitializeOnce();
+            return CnaResult.Success;
+        }
+        catch (Exception ex)
+        {
+            return game.ReportCallbackFailure(outError, ex);
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe CnaResult OnBeginRun(CnaHandle nativeGame, CnaGameTime* gameTime, nint context, CnaCallbackError* outError)
+    {
+        if (!TryResolve(context, out Game game))
+        {
+            return CnaResult.Success;
+        }
+
+        try
+        {
+            game.BeginRun();
+            return CnaResult.Success;
+        }
+        catch (Exception ex)
+        {
+            return game.ReportCallbackFailure(outError, ex);
+        }
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static unsafe CnaResult OnEndRun(CnaHandle nativeGame, CnaGameTime* gameTime, nint context, CnaCallbackError* outError)
+    {
+        if (!TryResolve(context, out Game game))
+        {
+            return CnaResult.Success;
+        }
+
+        try
+        {
+            game.EndRun();
             return CnaResult.Success;
         }
         catch (Exception ex)

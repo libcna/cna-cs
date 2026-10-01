@@ -267,7 +267,7 @@ public class Texture2D : Texture
         }
     }
 
-    /// <summary>See <see cref="GetDataInto{T}(nint, SurfaceFormat, int, Rectangle?, T[], int,
+    /// <summary>See <see cref="GetDataInto{T}(ulong, SurfaceFormat, int, Rectangle?, T[], int,
     /// int)"/>.</summary>
     internal static unsafe void SetDataFrom<T>(
         ulong handleValue, SurfaceFormat format, int level, Rectangle? rect,
