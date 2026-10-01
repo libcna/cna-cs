@@ -27,6 +27,10 @@ public class PhoneApplicationService
     /// <summary>Transient state the application keeps across a deactivation.</summary>
     public IDictionary<string, object> State { get; } = new Dictionary<string, object>();
 
+    /// <summary>How the application started: <see cref="StartupMode.Launch"/> here, since nothing
+    /// tombstones a desktop process for a later <see cref="StartupMode.Activate"/>.</summary>
+    public StartupMode StartupMode => StartupMode.Launch;
+
     public event EventHandler<LaunchingEventArgs>? Launching;
 
     public event EventHandler<ActivatedEventArgs>? Activated;
@@ -49,6 +53,16 @@ public class PhoneApplicationService
 }
 
 /// <summary>Arguments of <see cref="PhoneApplicationService.Launching"/>.</summary>
+/// <summary>How a Windows Phone application started: fresh, or returning from a deactivation.</summary>
+public enum StartupMode
+{
+    /// <summary>Started fresh.</summary>
+    Launch,
+
+    /// <summary>Returned to after a deactivation.</summary>
+    Activate,
+}
+
 public sealed class LaunchingEventArgs : EventArgs
 {
 }

@@ -121,6 +121,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-100 | A game's own worker thread loads content, creates resources and moves their data, as XNA allowed | done |
 | CSX-101 | ABI 0.39.0: the rest of a loading thread's calls run on the game thread (CNA CBIND-141) | done |
 | CSX-102 | A content reader is found by its assembly's simple name, as .NET Framework bound an unsigned assembly | done |
+| CSX-103 | `PhoneApplicationService.StartupMode`: a desktop process is always launched | done |
 
 ### P9 -- portability
 
@@ -130,6 +131,15 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-103: Microsoft's XNA Solitaire
+
+`microsoft/solitaire-wp` (XNASolitaire, the Windows Phone 7 game Microsoft published with XNA Game
+Studio 4.0) did not compile: it asks `PhoneApplicationService.Current.StartupMode` whether to restore
+a tombstoned game. CNA.PhoneCompat now has the `StartupMode` enum and the property, which answers
+`Launch` -- nothing tombstones a desktop process. `PhoneApplicationServiceTests.StartupMode_IsLaunch`.
+With its 56 textures built by XNA's BuildContent (WindowsPhone/Reach) the game deals a Klondike
+layout and a tap on the stock turns a card (mouse as finger, CSX-098). cna-cs-samples `games/Solitaire`.
 
 ### 2026-10-01 -- CSX-102: a game's own content reader in a browser
 

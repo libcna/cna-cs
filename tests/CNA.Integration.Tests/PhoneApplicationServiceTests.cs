@@ -90,4 +90,12 @@ public class PhoneApplicationServiceTests
             PhoneApplicationService.Current.State.Remove("key");
         }
     }
+
+    /// <summary>XNASolitaire restores a saved game only when its StartupMode says Activate; a
+    /// desktop process is always launched fresh.</summary>
+    [NativeFact]
+    public void StartupMode_IsLaunch()
+    {
+        Assert.Equal(StartupMode.Launch, PhoneApplicationService.Current.StartupMode);
+    }
 }
