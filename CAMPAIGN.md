@@ -85,7 +85,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-060 | Experiment: .NET wasm + `wasm-tools` workload + static CNA via `NativeFileReference` | done: .NET 11 (emscripten 6.0.3, libc++ 21) links CNA's WebGL2 archives; a C# XNA game draws in headless Chromium. .NET 10/8 pin emscripten 3.1.56/3.1.34, whose libc++ 17 has no `std::jthread` |
 | CSX-061 | Frame-stepped game loop on browser event loop | done: `Game.Run` on the browser runs CNA's host-driven run (ABI 0.38.0) from `requestAnimationFrame`; an unchanged XNA `Main` (`using (game) game.Run();`) runs to `Disposed` in Chromium |
 | CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | done in headless Chromium: AimingSample unchanged, 0 px from its C++ port; keys, mouse, its Escape exit and a reload driven. Desktop Chrome with a GPU not run here |
-| CSX-063 | Browser sample corpus | todo |
+| CSX-063 | Browser sample corpus | done: all 30 checked-in rows build and run in headless Chromium (cna-cs-samples `scripts/browser-requalify.sh`); 12 pixel-identical to their desktop capture, the rest differ by animation or seeded randomness |
 
 ### P8 -- Android
 
@@ -114,6 +114,24 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-063: every checked-in sample in a browser
+
+cna-cs-samples `scripts/browser-requalify.sh` runs each row through `browser-sample.sh` and measures
+its canvas against the row's desktop C# capture. All 30 build and run in headless Chromium without
+a page error; 12 are pixel-identical to the desktop (AimingSample, ContentManifestExtensions,
+GesturesSample, InputReporter, InputSequence, LocalizationSample, Orientation, PathDrawing,
+Pathfinding, SafeArea, TransformedCollisionTest, WaypointSample) and the rest differ where they
+animate or seed randomness. The table is in cna-cs-samples `NEXT.md`.
+
+What the first pass found: `ContentManifestExtensions` failed with `Arg_NoDefCTor` on
+`ListReader<string>` -- publishing trims, and the content manager builds readers by reflection
+from the names an XNB declares, so `CNA.Browser.targets` now roots the CNA.NET assemblies and the
+sample glue roots the game's and its libraries'. Pathfinding and SpriteSheet keep types in library
+projects, which the glue now references as their own builds (content names readers by assembly).
+ShapeRendering drew nothing in the browser and, it turned out, in every Release capture since the
+migration: its `DebugShapeRenderer` is `[Conditional("DEBUG")]`, and the row is qualified in Debug;
+the capture scripts now honour a row's `CnaSampleConfiguration`.
 
 ### 2026-10-01 -- CSX-062: an unchanged XNA sample in Chromium
 

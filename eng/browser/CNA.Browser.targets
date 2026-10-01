@@ -22,6 +22,11 @@
 
   <ItemGroup>
     <NativeFileReference Include="$(CnaBrowserNativeArchive)" />
+    <!-- The content manager creates readers by reflection from the type names an XNB declares,
+         which the trimmer cannot see: an untrimmed CNA.NET keeps them constructible. (Turning
+         trimming off altogether leaves .NET 11's relinked runtime out of step with its CoreLib.)
+         A game whose content names its own readers roots its own assembly the same way. -->
+    <TrimmerRootAssembly Include="CNA.Interop;CNA.Framework;CNA.XnaCompat" />
     <StaticWebAssetFingerprintPattern Include="CnaBrowserScripts" Pattern="*.js" Expression="#[.{fingerprint}]!" />
   </ItemGroup>
 
