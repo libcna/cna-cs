@@ -74,6 +74,9 @@ public class Game : IDisposable
     /// <summary>See <see cref="ThrowIfDrivingFailed"/>.</summary>
     private Exception? _pendingCallbackException;
 
+    /// <summary>Set by a SIGTERM or SIGINT during <see cref="Run"/>; see <see cref="RegisterTerminationSignals"/>.</summary>
+    private volatile bool _terminationRequested;
+
     /// <summary>See <see cref="CallComponentHandlers"/>.</summary>
     private int _componentCallDepth;
 
@@ -503,9 +506,56 @@ public class Game : IDisposable
     public void Run()
     {
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
-        CnaResult result = Native.cna_game_run(_nativeHandle);
+        CnaResult result;
+        using (RegisterTerminationSignals())
+        {
+            result = Native.cna_game_run(_nativeHandle);
+        }
+
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
         ThrowIfDrivingFailed(result, "cna_game_run");
+    }
+
+    /// <summary>
+    /// Makes SIGTERM and SIGINT end the game the way closing its window does.
+    ///
+    /// A C++ CNA game gets this from SDL, which turns both signals into a quit event -- but SDL
+    /// installs its handlers only where none exists, and the .NET runtime always has one. Its
+    /// default calls <c>exit()</c> on a signal thread while the game thread is still inside GL and
+    /// X: libGLX's destructor then waits for the display lock the game thread holds, and when the X
+    /// server is gone too, that thread's own IO-error <c>exit()</c> waits for the first. A capture
+    /// of the Pathfinding sample hung exactly so. Here the handler only sets a flag; the game thread
+    /// asks native to exit at its next update, so <see cref="Run"/> returns and the process ends
+    /// through <c>Main</c>. A second signal before then is left to the runtime's default, so a game
+    /// that no longer updates can still be terminated.
+    /// </summary>
+    private IDisposable RegisterTerminationSignals()
+    {
+        _terminationRequested = false;
+        Action<PosixSignalContext> handler = context =>
+        {
+            if (_terminationRequested)
+            {
+                return;
+            }
+
+            _terminationRequested = true;
+            context.Cancel = true;
+        };
+        var term = PosixSignalRegistration.Create(PosixSignal.SIGTERM, handler);
+        var interrupt = PosixSignalRegistration.Create(PosixSignal.SIGINT, handler);
+        return new SignalRegistrations(term, interrupt);
+    }
+
+    private sealed class SignalRegistrations(params PosixSignalRegistration[] registrations) : IDisposable
+    {
+        public void Dispose()
+        {
+            foreach (PosixSignalRegistration registration in registrations)
+            {
+                registration.Dispose();
+            }
+        }
     }
 
     /// <summary>
@@ -968,6 +1018,11 @@ public class Game : IDisposable
         if (!TryResolve(context, out Game game) || gameTime is null)
         {
             return CnaResult.Success;
+        }
+
+        if (game._terminationRequested)
+        {
+            _ = Native.cna_game_request_exit(game._nativeHandle);
         }
 
         try

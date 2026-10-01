@@ -102,6 +102,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | done; samples' Directory.Build.targets import + per-sample XnaProfile is part of CSX-050 |
 | CSX-083 | Device state cache coherent with what native SpriteBatch applies; BlendFactor/MultiSampleMask/ReferenceStencil dirty the state as XNA's setters do | done |
+| CSX-084 | SIGTERM/SIGINT during `Run` end the game through its own exit instead of the runtime's `exit()` racing the game thread | done |
 
 ### P9 -- portability
 
@@ -111,6 +112,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-084: a terminated game exits through its own loop
+
+Requalifying the samples hung on Pathfinding, which has no exit key, so the capture script ends it
+with SIGTERM and then stops Xvfb. Native stacks: the runtime's SIGTERM default had called `exit()`
+on its signal thread, and libGLX's destructor waited there for the Xlib display lock; the game
+thread held that lock in `XSync`, hit the dead X server, and its IO-error `exit()` waited for the
+first. The same race is the crash `docs/native-behavior-blockers.md` recorded for the template.
+A C++ CNA game never meets it: SDL turns SIGINT/SIGTERM into a quit event, but installs its
+handlers only where none exists, and .NET always has one.
+
+Fix: `CNA.Game.Run` registers SIGTERM and SIGINT for its duration; the handler sets a flag and
+cancels the default, and the next update callback asks native to exit, so `Run` returns, `Exiting`
+is raised and the process ends through `Main`. A second signal before that falls through to the
+default, so a game that stopped updating can still be killed.
+
+Test: `Sigterm_EndsRunThroughTheGamesOwnExit` sends SIGTERM to its own process at frame 3 and
+asserts `Run` returned through `Exiting` well before the test's own give-up frame; with the fix
+reverted the test host crashes ("Test host process crashed"). Results: integration 211/211,
+framework 631/631, XnaCompat 272/272, GamerServices 24/24.
 
 ### 2026-10-01 -- CSX-083: the device's state cache follows native SpriteBatch
 

@@ -23,7 +23,7 @@ route-presence check cannot catch a row that is wrong about what a route does.
 | Deterministic input state | still open | header: only `*_reset_for_tests_ext` routes, no injection |
 | Readback / cube-face capability identities | still open | header: 19 capabilities, neither added |
 | Virtual call into a dying device | **probably resolved, not re-measured** | `GraphicsResource` now checks a device-lifetime token (`graphicsDeviceLifetime_`) before dispatching to the device; no sanitizer build was run in this pass |
-| `SIGTERM` shutdown | **not re-measured** | `scripts/Reproduce-SigtermShutdown.sh` runs the template, which is repaired after this pass |
+| `SIGTERM` shutdown | **avoided by the binding** (CSX-084) | `Run` registers SIGTERM/SIGINT and turns them into the game's own exit, as SDL does for a C++ game; the runtime's `exit()` on a signal thread no longer races the game thread. The native teardown-order defect behind the crash is not fixed and is not reached this way |
 | SpriteBatch invalid sort modes / non-finite values | **not re-measured** | |
 
 | Affected XNA API | Missing or defective native route | Observable CNA.NET behavior | Required upstream change | Safe managed fallback |
