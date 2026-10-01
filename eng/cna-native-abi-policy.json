@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": "cna-cs-native-abi/1",
-  "consumerAbi": "0.36.0",
+  "consumerAbi": "0.37.0",
   "versionSemantics": {
     "major": "For ABI 1.x and later, a change permits breaks only at a new major. ABI 0 is experimental and does not provide this guarantee between minors.",
     "minorBefore1": "A reviewed ABI generation that may be additive or incompatible; never accepted as a same-major range.",
@@ -25,10 +25,10 @@
   },
   "acceptedVersions": [
     {
-      "libraryAbi": "0.36.0",
+      "libraryAbi": "0.37.0",
       "classification": "exact",
       "accepted": true,
-      "evidence": "Consumer baseline at CNA next 402c1aaa9 (0.36.0, CBIND-130: cna_packet_reader_copy_data_ext, which LocalNetworkGamer.ReceiveData(PacketReader) needs to read a received packet into XNA's managed BinaryReader-based PacketReader). tools/coverage/baselinediff.py 0.35.0 (6e0de68e8) -> 0.36.0 (402c1aaa9): 1383 consumed exports, 0 absent, 0 changed prototype; 3202 -> 3203 exports with 1 added and 0 removed; 0 struct, scalar, integer-constant or string-constant differences; 0 breaking differences, so no allowlist entry was needed. The step is the one added route; no consumed route's header documentation changed. tools/abi-verify against the 0.36.0 headers re-run for the 1384 imports this generation is admitted with."
+      "evidence": "Consumer baseline at CNA next e9dd5d879 (0.37.0, CBIND-132: four routes naming the canonical exception type and parameter name behind a failure, which the XNA facade uses to throw XNA's own exception types). tools/coverage/baselinediff.py 0.36.0 (402c1aaa9) -> 0.37.0 (e9dd5d879): 1405 consumed exports, 0 absent, 0 changed prototype; 3203 -> 3207 exports, 4 added, 0 removed; 0 struct, scalar, integer-constant or string-constant differences; 0 breaking differences. No consumed route's header documentation changed; the exception barrier's change adds a record to a failure and changes no result or category."
     }
   ],
   "retiredVersions": [
@@ -66,16 +66,21 @@
       "libraryAbi": "0.35.0",
       "retiredBecause": "Superseded by 0.36.0. The binding now imports cna_packet_reader_copy_data_ext, which no 0.35.0 library exports; everything else this consumer imports is unchanged between them. The retired-0.35.0 fixture exports every imported route and is refused on the version rule alone.",
       "previousClassification": "exact"
+    },
+    {
+      "libraryAbi": "0.36.0",
+      "retiredBecause": "Superseded by 0.37.0. The binding now imports the four cna_error_*_last_exception_* routes, which no 0.36.0 library exports; everything else this consumer imports is unchanged between them. The retired-0.36.0 fixture exports every imported route and is refused on the version rule alone.",
+      "previousClassification": "exact"
     }
   ],
   "default": "reject",
   "fixtures": [
     {
-      "name": "exact-0.36.0",
+      "name": "exact-0.37.0",
       "expected": "accept"
     },
     {
-      "name": "exact-0.36.0-extra-symbol",
+      "name": "exact-0.37.0-extra-symbol",
       "expected": "accept"
     },
     {
@@ -87,11 +92,11 @@
       "expected": "reject"
     },
     {
-      "name": "retired-0.35.0",
+      "name": "retired-0.36.0",
       "expected": "reject"
     },
     {
-      "name": "unreviewed-0.37.0",
+      "name": "unreviewed-0.38.0",
       "expected": "reject"
     },
     {
@@ -107,7 +112,7 @@
       "expected": "reject"
     },
     {
-      "name": "structurally-incompatible-0.36.0",
+      "name": "structurally-incompatible-0.37.0",
       "expected": "reject"
     },
     {

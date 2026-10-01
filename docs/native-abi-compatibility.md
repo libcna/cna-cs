@@ -24,32 +24,44 @@ It cannot express CNA's documented experimental-0.x exception by itself.
 
 | CNA.NET consumer | Native library | CNA.NET result | Evidence |
 | --- | --- | --- | --- |
-| 0.36.0 | 0.36.0 | Accept | Consumer baseline at CNA `next` `402c1aaa9`. |
-| 0.36.0 | Any other 0.x | Reject | No audited matrix entry. |
-| 0.36.0 | Any 1.x+ | Reject | Different ABI major. |
+| 0.37.0 | 0.37.0 | Accept | Consumer baseline at CNA `next` `e9dd5d879`. |
+| 0.37.0 | Any other 0.x | Reject | No audited matrix entry. |
+| 0.37.0 | Any 1.x+ | Reject | Different ABI major. |
 
 One accepted entry is not a simplification of the policy; it is what the policy produces when the
-consumer moves. There is no `>= 0.36` rule and there never was a `>= 0.6` one.
+consumer moves. There is no `>= 0.37` rule and there never was a `>= 0.6` one.
 
-`402c1aaa9` is 0.36.0 as CNA first published it, so every 0.36.0 library carries what this
-binding needs from the 0.35.0 line too: CBIND-128 (a drawable component borrows the game's device
-from the callbacks the game drives), CBIND-129 (a component's initialize before its content) and
-CBIND-131 (exit-time teardown of a live game).
+`e9dd5d879` is 0.37.0 as CNA first published it, and carries everything this binding needs from
+the earlier lines: CBIND-128/129 (component callbacks), CBIND-130 (packet-reader copy), CBIND-131
+(exit-time teardown) and CBIND-132 (the canonical exception behind a failure).
 
 ### Retired entries
 
-0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0, 0.21.0 and 0.35.0 were accepted once. 0.6.0-0.8.0 were retired
+0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0, 0.21.0, 0.35.0 and 0.36.0 were accepted once. 0.6.0-0.8.0 were retired
 when this binding began importing routes they do not export; 0.19.0, 0.20.0 and 0.21.0 when the
 next reviewed generation superseded them; 0.35.0 when this binding began importing 0.36.0's
-`cna_packet_reader_copy_data_ext`. The retirements are enforced: `retired-0.8.0`,
-`retired-0.21.0` and `retired-0.35.0` are refused.
+`cna_packet_reader_copy_data_ext`, and 0.36.0 when it began importing 0.37.0's exception queries.
+The retirements are enforced: `retired-0.8.0`, `retired-0.21.0` and `retired-0.36.0` are refused.
 
 Each retired fixture exports every route this binding imports and passes every runtime shape probe,
-so the version rule alone refuses it. `retired-0.35.0` is the sharpest: a real 0.35.0 library lacks
-only the one new route, so a policy written as "whatever exports the names we call" would take any
-0.35.0 build that happened to carry it.
+so the version rule alone refuses it. `retired-0.36.0` is the sharpest: a real 0.36.0 library lacks
+only the four new routes, so a policy written as "whatever exports the names we call" would take
+any 0.36.0 build that happened to carry them. Package acceptance met exactly that case on
+2026-10-01: an installed 0.36.0 library left in the package's native directory was refused by name.
 
-### What the 0.36.0 admission measured
+### What the 0.37.0 admission measured
+
+0.36.0 (CNA `402c1aaa9`) to 0.37.0 (CNA `e9dd5d879`), 2026-10-01: four routes added, nothing else.
+
+| Measurement | Result |
+| --- | --- |
+| Consumed entry points | 1409: the 1405 of 0.36.0 plus the four `cna_error_*_last_exception_*` queries |
+| Consumed entry points absent / changed prototype | 0 / 0 |
+| Upstream exports | 3203 -> 3207, 0 removed; 0 struct, scalar, constant or string differences; the upstream allowlist holds no entries |
+| `tools/abi-verify` | 1137 native and 1137 managed layout/type values, 0 mismatches; 1409 of 1409 prototypes compiled; 23 callbacks; 604 constants; 12 of 12 negative controls rejected |
+| Native integration (Release, OPENGLES3 with compiled effects) | 206 of 206, GamerServices/Avatar/Net 24 of 24; package acceptance passed |
+
+### What the 0.36.0 admission measured (retired)
 
 0.35.0 (CNA `6e0de68e8`) to 0.36.0 (CNA `402c1aaa9`), 2026-10-01: one route added, nothing else.
 
@@ -122,7 +134,7 @@ An operation is compatible only when it preserves every contract an existing con
 - clarify documentation without changing ownership, error, threading, lifetime, or behavior.
 
 Additional exports are deliberately allowed by the loader. They cannot collide with or substitute
-for the 1405 names imported by this build.
+for the 1409 names imported by this build.
 
 ## Breaking operations
 
@@ -174,7 +186,7 @@ error, and lifetime rules are ABI contract just as much as its machine-level pro
 Before returning a library handle, the managed resolver now requires:
 
 1. readable `cna_get_abi_version` metadata and an exact reviewed matrix entry;
-2. every one of the 1405 `LibraryImport` entry points declared by `CNA.Interop.Native`;
+2. every one of the 1409 `LibraryImport` entry points declared by `CNA.Interop.Native`;
 3. a successful `cna_error_get_last_message_size` result/out-parameter signature canary;
 4. a successful guarded `cna_touch_capabilities_init` canary proving the 16-byte version-1 shape,
    canonical body, and write bounds.
@@ -195,16 +207,16 @@ a fresh managed process. The exact matrix is:
 
 | Fixture | Expected | Property proved |
 | --- | --- | --- |
-| `exact-0.36.0` | Accept | Exact expected ABI. |
-| `exact-0.36.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
+| `exact-0.37.0` | Accept | Exact expected ABI. |
+| `exact-0.37.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
 | `retired-0.8.0` | Reject | A generation retired because this consumer outgrew it. |
 | `retired-0.21.0` | Reject | A generation retired because a newer one superseded it -- being previously audited is not admission. It exports every required symbol and passes every shape probe, so the version rule alone refuses it. |
-| `retired-0.35.0` | Reject | The generation this admission retired, one below the accepted entry. |
-| `unreviewed-0.37.0` | Reject | Nor is being newer: the matrix is a point list, not a floor. |
+| `retired-0.36.0` | Reject | The generation this admission retired, one below the accepted entry. |
+| `unreviewed-0.38.0` | Reject | Nor is being newer: the matrix is a point list, not a floor. |
 | `missing-required-symbol` | Reject | Any missing managed import fails at load, not at first use. |
 | `changed-required-signature` | Reject | A testable core signature/out-parameter change fails its canary. |
 | `incompatible-major-1.0.0` | Reject | Major mismatch. |
-| `structurally-incompatible-0.36.0` | Reject | An accepted version cannot override guarded shape evidence. |
+| `structurally-incompatible-0.37.0` | Reject | An accepted version cannot override guarded shape evidence. |
 | `malformed-metadata-0.0.0` | Reject | An incomplete/unrecognized encoded generation. |
 | `unreadable-metadata` | Reject | Missing version export. |
 

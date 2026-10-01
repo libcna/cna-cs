@@ -103,6 +103,8 @@ static partial class InteropPrototypes
         ["cna_effect_pass_copy_name#1"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_effect_technique_copy_name#1"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_error_copy_last_message#0"] = "char*",   // text buffer: C char, which C# has no type for
+        ["cna_error_copy_last_exception_type_ext#0"] = "char*",   // text buffer: C char, which C# has no type for
+        ["cna_error_copy_last_exception_param_name_ext#0"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_game_launch_parameters_copy_key#2"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_game_launch_parameters_copy_value#2"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_game_subscribe#2"] = "void (*)(void*)",   // callback

@@ -11,16 +11,16 @@ namespace CNA.Interop;
 internal static class CnaNativeAbiPolicy
 {
     internal const string PolicyVersion = "cna-cs-native-abi/1";
-    internal const uint ConsumerVersion = (0u << 16) | (36u << 8) | 0u;
+    internal const uint ConsumerVersion = (0u << 16) | (37u << 8) | 0u;
 
     /// <summary>
     /// The reviewed matrix. It is a point list, never a range: CNA documents that an experimental
     /// 0.x minor may be incompatible, so being newer than an accepted entry proves nothing.
     ///
     /// Every entry it has ever held was retired when a newer reviewed generation replaced it; the
-    /// last was 0.35.0, retired when this consumer moved to 0.36.0 to import
-    /// <c>cna_packet_reader_copy_data_ext</c>, the route XNA's managed <c>PacketReader</c> receives
-    /// through. A point matrix that kept every generation it had ever accepted would stop being a
+    /// last was 0.36.0, retired when this consumer moved to 0.37.0 to import the four routes that
+    /// name the canonical exception behind a failure (before it, 0.35.0 gave way to 0.36.0's
+    /// packet-reader copy). A point matrix that kept every generation it had ever accepted would stop being a
     /// review and start being a range. See docs/native-abi-compatibility.md for the retired matrix
     /// and the evidence behind each entry.
     /// </summary>

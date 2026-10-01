@@ -42,6 +42,21 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_error_get_last_message_size(out ulong outBytes);
 
+    /// <summary>The canonical exception type behind the last failure on this thread (ABI 0.37.0,
+    /// CBIND-132); zero bytes when the C layer raised the failure itself.</summary>
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_error_get_last_exception_type_size_ext(out ulong outBytes);
+
+    [LibraryImport(LibraryName)]
+    internal static unsafe partial CnaResult cna_error_copy_last_exception_type_ext(byte* destination, ulong capacity, out ulong outBytes);
+
+    /// <summary>An argument exception's parameter name, for the same failure.</summary>
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_error_get_last_exception_param_name_size_ext(out ulong outBytes);
+
+    [LibraryImport(LibraryName)]
+    internal static unsafe partial CnaResult cna_error_copy_last_exception_param_name_ext(byte* destination, ulong capacity, out ulong outBytes);
+
     /// <summary>Matches <c>cna_error_copy_last_message</c> exactly (<c>core.h:175</c>) -- same
     /// correction as <see cref="cna_error_get_last_message_size"/>: returns <see cref="CnaResult"/>
     /// (<c>BufferTooSmall</c> when <paramref name="capacity"/> is insufficient) rather than a
