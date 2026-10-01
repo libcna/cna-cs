@@ -59,14 +59,18 @@ public class CompatibilityTests
     }
 
     [Fact]
-    public void Color_Transparent_IsWhiteWithZeroAlpha()
+    public void Color_Transparent_IsBlackWithZeroAlpha()
     {
+        // XNA 4.0's Color.Transparent is new Color(0u) (XNA IL). This test used to pin XNA 3.1's
+        // transparent white, which made DistortionSample displace its whole scene.
         var color = XnaColor.Transparent;
 
-        Assert.Equal(255, color.R);
-        Assert.Equal(255, color.G);
-        Assert.Equal(255, color.B);
+        Assert.Equal(0u, color.PackedValue);
+        Assert.Equal(0, color.R);
+        Assert.Equal(0, color.G);
+        Assert.Equal(0, color.B);
         Assert.Equal(0, color.A);
+        Assert.Equal((0, 0, 0, 0), (CNA.Color.Transparent.R, CNA.Color.Transparent.G, CNA.Color.Transparent.B, CNA.Color.Transparent.A));
     }
 
     [Fact]

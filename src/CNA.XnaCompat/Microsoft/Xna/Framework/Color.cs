@@ -160,8 +160,12 @@ public struct Color : IPackedVector<uint>, IEquatable<Color>
     private static uint PackBytes(int r, int g, int b, int a) =>
         (uint)(r | (g << 8) | (b << 16) | (a << 24));
 
-    /// <summary>Matches real XNA: white with zero alpha, not black with zero alpha.</summary>
-    public static Color Transparent => new(255, 255, 255, 0);
+    /// <summary>
+    /// Transparent black, packed value 0: XNA 4.0's getter is <c>new Color(0u)</c> (XNA IL).
+    /// Transparent white was XNA 3.1's, and as a clear color it is not "nothing" -- DistortionSample
+    /// clears its distortion map with it and treats any non-zero texel as a displacement.
+    /// </summary>
+    public static Color Transparent => new(0, 0, 0, 0);
 
     public static Color AliceBlue => new(240, 248, 255);
     public static Color AntiqueWhite => new(250, 235, 215);

@@ -105,10 +105,11 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-084 | SIGTERM/SIGINT during `Run` end the game through its own exit instead of the runtime's `exit()` racing the game thread | done |
 | CSX-085 | A `CNA_Handle` is held as the 64-bit value it is, not narrowed to pointer width (WebAssembly, any 32-bit target) | done |
 | CSX-086 | `Game` lifecycle in XNA's order: `BeginRun` after Initialize/LoadContent, `EndRun` after `Exiting`, `Disposed` raised | done |
-| CSX-087 | Managed content paths resolve against the title directory, as XNA's `ContentManager.OpenStream` does through `TitleContainer`, not the working directory | done for the managed loaders; CNA's native `ContentManager` still resolves a relative root against the working directory (open) |
+| CSX-087 | Managed content paths resolve against the title directory, as XNA's `ContentManager.OpenStream` does through `TitleContainer`, not the working directory | done; the native half is CNA CBIND-140 (9976f4909): SimpleAnimation runs from an unrelated directory |
 | CSX-088 | Components initialized, content included, inside `base.Initialize()` in XNA's order, once | done |
 | CSX-089 | A `Model` whose tag is of the game's own type loads through the game's reader | done |
 | CSX-090 | `base.Update`/`base.Draw` update and draw the components at the call, once per frame | done |
+| CSX-091 | `Color.Transparent` is XNA 4.0's transparent black | done |
 
 ### P9 -- portability
 
@@ -148,6 +149,16 @@ What the corpus needed, each fixed where it lives:
 
 Not covered: audio (the emulator runs `-no-audio`), arm64-v8a, a physical device, and a GL context
 actually lost while paused (SDL kept it here).
+
+### 2026-10-01 -- CSX-091: Color.Transparent is transparent black
+
+DistortionSample (CSSAMPLE-032) still smeared its scene after CSX-090. Its map view (B) showed the
+cause: cleared with `Color.Transparent`, the background was white here and black in the C++ port.
+The shader treats any non-zero texel as a displacement, so the whole scene moved by half a texture.
+XNA 4.0's getter is `new Color(0u)` (XNA IL) -- transparent white was XNA 3.1's -- and both
+CNA.Framework and the facade defined (255, 255, 255, 0), with a test pinning it and a comment
+claiming XNA. Corrected in both, the test now asserts packed value 0 for both types. DistortionSample:
+0 px from its C++ port. Unit 272 + 638, integration 217.
 
 ### 2026-10-01 -- CSX-090: components update and draw at base.Update and base.Draw
 
