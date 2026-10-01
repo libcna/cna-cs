@@ -55,7 +55,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-030 | Template builds/runs against migrated binding; fresh `dotnet new` generation verified (dev + package) without hidden absolute paths | todo |
+| CSX-030 | Template builds/runs against migrated binding; fresh `dotnet new` generation verified (dev + package) without hidden absolute paths | done: template ae6b906, cna-cs packaging (installed native dir); dev + package acceptance pass |
 | CSX-031 | Platform layout decision (desktop/browser/android projects) | todo |
 
 ### P5 -- XNA surface expansion
@@ -110,6 +110,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-030: template and package consumers
+
+`cna-cs-template` (`ae6b906`) against the migrated binding: the checked-in game draws 600 frames on
+OPENGLES3; `scripts/verify-template.sh --mode development` (fresh `dotnet new` consumer) builds and
+draws 60 frames. Its generated consumers had been built in `/tmp` and run on any `DISPLAY`; they now
+go to cna-cs `build-consumer/template-<mode>` (inside the template, `dotnet new` copied them into the
+next game: 24 duplicate-member errors) and run on CNA's private display runner.
+
+Packaging found a hidden absolute path: the native asset was the build tree's `libcna_c_api.so`,
+whose RUNPATH names `cna/.sdl-prebuilt-.../install/lib`, so a package consumer loaded SDL from this
+machine's CNA checkout. `CNA.Interop` now packs an installed `CNACApi` component directory
+(RUNPATH `$ORIGIN` + `libSDL3*.so.0`) and `Package-Acceptance.sh` refuses any other RUNPATH.
+`cmake --install ../cna/build-probe --component CNACApi --prefix build-consumer/cna-native-linux-x64`
+then `scripts/Package-Acceptance.sh --native-directory build-consumer/cna-native-linux-x64/lib`:
+passed (3 packages, template dev + package, isolated consumer 60/600 frames with no native env,
+missing/wrong-arch/wrong-ABI/missing-symbol/invalid-path/conflict/override diagnostics). `ldd` on
+the consumer's packaged library resolves SDL from its own `runtimes/linux-x64/native`.
+
+Not done here (CSX-031): a platform layout for browser/Android, which waits for those platforms.
 
 ### 2026-10-01 -- CSX-021/022/052, CBIND-129, CSX-082: historical blockers re-run
 

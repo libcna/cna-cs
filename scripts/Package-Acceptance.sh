@@ -5,14 +5,14 @@ script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
 template_root=${CNA_TEMPLATE_ROOT:-"$repo_root/../cna-cs-template"}
 dotnet_command=${DOTNET_COMMAND:-dotnet}
-native_library=${CNA_ACCEPTANCE_NATIVE_LIBRARY:-}
+native_directory=${CNA_ACCEPTANCE_NATIVE_DIRECTORY:-}
 package_version=${CNA_PACKAGE_VERSION:-0.1.0-local.1}
 output_root=
 
 while (($# > 0)); do
   case "$1" in
-    --native-library)
-      native_library=${2:?--native-library requires a path}
+    --native-directory)
+      native_directory=${2:?--native-directory requires a path}
       shift 2
       ;;
     --package-version)
@@ -34,8 +34,18 @@ if [[ "$(uname -s)" != Linux || "$(uname -m)" != x86_64 ]]; then
   echo "This native-package experiment is evidence-scoped to linux-x64; this host is $(uname -s)/$(uname -m)." >&2
   exit 2
 fi
-if [[ -z "$native_library" || ! -f "$native_library" ]]; then
-  echo "Pass --native-library with an explicitly selected ABI-matched linux-x64 CNA C API build." >&2
+# The installed CNACApi component, not a build tree: `cmake --install <tree> --component CNACApi
+# --prefix <dir>` and pass <dir>/lib. A build-tree library carries an absolute RUNPATH into that
+# tree, so a package made from it loads only on the machine that built it.
+if [[ -z "$native_directory" || ! -f "$native_directory/libcna_c_api.so" ]]; then
+  echo "Pass --native-directory with the lib directory of an installed, ABI-matched linux-x64 CNACApi component." >&2
+  exit 2
+fi
+native_directory=$(realpath "$native_directory")
+native_library="$native_directory/libcna_c_api.so"
+native_runpath=$(readelf -d "$native_library" | sed -n 's/.*(RUNPATH).*\[\(.*\)\]/\1/p')
+if [[ "$native_runpath" != '$ORIGIN' ]]; then
+  echo "The native library's RUNPATH is '$native_runpath', not \$ORIGIN; install the CNACApi component instead of packing a build tree." >&2
   exit 2
 fi
 if [[ ! -f "$template_root/.template.config/template.json" ]]; then
@@ -45,8 +55,10 @@ fi
 
 cleanup_output=0
 if [[ -z "$output_root" ]]; then
-  output_root=$(mktemp -d)
-  cleanup_output=1
+  # Never /tmp: this is the shared consumer-fixture directory, kept until the next run replaces it.
+  output_root="$repo_root/build-consumer/package-acceptance"
+  rm -rf "$output_root"
+  mkdir -p "$output_root"
 else
   output_root=$(realpath -m "$output_root")
   if [[ -e "$output_root" ]]; then
@@ -84,7 +96,7 @@ pack_project()
 }
 
 pack_project src/CNA.Interop/CNA.Interop.csproj \
-  -p:CnaNativeRid=linux-x64 -p:CnaNativeLibrary="$(realpath "$native_library")"
+  -p:CnaNativeRid=linux-x64 -p:CnaNativeDirectory="$native_directory"
 pack_project src/CNA.Framework/CNA.Framework.csproj
 pack_project src/CNA.XnaCompat/CNA.XnaCompat.csproj
 
@@ -106,10 +118,12 @@ for package_id in CNA.Interop CNA.Framework CNA.XnaCompat; do
 done
 
 interop_entries=$(unzip -Z1 "$feed_root/CNA.Interop.$package_version.nupkg")
-if ! grep -Fxq 'runtimes/linux-x64/native/libcna_c_api.so' <<<"$interop_entries"; then
-  echo "CNA.Interop package is missing the selected linux-x64 native asset." >&2
-  exit 1
-fi
+for required in runtimes/linux-x64/native/libcna_c_api.so runtimes/linux-x64/native/libSDL3.so.0; do
+  if ! grep -Fxq "$required" <<<"$interop_entries"; then
+    echo "CNA.Interop package is missing $required." >&2
+    exit 1
+  fi
+done
 
 DOTNET_COMMAND="$dotnet_command" CNA_CS_ROOT="$repo_root" \
   "$template_root/scripts/verify-template.sh" --mode development
@@ -192,7 +206,8 @@ if CNA_NATIVE_LIBRARY="$work_root/wrong-abi.so" CNA_NATIVE_DIR=/deliberately/ign
   exit 1
 fi
 grep -Fq 'implements C ABI 1.0.0' "$logs_root/wrong-abi.log"
-grep -Fq 'consumer ABI 0.21.0' "$logs_root/wrong-abi.log"
+consumer_abi=$(jq -r .consumerAbi "$repo_root/eng/cna-native-abi-policy.json")
+grep -Fq "consumer ABI $consumer_abi" "$logs_root/wrong-abi.log"
 grep -Fq 'explicit CNA_NATIVE_LIBRARY' "$logs_root/wrong-abi.log"
 
 if CNA_NATIVE_LIBRARY="$abi_compatibility_root/fixtures/missing-required-symbol.so" \
@@ -221,8 +236,11 @@ if env -u CNA_NATIVE_LIBRARY CNA_NATIVE_DIR="$conflict_dir" \
 fi
 grep -Fq 'Conflicting CNA native libraries were found' "$logs_root/conflict.log"
 
-valid_override="$work_root/selected-explicit-native.so"
-cp "$packaged_native" "$valid_override"
+# An explicit override is a whole native directory too: the library finds SDL beside itself.
+explicit_dir="$work_root/explicit-native"
+mkdir -p "$explicit_dir"
+cp "$(dirname "$packaged_native")"/* "$explicit_dir/"
+valid_override="$explicit_dir/libcna_c_api.so"
 CNA_NATIVE_LIBRARY="$valid_override" CNA_NATIVE_DIR=/deliberately/ignored \
   XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=offscreen \
   "$dotnet_command" "$consumer_dll" --frames 60 >"$logs_root/explicit-override.log" 2>&1
@@ -230,7 +248,7 @@ grep -Fq 'drew 60 frames' "$logs_root/explicit-override.log"
 
 jq -n \
   --arg version "$package_version" \
-  --arg nativeSource "$(realpath "$native_library")" \
+  --arg nativeSource "$native_directory" \
   --arg interop "CNA.Interop.$package_version.nupkg" \
   --arg framework "CNA.Framework.$package_version.nupkg" \
   --arg compat "CNA.XnaCompat.$package_version.nupkg" \
@@ -241,7 +259,7 @@ jq -n \
     packageVersion: $version,
     nativeSource: $nativeSource,
     packages: [$interop, $framework, $compat],
-    contents: ["managed DLLs", "XML documentation", "LICENSE", "NOTICE.md", "README.md", "portable PDB symbol packages", "runtimes/linux-x64/native/libcna_c_api.so"],
+    contents: ["managed DLLs", "XML documentation", "LICENSE", "NOTICE.md", "README.md", "portable PDB symbol packages", "runtimes/linux-x64/native/libcna_c_api.so", "runtimes/linux-x64/native/libSDL3*.so.0"],
     isolatedRestore: "passed",
     isolatedBuild: "passed",
     sourceOrSiblingPaths: "absent",
@@ -256,7 +274,7 @@ jq -n \
     conflictingLibrariesDiagnostic: "passed",
     explicitOverridePrecedence: "passed",
     nativeAbiPolicy: "cna-cs-native-abi/1",
-    nativeAbiCompatibilityFixtures: "4 accepted / 6 rejected",
+    nativeAbiCompatibilityFixtures: "2 accepted / 10 rejected",
     nativeAbiSelectedLibrary: "passed",
     published: false,
     supportedRidClaim: false

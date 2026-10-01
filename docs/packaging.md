@@ -24,16 +24,21 @@ On the measured Linux x64 host, this command completed the complete acceptance p
 publishing anything:
 
 ```bash
-DOTNET_COMMAND=/path/to/dotnet \
-  scripts/Package-Acceptance.sh \
-  --native-library /absolute/path/to/libcna_c_api.so \
-  --output /tmp/cna-package-acceptance
+# The native input is an INSTALLED CNA C API component, not a build tree:
+cmake --install ../cna/build-probe --component CNACApi \
+  --prefix build-consumer/cna-native-linux-x64
+scripts/Package-Acceptance.sh --native-directory build-consumer/cna-native-linux-x64/lib
 ```
 
-The native input is mandatory and explicit. The script refuses a non-Linux-x64 host, creates an
-isolated feed and package cache, performs a clean Release solution build, packs, inspects, installs,
-builds and runs a newly generated consumer, and writes `acceptance-report.json`. Omitting
-`--output` uses an automatically removed temporary directory. It never invokes `nuget push`.
+The native input is mandatory and explicit, and it is a directory: `libcna_c_api.so` with RUNPATH
+`$ORIGIN` plus the SDL libraries CNA builds. The script refuses a library whose RUNPATH is anything
+but `$ORIGIN` -- a build-tree library names that tree, so a package made from it loaded only on the
+machine that built it, which the earlier single-file input did. It refuses a non-Linux-x64 host,
+creates an isolated feed and package cache, performs a clean Release solution build, packs,
+inspects, installs, builds and runs a newly generated consumer, and writes
+`acceptance-report.json`. Omitting `--output` writes to `build-consumer/package-acceptance`
+(replaced on the next run; never `/tmp`). It never invokes `nuget push`. FFmpeg, curl and opus stay
+system dependencies of this native configuration, as CNA's `docs/c-api/CONSUMING.md` records.
 
 The measured preview version was `0.1.0-local.1`, producing:
 
@@ -49,7 +54,14 @@ policy remains a release decision. The local `CNA.Interop` package additionally 
 
 ```text
 runtimes/linux-x64/native/libcna_c_api.so
+runtimes/linux-x64/native/libSDL3.so.0
+runtimes/linux-x64/native/libSDL3_mixer.so.0
+runtimes/linux-x64/native/libSDL3_image.so.0
 ```
+
+Re-measured 2026-10-01 against CNA `6e0de68e8` (C ABI 0.35.0, OPENGLES3, compiled effects): the
+consumer's packaged `libcna_c_api.so` resolves SDL from its own `runtimes/linux-x64/native`, with no
+path into the CNA tree.
 
 ## Measured linux-x64 experiment
 
@@ -112,5 +124,5 @@ Measured, not inferred. Under a real X display the `SDL_RENDERER` build reports 
 and takes the template's 2D fallback; under `offscreen` the same library reports a renderer called
 `1` and claims a 3D pipeline it does not have, and the packaged consumer then dies with a core dump.
 So the offscreen SDL video driver and CNA's `SDL_RENDERER` backend do not combine, and the harness's
-own default is the configuration to keep using. Pass `--native-library` a renderer that works
+own default is the configuration to keep using. Pass `--native-directory` a renderer that works
 headless.

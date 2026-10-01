@@ -9,18 +9,27 @@
     <IsPackable Condition="'$(CnaPackageAcceptance)' != 'true'">false</IsPackable>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(CnaPackageAcceptance)' == 'true' and '$(CnaNativeLibrary)' != '' and '$(CnaNativeRid)' != ''">
-    <None Include="$(CnaNativeLibrary)"
+  <!-- The native asset is the installed CNA C API component (cmake install of the
+       CNACApi component): libcna_c_api with RUNPATH $ORIGIN plus the SDL libraries CNA builds, which the
+       loader then finds beside it. Packing the library alone, out of a build tree, produced a
+       package that loaded only on the machine whose build tree its RUNPATH named. Only the soname
+       files are packed (libSDL3.so.0, not its versioned target and unversioned link), because
+       DT_NEEDED names the soname and a package has no symlinks. -->
+  <ItemGroup Condition="'$(CnaPackageAcceptance)' == 'true' and '$(CnaNativeDirectory)' != '' and '$(CnaNativeRid)' != ''">
+    <CnaNativeAsset Include="$(CnaNativeDirectory)/libcna_c_api.so" Condition="Exists('$(CnaNativeDirectory)/libcna_c_api.so')" />
+    <CnaNativeAsset Include="$(CnaNativeDirectory)/libcna_c_api.dylib" Condition="Exists('$(CnaNativeDirectory)/libcna_c_api.dylib')" />
+    <CnaNativeAsset Include="$(CnaNativeDirectory)/lib*.so.?;$(CnaNativeDirectory)/*.dll" />
+    <None Include="@(CnaNativeAsset)"
           Pack="true"
           PackagePath="runtimes/$(CnaNativeRid)/native/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <Target Name="ValidateCnaAcceptanceNativeAsset" BeforeTargets="Pack"
-          Condition="'$(CnaPackageAcceptance)' == 'true' and ('$(CnaNativeLibrary)' != '' or '$(CnaNativeRid)' != '')">
-    <Error Condition="'$(CnaNativeLibrary)' == '' or '$(CnaNativeRid)' == ''"
-           Text="CnaNativeLibrary and CnaNativeRid must either both be set or both be empty." />
-    <Error Condition="!Exists('$(CnaNativeLibrary)')"
-           Text="CnaNativeLibrary='$(CnaNativeLibrary)' does not exist." />
+          Condition="'$(CnaPackageAcceptance)' == 'true' and ('$(CnaNativeDirectory)' != '' or '$(CnaNativeRid)' != '')">
+    <Error Condition="'$(CnaNativeDirectory)' == '' or '$(CnaNativeRid)' == ''"
+           Text="CnaNativeDirectory and CnaNativeRid must either both be set or both be empty." />
+    <Error Condition="!Exists('$(CnaNativeDirectory)/libcna_c_api.so') and !Exists('$(CnaNativeDirectory)/libcna_c_api.dylib') and !Exists('$(CnaNativeDirectory)/cna_c_api.dll')"
+           Text="CnaNativeDirectory='$(CnaNativeDirectory)' contains no CNA C API library; pass the lib directory of an installed CNACApi component." />
   </Target>
 
 </Project>

@@ -60,3 +60,6 @@ __pycache__/
 
 # Shared throwaway probe/experiment output (never a build this repository ships)
 build-probe/
+
+# Shared consumer fixtures (package acceptance, generated template consumers)
+build-consumer/
