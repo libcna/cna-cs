@@ -145,6 +145,75 @@ internal static class XnaContentPath
         Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
 
     /// <summary>
+    /// A file path a Windows-authored game wrote, as this host can open it (cna-cs CSX-096): a
+    /// <c>\</c> becomes the host separator, and when the path does not exist as written each
+    /// segment is matched ignoring case, as on the filesystem the game was written for.
+    /// RolePlayingGame hands <c>AudioEngine</c> <c>Content\Audio\RpgAudio.xgs</c>, ShipGame
+    /// <c>content/sounds/sounds.xgs</c> for <c>Content/Sounds</c>; both work on Windows.
+    ///
+    /// A relative path stays relative and is looked up under <paramref name="baseDirectory"/>
+    /// (the working directory when null: what <c>Path.GetFullPath</c>, and so XNA's audio
+    /// classes, resolve it against). A path that matches nothing comes back separator-normalized
+    /// and otherwise unchanged, so the caller's own not-found error names it. Ties between
+    /// entries differing only in case go to the ordinal-first, as in <see cref="MatchIgnoringCase"/>.
+    /// </summary>
+    internal static string ToHostPath(string path, string? baseDirectory = null)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+
+        string normalized = Path.DirectorySeparatorChar == '\\' ? path : path.Replace('\\', Path.DirectorySeparatorChar);
+        bool rooted = Path.IsPathRooted(normalized);
+        string start = rooted ? Path.GetPathRoot(normalized)! : baseDirectory ?? Directory.GetCurrentDirectory();
+        string probe = rooted ? normalized : Path.Combine(start, normalized);
+        if (File.Exists(probe) || Directory.Exists(probe))
+        {
+            return normalized;
+        }
+
+        string[] segments = (rooted ? normalized[start.Length..] : normalized)
+            .Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+        string current = start;
+        var resolved = new List<string>(segments.Length);
+        foreach (string segment in segments)
+        {
+            string candidate = Path.Combine(current, segment);
+            if (segment is "." or ".." || File.Exists(candidate) || Directory.Exists(candidate))
+            {
+                current = candidate;
+                resolved.Add(segment);
+                continue;
+            }
+
+            if (!Directory.Exists(current))
+            {
+                return normalized;
+            }
+
+            string? match = null;
+            foreach (string entry in Directory.EnumerateFileSystemEntries(current))
+            {
+                string name = Path.GetFileName(entry);
+                if (string.Equals(name, segment, StringComparison.OrdinalIgnoreCase) &&
+                    (match is null || string.CompareOrdinal(name, match) < 0))
+                {
+                    match = name;
+                }
+            }
+
+            if (match is null)
+            {
+                return normalized;
+            }
+
+            current = Path.Combine(current, match);
+            resolved.Add(match);
+        }
+
+        string joined = string.Join(Path.DirectorySeparatorChar, resolved);
+        return rooted ? Path.Combine(start, joined) : joined;
+    }
+
+    /// <summary>
     /// The file whose name differs from <paramref name="exact"/> only in case, or
     /// <paramref name="exact"/> itself when there is none.
     ///

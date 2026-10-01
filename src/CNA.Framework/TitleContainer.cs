@@ -34,7 +34,8 @@ public static class TitleContainer
                 "TitleContainer.OpenStream takes a path relative to the title, not an absolute one.", nameof(name));
         }
 
-        string full = Path.Combine(AppContext.BaseDirectory, normalized);
+        // Written for Windows: re-cased segment by segment when the path does not exist as written.
+        string full = Path.Combine(AppContext.BaseDirectory, Content.XnaContentPath.ToHostPath(normalized, AppContext.BaseDirectory));
 
         try
         {

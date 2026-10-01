@@ -83,7 +83,8 @@ public class AudioEngine : IDisposable
             throw new ArgumentNullException(nameof(settingsFile));
         }
 
-        string fullPath = Path.GetFullPath(settingsFile);
+        // Windows' separators and case, as XNA's own engine saw them (CNA.NET CSX-096).
+        string fullPath = Path.GetFullPath(CNA.Content.XnaContentPath.ToHostPath(settingsFile));
         using var reader = new BinaryReader(File.OpenRead(fullPath));
         bool valid = reader.BaseStream.Length > 4 && reader.ReadBytes(4) is [0x58, 0x47, 0x53, 0x46];
         if (!valid)

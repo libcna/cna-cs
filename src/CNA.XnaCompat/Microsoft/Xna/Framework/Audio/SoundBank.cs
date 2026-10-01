@@ -9,7 +9,7 @@ public class SoundBank : IDisposable
     public SoundBank(AudioEngine audioEngine, string filename)
     {
         ArgumentNullException.ThrowIfNull(audioEngine);
-        _soundBank = XnaExceptions.Guard(() => new CNA.Audio.SoundBank(audioEngine.Framework, filename));
+        _soundBank = XnaExceptions.Guard(() => new CNA.Audio.SoundBank(audioEngine.Framework, filename is null ? filename! : CNA.Content.XnaContentPath.ToHostPath(filename)));
     }
 
     ~SoundBank()

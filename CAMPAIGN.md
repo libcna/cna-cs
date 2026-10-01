@@ -114,6 +114,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-093 | A model tag holds XNA's types, and `object` has an element reader | done |
 | CSX-094 | A Windows Phone title's `IsFullScreen` is its status bar, not a desktop display mode | done |
 | CSX-095 | A Windows Phone title's player one is the phone: connected, Back on Escape | done |
+| CSX-096 | File paths given to XNA's file-taking APIs resolve as on Windows (separators, case) | done |
 
 ### P9 -- portability
 
@@ -123,6 +124,20 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-096: XNA's file-taking APIs read paths as Windows did
+
+Two of the newly eligible games (cna-cs-samples CSSAMPLE-066, -070) died before their first frame:
+RolePlayingGame hands `AudioEngine` `Content\Audio\RpgAudio.xgs`, ShipGame hands it
+`content/sounds/sounds.xgs` for `Content/Sounds/sounds.xgs`. Both are right on Windows, where XNA's
+engine opened them with Win32. `XnaContentPath.ToHostPath` turns `\` into the host separator and,
+when the path does not exist as written, matches each segment ignoring case (ordinal-first on a
+tie, as the existing file-name matcher); a path matching nothing comes back separator-normalized
+for the caller's own error. `AudioEngine` (still `Path.GetFullPath`, as XNA's IL), `WaveBank`,
+`SoundBank` and `TitleContainer.OpenStream` use it. Content asset names already resolved this way.
+`XnaContentPathHostTests` (5). Not reachable from the binding: a game handing such a path to the BCL
+itself (NetRumble's `new DirectoryInfo(Content.RootDirectory + @"\audio\wav")`) -- that row carries
+a recorded source deviation. Unit 281 + 643, integration 220.
 
 ### 2026-10-01 -- CSX-095: a phone title's player one is the phone
 
