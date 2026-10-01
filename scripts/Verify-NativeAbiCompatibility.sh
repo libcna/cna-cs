@@ -136,25 +136,25 @@ run_reject()
   grep -Fq "$diagnostic" "$logs_root/$name.log"
 }
 
-compile_fixture exact-0.37.0 -DCNA_ABI_FIXTURE_VERSION=0x00002500U
-compile_fixture exact-0.37.0-extra-symbol -DCNA_ABI_FIXTURE_VERSION=0x00002500U \
+compile_fixture exact-0.38.0 -DCNA_ABI_FIXTURE_VERSION=0x00002600U
+compile_fixture exact-0.38.0-extra-symbol -DCNA_ABI_FIXTURE_VERSION=0x00002600U \
   -DCNA_ABI_FIXTURE_EXTRA_SYMBOL
 compile_fixture retired-0.8.0 -DCNA_ABI_FIXTURE_VERSION=0x00000800U
 compile_fixture retired-0.21.0 -DCNA_ABI_FIXTURE_VERSION=0x00001500U
-compile_fixture retired-0.36.0 -DCNA_ABI_FIXTURE_VERSION=0x00002400U
-compile_fixture unreviewed-0.38.0 -DCNA_ABI_FIXTURE_VERSION=0x00002600U
-compile_fixture missing-required-symbol -DCNA_ABI_FIXTURE_VERSION=0x00002500U \
+compile_fixture retired-0.37.0 -DCNA_ABI_FIXTURE_VERSION=0x00002500U
+compile_fixture unreviewed-0.39.0 -DCNA_ABI_FIXTURE_VERSION=0x00002700U
+compile_fixture missing-required-symbol -DCNA_ABI_FIXTURE_VERSION=0x00002600U \
   -DCNA_ABI_FIXTURE_MISSING_REQUIRED_SYMBOL
-compile_fixture changed-required-signature -DCNA_ABI_FIXTURE_VERSION=0x00002500U \
+compile_fixture changed-required-signature -DCNA_ABI_FIXTURE_VERSION=0x00002600U \
   -DCNA_ABI_FIXTURE_CHANGED_SIGNATURE
 compile_fixture incompatible-major-1.0.0 -DCNA_ABI_FIXTURE_VERSION=0x00010000U
-compile_fixture structurally-incompatible-0.37.0 -DCNA_ABI_FIXTURE_VERSION=0x00002500U \
+compile_fixture structurally-incompatible-0.38.0 -DCNA_ABI_FIXTURE_VERSION=0x00002600U \
   -DCNA_ABI_FIXTURE_INCOMPATIBLE_STRUCT
 compile_fixture malformed-metadata-0.0.0 -DCNA_ABI_FIXTURE_VERSION=0x00000000U
 compile_fixture unreadable-metadata -DCNA_ABI_FIXTURE_UNREADABLE_METADATA
 
-run_accept exact-0.37.0
-run_accept exact-0.37.0-extra-symbol
+run_accept exact-0.38.0
+run_accept exact-0.38.0-extra-symbol
 # A generation this consumer used to accept long ago. It is refused on the version rule alone,
 # before the routes it does not export are ever looked for -- which is the point: retiring a matrix
 # entry has to be enforced, not merely written down.
@@ -162,16 +162,16 @@ run_reject retired-0.8.0 'experimental ABI 0.8.0 is not in the audited compatibi
 # 0.21.0 was retired by the 0.35.0 admission, and it stays the strongest of the retirement controls
 # for routes removed: every route this consumer imported then still exists with the same prototype.
 run_reject retired-0.21.0 'experimental ABI 0.21.0 is not in the audited compatibility matrix'
-# 0.36.0 is the generation retired by this admission, and the immediate neighbour below. The
-# fixture exports every route this consumer imports, the 0.37.0 exception queries included, so
-# only the version rule refuses it -- exactly the case a floor-based policy would get wrong.
-run_reject retired-0.36.0 'experimental ABI 0.36.0 is not in the audited compatibility matrix'
+# 0.37.0 is the generation retired by this admission, and the immediate neighbour below. The
+# fixture exports every route this consumer imports, 0.38.0's host-driven run included, so only
+# the version rule refuses it -- exactly the case a floor-based policy would get wrong.
+run_reject retired-0.37.0 'experimental ABI 0.37.0 is not in the audited compatibility matrix'
 # The neighbour above: newer is not evidence of anything while the major is zero.
-run_reject unreviewed-0.38.0 'experimental ABI 0.38.0 is not in the audited compatibility matrix'
+run_reject unreviewed-0.39.0 'experimental ABI 0.39.0 is not in the audited compatibility matrix'
 run_reject missing-required-symbol "required symbol 'cna_game_destroy' is missing"
 run_reject changed-required-signature "failed required signature/shape probe 'cna_error_get_last_message_size'"
 run_reject incompatible-major-1.0.0 'major 1 differs from consumer major 0'
-run_reject structurally-incompatible-0.37.0 "failed required signature/shape probe 'cna_touch_capabilities_init'"
+run_reject structurally-incompatible-0.38.0 "failed required signature/shape probe 'cna_touch_capabilities_init'"
 run_reject malformed-metadata-0.0.0 'metadata encodes 0.0.0'
 run_reject unreadable-metadata "required symbol 'cna_get_abi_version' is missing"
 
@@ -199,10 +199,10 @@ jq -n \
     schemaVersion: 1,
     policyVersion: "cna-cs-native-abi/1",
     status: "passed",
-    consumerAbi: "0.37.0",
+    consumerAbi: "0.38.0",
     requiredSymbolCount: $requiredSymbolCount,
-    accepted: ["exact-0.37.0", "exact-0.37.0-extra-symbol"],
-    rejected: ["retired-0.8.0", "retired-0.21.0", "retired-0.36.0", "unreviewed-0.38.0", "missing-required-symbol", "changed-required-signature", "incompatible-major-1.0.0", "structurally-incompatible-0.37.0", "malformed-metadata-0.0.0", "unreadable-metadata"],
+    accepted: ["exact-0.38.0", "exact-0.38.0-extra-symbol"],
+    rejected: ["retired-0.8.0", "retired-0.21.0", "retired-0.37.0", "unreviewed-0.39.0", "missing-required-symbol", "changed-required-signature", "incompatible-major-1.0.0", "structurally-incompatible-0.38.0", "malformed-metadata-0.0.0", "unreadable-metadata"],
     selectedNative: $selectedNative
   }' >"$output_root/abi-compatibility-report.json"
 

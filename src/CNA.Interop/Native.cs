@@ -93,6 +93,13 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_run_one_frame(CnaHandle game);
 
+    /// <summary>Matches <c>cna_game_run_frame_ext</c> (ABI 0.38.0): one frame of a run the host
+    /// drives -- the first call begins the run, the call that finds the game exited ends it
+    /// (<c>exiting</c>, <c>end_run</c>) and reports <paramref name="running"/> false. The browser's
+    /// <c>Game.Run</c>, which cannot block a page.</summary>
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_game_run_frame_ext(CnaHandle game, out byte running);
+
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_request_exit(CnaHandle game);
 

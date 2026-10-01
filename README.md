@@ -2,7 +2,7 @@
 
 > **Status: exact public metadata for the selected XNA 4.0 Windows runtime profile; not yet
 > behaviorally complete or release-ready.** The strict comparison reports 256/256 types, zero
-> differences, zero CNA leaks, and an empty allowlist. The binding targets CNA C ABI 0.37.0.
+> differences, zero CNA leaks, and an empty allowlist. The binding targets CNA C ABI 0.38.0.
 
 CNA.NET is the C#/.NET binding for [CNA](https://github.com/openeggbert/cna), a native C++ game
 framework. Its intended path is:
@@ -25,7 +25,7 @@ Binary compatibility with Microsoft's strong-named assemblies is not the primary
 
 ## Measured state
 
-As of 2026-10-01, against CNA `next` `e9dd5d879` (C ABI 0.37.0), OPENGLES3 with
+As of 2026-10-01, against CNA `next` `f445fef8c` (C ABI 0.38.0), OPENGLES3 with
 `CNA_EASYGL_COMPILED_EFFECTS=ON`, Linux x64:
 
 - Debug and Release solution builds: 0 warnings, 0 errors;
@@ -38,7 +38,7 @@ As of 2026-10-01, against CNA `next` `e9dd5d879` (C ABI 0.37.0), OPENGLES3 with
 - ABI: 1409 imports, all resolving; `tools/abi-verify` measures 1137 native/managed layout values
   with 0 mismatches, compiles all 1409 prototypes, checks 23 callback shapes and asserts 604
   constants; the
-  `cna-cs-native-abi/1` matrix accepts exactly 0.37.0 and 12 isolated fixtures pass (2 accepted, 10
+  `cna-cs-native-abi/1` matrix accepts exactly 0.38.0 and 12 isolated fixtures pass (2 accepted, 10
   rejected). See [`docs/native-abi-compatibility.md`](docs/native-abi-compatibility.md).
 
 The campaign plan and running evidence ledger is [`CAMPAIGN.md`](CAMPAIGN.md). Earlier measurements
@@ -67,7 +67,7 @@ The loader also accepts `CNA_NATIVE_DIR`. Explicit configuration is fail-fast an
 over package-native lookup. Admission follows
 [`cna-cs-native-abi/1`](docs/native-abi-compatibility.md), not a same-major range: the version must
 have a reviewed matrix entry, all 1409 imports must exist, and signature/shape canaries must pass.
-The one accepted entry today is C ABI 0.37.0.
+The one accepted entry today is C ABI 0.38.0.
 Wrong ABI, missing symbols, conflicts, wrong architecture/load failure, and missing-library cases
 report the attempted configuration, consumer/detected ABI where available, RID, and remediation;
 `CNA_NATIVE_DIAGNOSTICS=1` enables low-level loader details.

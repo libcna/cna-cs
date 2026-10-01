@@ -24,32 +24,47 @@ It cannot express CNA's documented experimental-0.x exception by itself.
 
 | CNA.NET consumer | Native library | CNA.NET result | Evidence |
 | --- | --- | --- | --- |
-| 0.37.0 | 0.37.0 | Accept | Consumer baseline at CNA `next` `e9dd5d879`. |
-| 0.37.0 | Any other 0.x | Reject | No audited matrix entry. |
-| 0.37.0 | Any 1.x+ | Reject | Different ABI major. |
+| 0.38.0 | 0.38.0 | Accept | Consumer baseline at CNA `next` `f445fef8c`. |
+| 0.38.0 | Any other 0.x | Reject | No audited matrix entry. |
+| 0.38.0 | Any 1.x+ | Reject | Different ABI major. |
 
 One accepted entry is not a simplification of the policy; it is what the policy produces when the
-consumer moves. There is no `>= 0.37` rule and there never was a `>= 0.6` one.
+consumer moves. There is no `>= 0.38` rule and there never was a `>= 0.6` one.
 
-`e9dd5d879` is 0.37.0 as CNA first published it, and carries everything this binding needs from
+`f445fef8c` is 0.38.0 as CNA first published it, and carries everything this binding needs from
 the earlier lines: CBIND-128/129 (component callbacks), CBIND-130 (packet-reader copy), CBIND-131
-(exit-time teardown) and CBIND-132 (the canonical exception behind a failure).
+(exit-time teardown), CBIND-132 (the canonical exception behind a failure), CBIND-133 (a header
+libc++ and so every Emscripten build can compile) and CBIND-134 (the host-driven run).
 
 ### Retired entries
 
-0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0, 0.21.0, 0.35.0 and 0.36.0 were accepted once. 0.6.0-0.8.0 were retired
-when this binding began importing routes they do not export; 0.19.0, 0.20.0 and 0.21.0 when the
-next reviewed generation superseded them; 0.35.0 when this binding began importing 0.36.0's
-`cna_packet_reader_copy_data_ext`, and 0.36.0 when it began importing 0.37.0's exception queries.
-The retirements are enforced: `retired-0.8.0`, `retired-0.21.0` and `retired-0.36.0` are refused.
+0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0, 0.21.0, 0.35.0, 0.36.0 and 0.37.0 were accepted once. 0.6.0-0.8.0
+were retired when this binding began importing routes they do not export; 0.19.0, 0.20.0 and 0.21.0
+when the next reviewed generation superseded them; 0.35.0 when this binding began importing 0.36.0's
+`cna_packet_reader_copy_data_ext`, 0.36.0 when it began importing 0.37.0's exception queries, and
+0.37.0 when it began importing 0.38.0's `cna_game_run_frame_ext`.
+The retirements are enforced: `retired-0.8.0`, `retired-0.21.0` and `retired-0.37.0` are refused.
 
 Each retired fixture exports every route this binding imports and passes every runtime shape probe,
-so the version rule alone refuses it. `retired-0.36.0` is the sharpest: a real 0.36.0 library lacks
-only the four new routes, so a policy written as "whatever exports the names we call" would take
-any 0.36.0 build that happened to carry them. Package acceptance met exactly that case on
+so the version rule alone refuses it. `retired-0.37.0` is the sharpest: a real 0.37.0 library lacks
+only the one new route, so a policy written as "whatever exports the names we call" would take any
+0.37.0 build that happened to carry it. Package acceptance met exactly that case on
 2026-10-01: an installed 0.36.0 library left in the package's native directory was refused by name.
 
-### What the 0.37.0 admission measured
+### What the 0.38.0 admission measured
+
+0.37.0 (CNA `e9dd5d879`) to 0.38.0 (CNA `f445fef8c`), 2026-10-01: one route added, nothing else.
+
+| Measurement | Result |
+| --- | --- |
+| Consumed entry points | 1410: the 1409 of 0.37.0 plus `cna_game_run_frame_ext` |
+| Consumed entry points absent / changed prototype | 0 / 0 |
+| Upstream exports | 3207 -> 3208, 0 removed; 0 struct, scalar, constant or string differences; the upstream allowlist holds no entries |
+| `tools/abi-verify` | 1137 native and 1137 managed layout/type values, 0 mismatches; 1410 of 1410 prototypes compiled; 23 callbacks; 604 constants |
+| Fixtures | 2 accepted, 10 rejected (`retired-0.37.0` and `unreviewed-0.39.0` on either side) |
+| Native integration (Release, OPENGLES3 with compiled effects) | 211 of 211, GamerServices/Avatar/Net 24 of 24, framework 635 of 635, XnaCompat 272 of 272; package acceptance passed |
+
+### What the 0.37.0 admission measured (retired)
 
 0.36.0 (CNA `402c1aaa9`) to 0.37.0 (CNA `e9dd5d879`), 2026-10-01: four routes added, nothing else.
 
@@ -207,16 +222,16 @@ a fresh managed process. The exact matrix is:
 
 | Fixture | Expected | Property proved |
 | --- | --- | --- |
-| `exact-0.37.0` | Accept | Exact expected ABI. |
-| `exact-0.37.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
+| `exact-0.38.0` | Accept | Exact expected ABI. |
+| `exact-0.38.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
 | `retired-0.8.0` | Reject | A generation retired because this consumer outgrew it. |
 | `retired-0.21.0` | Reject | A generation retired because a newer one superseded it -- being previously audited is not admission. It exports every required symbol and passes every shape probe, so the version rule alone refuses it. |
-| `retired-0.36.0` | Reject | The generation this admission retired, one below the accepted entry. |
-| `unreviewed-0.38.0` | Reject | Nor is being newer: the matrix is a point list, not a floor. |
+| `retired-0.37.0` | Reject | The generation this admission retired, one below the accepted entry. |
+| `unreviewed-0.39.0` | Reject | Nor is being newer: the matrix is a point list, not a floor. |
 | `missing-required-symbol` | Reject | Any missing managed import fails at load, not at first use. |
 | `changed-required-signature` | Reject | A testable core signature/out-parameter change fails its canary. |
 | `incompatible-major-1.0.0` | Reject | Major mismatch. |
-| `structurally-incompatible-0.37.0` | Reject | An accepted version cannot override guarded shape evidence. |
+| `structurally-incompatible-0.38.0` | Reject | An accepted version cannot override guarded shape evidence. |
 | `malformed-metadata-0.0.0` | Reject | An incomplete/unrecognized encoded generation. |
 | `unreadable-metadata` | Reject | Missing version export. |
 

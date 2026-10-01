@@ -83,7 +83,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-060 | Experiment: .NET wasm + `wasm-tools` workload + static CNA via `NativeFileReference` | done: .NET 11 (emscripten 6.0.3, libc++ 21) links CNA's WebGL2 archives; a C# XNA game draws in headless Chromium. .NET 10/8 pin emscripten 3.1.56/3.1.34, whose libc++ 17 has no `std::jthread` |
-| CSX-061 | Frame-stepped game loop on browser event loop | todo |
+| CSX-061 | Frame-stepped game loop on browser event loop | doing: CNA CBIND-134 (ABI 0.38.0, `cna_game_run_frame_ext`) admitted and imported; managed `Game.Run` on the browser next |
 | CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | todo |
 | CSX-063 | Browser sample corpus | todo |
 
