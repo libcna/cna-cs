@@ -76,7 +76,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-050 | Requalify existing checked-in C# rows against migrated binding | done (cna-cs-samples bd9d069): 30/30 build Debug+Release, run, capture; every Escape row exits 0; 28 rows done; found CSX-083 and CSX-084 |
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
-| CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | in progress: 66 of 78 rows ✅ (cna-cs-samples plan.md, 2026-10-01) |
+| CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
 
 ### P7 -- browser
 
@@ -116,6 +116,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-095 | A Windows Phone title's player one is the phone: connected, Back on Escape | done |
 | CSX-096 | File paths given to XNA's file-taking APIs resolve as on Windows (separators, case) | done |
 | CSX-097 | `Microsoft.Phone.Shell.PhoneApplicationService` in CNA.PhoneCompat: Launching after LoadContent, Closing at exit | done |
+| CSX-098 | A Windows Phone title off a phone gets the mouse as a finger, as in the emulator | done |
 
 ### P9 -- portability
 
@@ -125,6 +126,18 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-098: the mouse is the finger for a phone title off a phone
+
+The phone rows qualified on first frames and Escape, but their touch-only controls were dead on a
+desktop: the facade never asked for CNA's mouse-as-touch bridge, which is off by default to keep
+XNA's and FNA's behaviour. The phone emulator made the mouse the finger, and the C++ ports of these
+samples opt into the same bridge (at the owner's request, 2026-09-27). CNA.Interop now binds
+`cna_touch_panel_{get,set}_mouse_touch_emulation_enabled_ext`, CNA.Framework exposes them
+internally, and a phone title (`PhoneTitle`) turns the bridge on at its first frame; a Windows title
+keeps the default. abi-verify: 1412 imports, 0 mismatches. `CompatPhoneTouchTests` (on for a phone
+title, off for a Windows one). DynamicMenu: a mouse tap on "Page 2" now shows page 2, 0 px from both
+the C++ campaign's frame and the original XNA game's. Integration 223.
 
 ### 2026-10-01 -- CSX-097: a phone game's application lifetime, off the phone
 

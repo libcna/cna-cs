@@ -458,6 +458,11 @@ public class Game : IDisposable
             if (!_owner._startedRaised)
             {
                 _owner._startedRaised = true;
+                if (PhoneTitle.Active)
+                {
+                    PhoneTitle.OnStarted();
+                }
+
                 Started?.Invoke(_owner);
             }
 

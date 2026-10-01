@@ -5,7 +5,8 @@ namespace Microsoft.Xna.Framework;
 /// XNA's build marks the title in its <c>Microsoft.Xna.Framework.RuntimeProfile</c> resource
 /// (<c>WindowsPhone.v4.0.&lt;profile&gt;</c>). Two things the phone itself supplied have no desktop
 /// counterpart, and the facade stands in for them: full screen is the status bar, not a display
-/// mode (cna-cs CSX-094), and player one's pad is the phone, with its Back button (CSX-095).
+/// mode (cna-cs CSX-094), player one's pad is the phone, with its Back button (CSX-095), and the
+/// mouse is the finger, as in the emulator (CSX-098).
 /// On Android and iOS the host is a phone and none of this applies.
 /// </summary>
 internal static class PhoneTitle
@@ -19,6 +20,10 @@ internal static class PhoneTitle
     internal static bool IsOffAPhone(string? runtimeProfileLine, bool hostIsPhone) =>
         !hostIsPhone && runtimeProfileLine is not null &&
         runtimeProfileLine.StartsWith("WindowsPhone.", StringComparison.Ordinal);
+
+    /// <summary>Called once the game runs: the mouse reaches <c>TouchPanel</c> as a finger, as it
+    /// did in the phone emulator. A Windows title keeps XNA's default, touch from a digitizer only.</summary>
+    internal static void OnStarted() => CNA.Input.Touch.TouchPanel.MouseTouchEmulationEnabled = true;
 
     /// <summary>
     /// Player one's state as a phone title sees it: the phone is always a connected pad

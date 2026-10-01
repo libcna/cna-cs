@@ -3095,6 +3095,12 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_touch_panel_get_window_handle(CnaHandle game, out ulong outWindow);
 
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_touch_panel_get_mouse_touch_emulation_enabled_ext(CnaHandle game, out byte outEnabled);
+
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_touch_panel_set_mouse_touch_emulation_enabled_ext(CnaHandle game, byte enabled);
+
     /// <summary><c>ref</c> for the same caller-initialized reason as
     /// <see cref="cna_graphics_adapter_get_current_display_mode"/>.</summary>
     [LibraryImport(LibraryName)]

@@ -41,6 +41,26 @@ public static class TouchPanel
     /// <summary>The window touch input is bound to. Matches real XNA's
     /// <c>TouchPanel.WindowHandle</c>. Read-only here: the ABI exposes the getter only, and the
     /// window is the game's rather than something a caller reassigns.</summary>
+    /// <summary>
+    /// CNA's own switch (off by default, as in XNA and FNA): left-mouse-button input is also
+    /// reported as touch input. Internal: the XNA facade turns it on for a Windows Phone title off
+    /// a phone, where the emulator made the mouse the finger (cna-cs CSX-098).
+    /// </summary>
+    internal static bool MouseTouchEmulationEnabled
+    {
+        get
+        {
+            CnaResult result = Native.cna_touch_panel_get_mouse_touch_emulation_enabled_ext(CnaAmbientGame.Current, out byte enabled);
+            CnaException.ThrowIfFailed(result, nameof(MouseTouchEmulationEnabled));
+            return enabled != 0;
+        }
+        set
+        {
+            CnaResult result = Native.cna_touch_panel_set_mouse_touch_emulation_enabled_ext(CnaAmbientGame.Current, value ? (byte)1 : (byte)0);
+            CnaException.ThrowIfFailed(result, nameof(MouseTouchEmulationEnabled));
+        }
+    }
+
     public static nint WindowHandle
     {
         get
