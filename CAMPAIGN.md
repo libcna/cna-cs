@@ -76,7 +76,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-050 | Requalify existing checked-in C# rows against migrated binding | done (cna-cs-samples bd9d069): 30/30 build Debug+Release, run, capture; every Escape row exits 0; 28 rows done; found CSX-083 and CSX-084 |
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
-| CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | todo |
+| CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | in progress: 66 of 78 rows ✅ (cna-cs-samples plan.md, 2026-10-01) |
 
 ### P7 -- browser
 
@@ -112,6 +112,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-091 | `Color.Transparent` is XNA 4.0's transparent black | done |
 | CSX-092 | The managed model path reads every stock effect XNA writes into a model | done |
 | CSX-093 | A model tag holds XNA's types, and `object` has an element reader | done |
+| CSX-094 | A Windows Phone title's `IsFullScreen` is its status bar, not a desktop display mode | done |
 
 ### P9 -- portability
 
@@ -121,6 +122,22 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-094: a phone title's full screen stays in the game on a desktop
+
+The full-corpus requalify after CSX-093 (67/67 pass, `/rv/tmp/cs-samples/requal-20261001-csx093`)
+captured SoccerPitch (CSSAMPLE-073) black: the game sets `graphics.IsFullScreen = true`, CNA asked
+SDL for a 480x800 full-screen mode, and SDL gave up ("no window becoming fullscreen; reverting");
+the capture caught the window mid-switch. On Windows Phone that property hides the status bar and
+never changes the display mode, so the request was wrong on any desktop, not only on a bare Xvfb.
+The facade now reads the platform from the game's `Microsoft.Xna.Framework.RuntimeProfile`
+(`WindowsPhone.v4.0.<profile>`, as XNA's build writes it): a phone title off a phone keeps
+`IsFullScreen`/`ToggleFullScreen` as its own state and runs in its window, as in the emulator;
+Android and iOS keep forwarding it (their full screen is the phone's). Unit:
+`PhoneTitle_KeepsFullScreenInTheGame_OnlyOffAPhone`; integration:
+`CompatPhoneFullScreenTests` (reads back true, presents windowed). The ten phone rows rerun with no
+full-screen errors and titled windows; their frames match their earlier evidence. Unit 277 + 638,
+integration 220.
 
 ### 2026-10-01 -- CSX-093: model tags hold XNA's types
 

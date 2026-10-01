@@ -39,4 +39,22 @@ public class RuntimeProfileTests
     {
         Assert.Equal(GraphicsProfile.Reach, Read(typeof(object).Assembly));
     }
+
+    private static bool KeepsFullScreenInTheGame(string? line, bool hostIsPhone) =>
+        (bool)typeof(global::Microsoft.Xna.Framework.GraphicsDeviceManager)
+            .GetMethod("KeepsFullScreenInTheGame", BindingFlags.NonPublic | BindingFlags.Static)!
+            .Invoke(null, [line, hostIsPhone])!;
+
+    /// <summary>cna-cs CSX-094: a Windows Phone title's full screen is the phone's status bar,
+    /// never a display mode, except where the host is a phone.</summary>
+    [Theory]
+    [InlineData("WindowsPhone.v4.0.Reach", false, true)]
+    [InlineData("WindowsPhone.v4.0.Reach", true, false)]
+    [InlineData("Windows.v4.0.HiDef", false, false)]
+    [InlineData("Xbox360.v4.0.HiDef", false, false)]
+    [InlineData(null, false, false)]
+    public void PhoneTitle_KeepsFullScreenInTheGame_OnlyOffAPhone(string? line, bool hostIsPhone, bool expected)
+    {
+        Assert.Equal(expected, KeepsFullScreenInTheGame(line, hostIsPhone));
+    }
 }

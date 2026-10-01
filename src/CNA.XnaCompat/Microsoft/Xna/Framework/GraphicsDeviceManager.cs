@@ -21,12 +21,24 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
     private bool _disposed;
     private EventHandler<PreparingDeviceSettingsEventArgs>? _preparingDeviceSettings;
 
+    // A Windows Phone title on a desktop (cna-cs CSX-094). On the phone, IsFullScreen hides the
+    // status bar and never changes the display mode; the nearest thing on a desktop is the window
+    // the emulator gave it. Forwarded, it asked the desktop for a 480x800 full-screen mode.
+    private readonly bool _phoneTitleWindowed;
+    private bool _phoneTitleFullScreen;
+
     public GraphicsDeviceManager(Game game)
+        : this(game, ReadRuntimeProfileLine(game?.GetType().Assembly))
+    {
+    }
+
+    internal GraphicsDeviceManager(Game game, string? runtimeProfileLine)
     {
         ArgumentNullException.ThrowIfNull(game);
         Game = game;
+        _phoneTitleWindowed = KeepsFullScreenInTheGame(runtimeProfileLine, OperatingSystem.IsAndroid() || OperatingSystem.IsIOS());
         _backend = new CNA.GraphicsDeviceManager(game.Backend);
-        _backend.GraphicsProfile = (CNA.Graphics.GraphicsProfile)(int)ReadDefaultGraphicsProfile(game.GetType().Assembly);
+        _backend.GraphicsProfile = (CNA.Graphics.GraphicsProfile)(int)ParseGraphicsProfile(runtimeProfileLine);
         _backend.DeviceCreated += (_, args) => OnDeviceCreated(this, args);
         _backend.DeviceDisposing += (_, args) => OnDeviceDisposing(this, args);
         _backend.DeviceReset += (_, args) => OnDeviceReset(this, args);
@@ -44,16 +56,34 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
     /// resource (written from the project's <c>XnaProfile</c>, build/CNA.XnaCompat.targets), whose
     /// first line ends in <c>Reach</c> or <c>HiDef</c>; Reach when there is no such resource or line.
     /// </summary>
-    internal static Graphics.GraphicsProfile ReadDefaultGraphicsProfile(System.Reflection.Assembly assembly)
+    internal static Graphics.GraphicsProfile ReadDefaultGraphicsProfile(System.Reflection.Assembly assembly) =>
+        ParseGraphicsProfile(ReadRuntimeProfileLine(assembly));
+
+    /// <summary>The first line of the game assembly's <c>Microsoft.Xna.Framework.RuntimeProfile</c>
+    /// resource, <c>&lt;platform&gt;.v4.0.&lt;profile&gt;</c>, or null when there is none.</summary>
+    internal static string? ReadRuntimeProfileLine(System.Reflection.Assembly? assembly)
     {
-        using Stream? stream = assembly.GetManifestResourceStream("Microsoft.Xna.Framework.RuntimeProfile");
+        using Stream? stream = assembly?.GetManifestResourceStream("Microsoft.Xna.Framework.RuntimeProfile");
         if (stream is null)
         {
-            return Graphics.GraphicsProfile.Reach;
+            return null;
         }
 
         using var reader = new StreamReader(stream);
-        string? line = reader.ReadLine();
+        return reader.ReadLine();
+    }
+
+    /// <summary>
+    /// Whether <see cref="IsFullScreen"/> stays the game's own state rather than reaching the
+    /// display: a Windows Phone title (XNA's build writes <c>WindowsPhone.v4.0.&lt;profile&gt;</c>)
+    /// on a host that is not a phone. On Android and iOS the platform's full screen is the phone's.
+    /// </summary>
+    internal static bool KeepsFullScreenInTheGame(string? runtimeProfileLine, bool hostIsPhone) =>
+        !hostIsPhone && runtimeProfileLine is not null &&
+        runtimeProfileLine.StartsWith("WindowsPhone.", StringComparison.Ordinal);
+
+    internal static Graphics.GraphicsProfile ParseGraphicsProfile(string? line)
+    {
         if (line is not null && line.EndsWith("Reach", StringComparison.Ordinal))
         {
             return Graphics.GraphicsProfile.Reach;
@@ -93,8 +123,18 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
 
     public bool IsFullScreen
     {
-        get => _backend.IsFullScreen;
-        set => _backend.IsFullScreen = value;
+        get => _phoneTitleWindowed ? _phoneTitleFullScreen : _backend.IsFullScreen;
+        set
+        {
+            if (_phoneTitleWindowed)
+            {
+                _phoneTitleFullScreen = value;
+            }
+            else
+            {
+                _backend.IsFullScreen = value;
+            }
+        }
     }
 
     public bool PreferMultiSampling
@@ -141,7 +181,16 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
 
     public void ApplyChanges() => _backend.ApplyChanges();
 
-    public void ToggleFullScreen() => _backend.ToggleFullScreen();
+    public void ToggleFullScreen()
+    {
+        if (_phoneTitleWindowed)
+        {
+            _phoneTitleFullScreen = !_phoneTitleFullScreen;
+            return;
+        }
+
+        _backend.ToggleFullScreen();
+    }
 
     protected virtual bool CanResetDevice(GraphicsDeviceInformation newDeviceInfo)
     {
