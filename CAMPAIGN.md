@@ -48,8 +48,8 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-020 | CNA-REPORT-004: component callbacks driven by `Game::Update/Draw/Initialize` run outside the C callback borrow scope, so `DrawableGameComponent.GraphicsDevice` cannot be borrowed there. Native repro, fix, C test, C# test, rerun samples | done natively + C# test (CNA bdf239360, CBIND-128); sample rows rerun under CSX-050 |
-| CSX-021 | CNA-REPORT-002 (model/effect ownership): rerun blocked samples, close if fixed | todo |
-| CSX-022 | Compiled XNA effects with `CNA_EASYGL_COMPILED_EFFECTS=ON`: verify from current tree | todo |
+| CSX-021 | CNA-REPORT-002 (model/effect ownership): rerun blocked samples, close if fixed | done: CNA-REPORT-002 was cna-cs (5f6c212); 001 resolved in CNA 8c713f1d8; 003 not reproduced; blocker register re-measured |
+| CSX-022 | Compiled XNA effects with `CNA_EASYGL_COMPILED_EFFECTS=ON`: verify from current tree | done: ColorReplacement renders its compiled ReplaceColor effect on build-probe (OPENGLES3, compiled effects ON) |
 
 ### P4 -- template
 
@@ -99,6 +99,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | todo |
+| CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | todo |
 
 ### P9 -- portability
@@ -109,6 +110,30 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-021/022/052, CBIND-129, CSX-082: historical blockers re-run
+
+Re-ran the four `⛔` cna-cs-samples rows on `build-probe` with `scripts/capture-sample.sh` (private
+Xvfb :128). SpriteEffects and WaypointSample ran and exited 0 at once. ParticleSample and
+ColorReplacement first surfaced only a message (`Callback: Object reference not set...`), so
+CSX-082 made callback exceptions unwind with their own type and stack; that exposed both causes:
+
+* **CNA CBIND-129 (`6e0de68e8`)**: `ForwardingComponent::Initialize` ran the base (which loads a
+  drawable's content) before the component's own initialize handler. ParticleSample sets its
+  texture name in `Initialize`. Handler first now; `RuntimeComponentsSmoke.c` records the sequence
+  and fails on the old order. `^CApi` 117/117.
+* **cna-cs `5f6c212` (was CNA-REPORT-002)**: `ModelMesh.Draw` disposed the effect's cached
+  technique/pass wrappers each draw; the second draw used a released handle. CNA was correct. New
+  `CompatModel_DrawsRepeatedlyWithTheEffectsOwnTechnique` fails without the fix.
+
+All four rows now run and exit 0 through Escape (`/rv/tmp/cs-samples/requal-20261001/`);
+ColorReplacement renders with its compiled effect, which also closes CSX-022 on this tree.
+REPORT-001's root (resizable XNA window) was already fixed in CNA `8c713f1d8`; REPORT-003 did not
+reproduce. cna-cs-samples `26d06c1` records this and replaces its obsolete read-only/stop rules
+(CSX-052). cna-cs `docs/native-behavior-blockers.md` re-measured against 0.35: two rows closed,
+seven re-confirmed open from the headers, five explicitly marked not re-measured.
+
+Integration 203/203 (Release), framework 629/629, XNA-compat 225/225.
 
 ### 2026-10-01 -- CSX-010..014, CSX-020: ABI 0.35 migration and component device borrow
 
@@ -141,8 +166,6 @@ Commands and results (all on `cna/build-probe`, OPENGLES3 Release, compiled effe
 
 Open from this step:
 
-* `scripts/Verify-BlockerTable.sh` fails by design until `docs/native-behavior-blockers.md` is
-  re-measured against 0.35 (CSX-021).
 * CI pins `libcna/cna@bdf239360`, which exists upstream only after the owner pushes CNA.
 * Facade surfaces `CnaException` where XNA throws `InvalidOperationException`/`NotSupportedException`
   /`ArgumentException` for the same refusals (occlusion sequencing, Reach limits, misaligned audio
