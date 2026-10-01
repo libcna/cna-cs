@@ -73,7 +73,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-050 | Requalify existing checked-in C# rows against migrated binding | doing: 28/30 build, run and exit cleanly; ColorReplacement's missing tyres were CSX-083 |
+| CSX-050 | Requalify existing checked-in C# rows against migrated binding | done (cna-cs-samples bd9d069): 30/30 build Debug+Release, run, capture; every Escape row exits 0; 28 rows done; found CSX-083 and CSX-084 |
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | todo |
@@ -112,6 +112,19 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-050: the checked-in samples, requalified
+
+cna-cs-samples `2d62243..bd9d069`. `scripts/requalify.sh` builds each of the 30 rows in Debug and
+Release, captures it on a private Xvfb, takes its exit path and captures the row's C++ port the
+same way. All 30 build, run and capture against cna-cs `496858b` and CNA `e9dd5d879`; every row with
+an Escape path exits 0; 11 are pixel-identical to their C++ port, three more (GesturesSample,
+Orientation, PathDrawing) once the retained C++ phone captures' 100-pixel offset is removed, and the
+rest differ by animation phase or seeded randomness. Found on the
+way: CSX-083 (ColorReplacement's tyres) and CSX-084 (Pathfinding's SIGTERM hang). Phone-only rows
+run through a host generated from `<CnaPhoneGame>`, with CNA.PhoneCompat; InputSequence compiles now
+that the Net namespace exists. 28 of 78 eligible rows are done; the table is in cna-cs-samples
+`NEXT.md`.
 
 ### 2026-10-01 -- CSX-084: a terminated game exits through its own loop
 
