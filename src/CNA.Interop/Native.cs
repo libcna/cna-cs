@@ -2264,88 +2264,6 @@ internal static partial class Native
     // CNB: CNA's own binary content container. The read path first -- a document is parsed, asked
     // what it is, and destroyed. The writer routes below exist so a test can author a fixture
     // through CNA's own encoder instead of vendoring somebody's content.
-    // Engine layer: the pooled render targets a post-process chain is built on. Present in every
-    // build; a build without the engine layer answers NOT_SUPPORTED rather than failing to resolve.
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_render_target_pool_create(CnaHandle graphicsDevice, out CnaHandle outPool);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_render_target_pool_destroy(CnaHandle pool);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_render_target_pool_acquire(
-        CnaHandle pool, int width, int height, uint format, uint depthFormat, int slot,
-        out CnaHandle outRenderTarget);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_render_target_pool_reset(CnaHandle pool);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_render_target_pool_get_target_count(CnaHandle pool, out ulong outCount);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_render_target_pool_get_estimated_bytes(CnaHandle pool, out ulong outBytes);
-
-    // -- Engine-layer post-process passes and chains --------------------------------------------
-
-    /// <summary>Caller-initialised and versioned; <c>ref</c> and not <c>out</c>. The header is
-    /// explicit that a zero-filled context is not a defaulted one, because a later revision may add
-    /// a field whose zero means something.</summary>
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_context_init(ref CnaPostProcessContext outContext);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_blit_pass_create(CnaHandle graphicsDevice, out CnaHandle outPass);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_pass_apply(
-        CnaHandle pass, in CnaPostProcessContext context);
-
-    [LibraryImport(LibraryName)]
-    internal static unsafe partial CnaResult cna_post_process_pass_copy_name(
-        CnaHandle pass, byte* destination, ulong capacity, out ulong outBytes);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_pass_is_supported(
-        CnaHandle pass, CnaHandle graphicsDevice, out byte outSupported);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_pass_destroy(CnaHandle pass);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_create(
-        CnaHandle graphicsDevice, out CnaHandle outChain);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_destroy(CnaHandle chain);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_add_pass(CnaHandle chain, CnaHandle pass);
-
-    /// <summary>Takes ownership. The pass handle is invalid on return <em>whether or not the call
-    /// succeeded</em>, which is why the managed wrapper detaches before checking the result.</summary>
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_add_owned_pass(CnaHandle chain, CnaHandle pass);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_clear(CnaHandle chain);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_get_pass_count(CnaHandle chain, out int outCount);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_apply(
-        CnaHandle chain, in CnaPostProcessContext context);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_reset_targets(CnaHandle chain);
-
-    /// <summary>A counted borrow: destroying the chain is refused while the returned pool handle is
-    /// outstanding, and the borrow is released with <c>cna_render_target_pool_destroy</c>.</summary>
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_post_process_chain_get_target_pool(
-        CnaHandle chain, out CnaHandle outPool);
-
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_cnb_read_limits_init(ref CnaCnbReadLimits limits);
 
@@ -2608,86 +2526,6 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static unsafe partial CnaResult cna_cnb_document_copy_metadata_asset_type_name(
         CnaHandle document, byte* destination, ulong capacity, out ulong outByteCount);
-
-    // -- Engine-layer HDR passes (engine_layer.h) ---------------------------------------------
-    //
-    // Bloom and tonemap, which are post-process passes of the family D3's second slice already
-    // binds -- so they enter the chain through the routes that are already here. The three pure
-    // routes at the end are the reason this family was chosen over a larger one: they compute the
-    // pass's own arithmetic without a device, which is the only exact evidence available for a
-    // shader's behaviour.
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_create(CnaHandle graphicsDevice, out CnaHandle outPass);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_get_threshold(CnaHandle pass, out float outValue);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_set_threshold(CnaHandle pass, float value);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_get_intensity(CnaHandle pass, out float outValue);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_set_intensity(CnaHandle pass, float value);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_get_iterations(CnaHandle pass, out int outValue);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_set_iterations(CnaHandle pass, int value);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_reset_targets(CnaHandle pass);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_create(CnaHandle graphicsDevice, out CnaHandle outPass);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_get_mode(CnaHandle pass, out CnaTonemappingMode outMode);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_set_mode(CnaHandle pass, CnaTonemappingMode mode);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_get_exposure(CnaHandle pass, out float outValue);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_set_exposure(CnaHandle pass, float value);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_get_gamma(CnaHandle pass, out float outValue);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_set_gamma(CnaHandle pass, float value);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_is_deband_enabled(CnaHandle pass, out byte outEnabled);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_set_deband_enabled(CnaHandle pass, byte value);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_get_deband_strength(CnaHandle pass, out float outValue);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_set_deband_strength(CnaHandle pass, float value);
-
-    /// <summary>The pass's own arithmetic, without a pass. Pure, deviceless and exact -- which makes
-    /// it the strongest evidence available about what these passes do, since a shader's output can
-    /// otherwise only be compared against a reimplementation of the shader.</summary>
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_extract_channel(
-        float value, float threshold, out float outExtracted);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_bloom_pass_iterations_for_quality(
-        CnaRenderQuality quality, out int outIterations);
-
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_tonemap_pass_tonemap_channel(
-        CnaTonemappingMode mode, float value, float exposure, float gamma, out float outValue);
 
     // -- CNB models (cnb.h) -------------------------------------------------------------------
     //
@@ -3100,25 +2938,6 @@ internal static partial class Native
 
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_graphics_device_set_reference_stencil(CnaHandle device, int stencil);
-
-    /// <summary>
-    /// <c>graphics_ext.h</c>. Whether this CNA build has its CNAEXT engine layer.
-    ///
-    /// Worth binding on its own, before any of the 812 engine-layer routes: every one of them is
-    /// exported by every build, and the ones that need a native engine-layer object return
-    /// <c>NOT_SUPPORTED</c> when the layer is absent. Upstream did that deliberately, so that the
-    /// exported ABI has one shape regardless of build options and the recorded baseline describes
-    /// something. The consequence for a binding is that a resolved symbol is not evidence of a
-    /// capability, and this is the route that is.
-    /// </summary>
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_graphics_ext_is_available(out byte outAvailable);
-
-    /// <summary><c>engine_layer.h</c>. The engine layer's revision, or zero when absent. A
-    /// revision marker, not an ABI compatibility promise -- it exists so a header and a library
-    /// from different builds can be told apart.</summary>
-    [LibraryImport(LibraryName)]
-    internal static partial CnaResult cna_engine_layer_get_version(out int outVersion);
 
     // -- Mouse cursors (input_cursor.h) ---------------------------------------------------------
     //

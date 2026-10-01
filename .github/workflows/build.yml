@@ -12,13 +12,14 @@ permissions:
 env:
   DOTNET_NOLOGO: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  # The CNA generation this binding is written against: ABI 0.21.0 on the `next` branch.
+  # The CNA generation this binding is written against: ABI 0.35.0 on the `next` branch, at the
+  # commit that carries CBIND-128 (component device borrow).
   # Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails the ABI gates
   # by design -- which is the gates working, and not something to fix by tracking the branch.
-  CNA_UPSTREAM_COMMIT: 599d14e54e073b566d77b3d6fb30ac52d3d810b7
+  CNA_UPSTREAM_COMMIT: bdf23936005e39d25ce367198e53943b026f61f1
   # The generation the reviewed matrix accepted immediately before this one. The upstream diff gate
   # measures forward from here, which is what the ABI policy asks for.
-  CNA_PREVIOUS_ACCEPTED_COMMIT: 71576a7b933c702e1d1384a9720b0237644c2130
+  CNA_PREVIOUS_ACCEPTED_COMMIT: 599d14e54e073b566d77b3d6fb30ac52d3d810b7
   CNA_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_number }}
 
 jobs:
@@ -141,7 +142,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: openeggbert/cna
+          repository: libcna/cna
           ref: ${{ env.CNA_UPSTREAM_COMMIT }}
           path: cna-upstream
       - uses: actions/setup-dotnet@v4
@@ -171,7 +172,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: openeggbert/cna
+          repository: libcna/cna
           path: cna-upstream
           fetch-depth: 0
       - name: Require a purely additive upstream diff over the consumed surface
@@ -210,7 +211,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: openeggbert/cna-cs-template
+          repository: libcna/cna-cs-template
           path: cna-cs-template
       - uses: actions/setup-dotnet@v4
         with:
@@ -226,7 +227,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: openeggbert/cna-cs-template
+          repository: libcna/cna-cs-template
           path: cna-cs-template
       - uses: actions/setup-dotnet@v4
         with:
@@ -286,7 +287,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: openeggbert/cna-cs-template
+          repository: libcna/cna-cs-template
           path: cna-cs-template
       - uses: actions/setup-dotnet@v4
         with:

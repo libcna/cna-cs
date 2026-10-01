@@ -44,10 +44,17 @@ public class ClearColorDepthTests(ITestOutputHelper output, NativeGameFixture fi
     [Native3DFact]
     public void Clear_Color_ClearsDepthSoDepthTestedGeometrySurvives()
     {
+        // Both depth formats, because Clear(Color) selects different planes for them.
+        ClearsDepth(DepthFormat.Depth24);
+        ClearsDepth(DepthFormat.Depth24Stencil8);
+    }
+
+    private void ClearsDepth(DepthFormat depthFormat)
+    {
         fixture.InsideAFrameWithDevice(device =>
         {
             using var target = new RenderTarget2D(
-                device, Size, Size, false, SurfaceFormat.Color, DepthFormat.Depth24, 0,
+                device, Size, Size, false, SurfaceFormat.Color, depthFormat, 0,
                 RenderTargetUsage.DiscardContents);
 
             if (!CnaNativeProbe.SupportsRenderTargetReadback(device, output))
@@ -62,17 +69,20 @@ public class ClearColorDepthTests(ITestOutputHelper output, NativeGameFixture fi
             using var effect = new BasicEffect(device) { VertexColorEnabled = true };
             effect.Projection = Matrix.CreateOrthographicOffCenter(0, Size, Size, 0, 0, 1);
 
+            // z = -0.5 is in front of an identity view, at depth 0.5 under this projection. It read
+            // +0.5 until CNA 0.35, which is behind the camera: XNA clips that (depth -0.5), and it
+            // only drew because GL's depth range accepted it.
             var quad = new[]
             {
-                new VertexPositionColor(new Vector3(0, 0, 0.5f), Color.White),
-                new VertexPositionColor(new Vector3(Size, 0, 0.5f), Color.White),
-                new VertexPositionColor(new Vector3(0, Size, 0.5f), Color.White),
-                new VertexPositionColor(new Vector3(Size, 0, 0.5f), Color.White),
-                new VertexPositionColor(new Vector3(Size, Size, 0.5f), Color.White),
-                new VertexPositionColor(new Vector3(0, Size, 0.5f), Color.White),
+                new VertexPositionColor(new Vector3(0, 0, -0.5f), Color.White),
+                new VertexPositionColor(new Vector3(Size, 0, -0.5f), Color.White),
+                new VertexPositionColor(new Vector3(0, Size, -0.5f), Color.White),
+                new VertexPositionColor(new Vector3(Size, 0, -0.5f), Color.White),
+                new VertexPositionColor(new Vector3(Size, Size, -0.5f), Color.White),
+                new VertexPositionColor(new Vector3(0, Size, -0.5f), Color.White),
             };
 
-            int LitPixelsAfter(Action clear)
+            int LitPixelsAfter(Action clear, DepthStencilState? depthState = null)
             {
                 device.SetRenderTarget(target);
                 try
@@ -82,7 +92,7 @@ public class ClearColorDepthTests(ITestOutputHelper output, NativeGameFixture fi
                     device.Clear(ClearOptions.DepthBuffer, Color.Black, 0f, 0);
                     clear();
 
-                    device.DepthStencilState = DepthStencilState.Default;
+                    device.DepthStencilState = depthState ?? DepthStencilState.Default;
                     device.RasterizerState = RasterizerState.CullNone;
                     device.BlendState = BlendState.Opaque;
                     effect.CurrentTechnique.Passes[0].Apply();
@@ -98,15 +108,28 @@ public class ClearColorDepthTests(ITestOutputHelper output, NativeGameFixture fi
                 return pixels.Count(p => p.R > 127);
             }
 
+            // The control for the control: with depth testing off the quad must cover the target,
+            // or a dark result below means "nothing drew" rather than "depth was not cleared".
+            int noDepthTest = LitPixelsAfter(
+                () => device.Clear(ClearOptions.Target, Color.Black, 1f, 0), DepthStencilState.None);
             int simple = LitPixelsAfter(() => device.Clear(Color.Black));
-            int explicitAll = LitPixelsAfter(() => device.Clear(
-                ClearOptions.Target | ClearOptions.DepthBuffer | ClearOptions.Stencil,
-                Color.Black, 1f, 0));
+            // Every plane the target has: XNA refuses to clear one it does not have.
+            ClearOptions allPlanes = depthFormat == DepthFormat.Depth24Stencil8
+                ? ClearOptions.Target | ClearOptions.DepthBuffer | ClearOptions.Stencil
+                : ClearOptions.Target | ClearOptions.DepthBuffer;
+            int explicitAll = LitPixelsAfter(() => device.Clear(allPlanes, Color.Black, 1f, 0));
             int targetOnly = LitPixelsAfter(() => device.Clear(ClearOptions.Target, Color.Black, 1f, 0));
 
+            output.WriteLine($"{depthFormat}");
+            output.WriteLine($"no depth test                    : {noDepthTest} lit of {Size * Size}");
             output.WriteLine($"Clear(Color)                     : {simple} lit of {Size * Size}");
-            output.WriteLine($"Clear(Target|Depth|Stencil, 1.0) : {explicitAll} lit of {Size * Size}");
+            output.WriteLine($"Clear({allPlanes}, 1.0) : {explicitAll} lit of {Size * Size}");
             output.WriteLine($"Clear(Target only)               : {targetOnly} lit of {Size * Size}");
+
+            Assert.True(
+                noDepthTest == Size * Size,
+                $"with depth testing off the quad must cover the target, but {noDepthTest} pixels " +
+                $"were lit -- so the draw itself failed and the cases below cannot be read.");
 
             Assert.True(
                 targetOnly == 0,
@@ -116,13 +139,13 @@ public class ClearColorDepthTests(ITestOutputHelper output, NativeGameFixture fi
 
             Assert.True(
                 explicitAll == Size * Size,
-                $"the explicit Target|DepthBuffer|Stencil clear should have reset depth to 1.0 and " +
+                $"the explicit {allPlanes} clear should have reset depth to 1.0 and " +
                 $"let the whole quad through, but only {explicitAll} of {Size * Size} pixels were lit.");
 
             Assert.True(
                 simple == Size * Size,
-                $"Clear(Color) must clear depth as well as colour -- XNA and FNA define it as " +
-                $"Clear(Target|DepthBuffer|Stencil, color, Viewport.MaxDepth, 0). Only {simple} of " +
+                $"Clear(Color) must clear depth as well as colour -- XNA defines it as " +
+                $"Clear(DefaultClearOptions, color, 1f, 0). Only {simple} of " +
                 $"{Size * Size} pixels survived the depth test, so the depth buffer still held the " +
                 $"hostile 0 this test wrote before it.");
         });

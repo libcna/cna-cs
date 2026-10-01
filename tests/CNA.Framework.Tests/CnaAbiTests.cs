@@ -34,7 +34,8 @@ public class CnaAbiTests
 
     /// <summary>
     /// The constant this binding compares against must be the version it was written for, now
-    /// 0.21.0. It sat at 0.6.0 through the generations that only added routes this binding did not
+    /// 0.35.0, reached by dropping the 44 engine-layer imports CNA removed in 0.30.0 and
+    /// re-measuring every remaining one. Before that it was 0.21.0. It sat at 0.6.0 through the generations that only added routes this binding did not
     /// call; it moved to 0.19.0 when the binding started importing routes CNA introduced after
     /// 0.8.0 -- the render-target ContentLost pair, the two optioned raw vertex uploads, the
     /// caller-owned device pair and the engine-layer availability pair -- to 0.20.0 with the
@@ -47,7 +48,7 @@ public class CnaAbiTests
     [Fact]
     public void ExpectedVersion_IsTheAbiThisBindingWasWrittenAgainst()
     {
-        Assert.Equal((0, 21, 0), CnaAbi.Decode(CnaAbi.ExpectedVersion));
+        Assert.Equal((0, 35, 0), CnaAbi.Decode(CnaAbi.ExpectedVersion));
     }
 
     /// <summary>Round-trips every field independently, so a mask that swallowed a neighbouring
@@ -61,7 +62,7 @@ public class CnaAbiTests
     }
 
     [Theory]
-    [InlineData(0, 21, 0, "exact")]
+    [InlineData(0, 35, 0, "exact")]
     public void Policy_AcceptsOnlyReviewedAbiGenerations(int major, int minor, int patch, string classification)
     {
         uint version = ((uint)major << 16) | ((uint)minor << 8) | (uint)patch;
@@ -70,15 +71,15 @@ public class CnaAbiTests
     }
 
     /// <summary>
-    /// 0.6.0 through 0.20.0 are here rather than in the accepting theory above because they were
-    /// retired, not because they were never reviewed. 0.20.0 and 0.22.0 sit on either side of the
+    /// 0.6.0 through 0.21.0 are here rather than in the accepting theory above because they were
+    /// retired, not because they were never reviewed. 0.34.0 and 0.36.0 sit on either side of the
     /// accepted entry to keep the matrix a point list -- being newer than an audited generation is
     /// not evidence about an experimental 0.x ABI, and neither is having been audited once.
     ///
-    /// 0.20.0 is the sharpest of them. 0.20.0 -> 0.21.0 added three exports and removed nothing, so
-    /// a 0.20.0 library exports every symbol this binding requires and passes every shape probe;
-    /// the version rule is the only thing that refuses it. A policy expressed as "0.20.0 or newer",
-    /// or as "whatever exports what we call", would admit it.
+    /// 0.21.0 is the sharpest of them: every route this binding still imports existed there with
+    /// the same prototype, so a 0.21.0 library exports every symbol it requires and passes every
+    /// shape probe; the version rule is the only thing that refuses it. A policy expressed as
+    /// "whatever exports what we call" would admit it.
     /// </summary>
     [Theory]
     [InlineData(0, 0, 0)]
@@ -87,8 +88,10 @@ public class CnaAbiTests
     [InlineData(0, 8, 0)]
     [InlineData(0, 19, 0)]
     [InlineData(0, 20, 0)]
-    [InlineData(0, 21, 1)]
-    [InlineData(0, 22, 0)]
+    [InlineData(0, 21, 0)]
+    [InlineData(0, 34, 0)]
+    [InlineData(0, 35, 1)]
+    [InlineData(0, 36, 0)]
     [InlineData(1, 0, 0)]
     public void Policy_RejectsUnauditedVersions(int major, int minor, int patch)
     {
@@ -110,20 +113,11 @@ public class CnaAbiTests
             .Order(StringComparer.Ordinal)
             .ToArray();
 
-        // 1002: five from A3/A4/A5, two for A1, fourteen for D2's first CNB slice, six for D3's
-        // engine-layer render target pool, fourteen for D2's second -- the CNB texture decode family
-        // plus the device's surface-format support query -- fifteen for D3's second, the
-        // post-process pass and chain family, and thirty-nine for D2's third: the CNB model read
-        // path, plus the authoring routes a fixture needs so that CNA's own encoder writes it,
-        // twenty-two for D3's third -- the bloom and tonemap passes with the three pure routes that
-        // compute their own arithmetic -- and fourteen for the CNB loader registry, the extension
-        // mechanism by which a game teaches CNA about its own .cnb types, and one for the video
-        // frame generation that closed half of the VideoPlayer.GetTexture blocker row, and ten
-        // for the CNB sprite font and six for the CNB sound effect -- the slices that turn a .cnb
-        // into a drawable SpriteFont and a playable SoundEffect.
+        // 957: the 1002 the 0.21.0 binding imported, less the 44 engine-layer routes CNA retired in
+        // 0.30.0 and cna_graphics_ext_is_available, whose only caller described that layer.
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(1002, declared.Length);
+        Assert.Equal(957, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 
@@ -135,7 +129,7 @@ public class CnaAbiTests
         JsonElement root = document.RootElement;
 
         Assert.Equal(CnaNativeAbiPolicy.PolicyVersion, root.GetProperty("policyVersion").GetString());
-        Assert.Equal("0.21.0", root.GetProperty("consumerAbi").GetString());
+        Assert.Equal("0.35.0", root.GetProperty("consumerAbi").GetString());
         JsonElement[] entries = root.GetProperty("acceptedVersions").EnumerateArray().ToArray();
         string[] versions = entries.Select(item => item.GetProperty("libraryAbi").GetString()!).ToArray();
         Assert.Equal(
@@ -144,7 +138,7 @@ public class CnaAbiTests
         Assert.Equal(
             CnaNativeAbiPolicy.AcceptedProfiles.Select(profile => profile.Compatibility),
             entries.Select(item => item.GetProperty("classification").GetString()));
-        Assert.Equal(11, root.GetProperty("fixtures").GetArrayLength());
+        Assert.Equal(12, root.GetProperty("fixtures").GetArrayLength());
     }
 
     private static string Format(uint version)

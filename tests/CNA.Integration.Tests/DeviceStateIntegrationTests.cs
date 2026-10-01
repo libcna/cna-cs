@@ -82,6 +82,17 @@ public class DeviceStateIntegrationTests(ITestOutputHelper output, NativeGameFix
     {
         fixture.InsideAFrameWithDevice(device =>
         {
+            // OcclusionQuery is HiDef-only in XNA, which refuses it in Reach whatever the hardware
+            // can do; the capability below describes the renderer, not the profile.
+            if (device.GraphicsProfile == GraphicsProfile.Reach)
+            {
+                CnaNativeProbe.AssertRefusedAsNotSupported(
+                    "creating an OcclusionQuery in the Reach profile",
+                    () => new OcclusionQuery(device).Dispose(),
+                    output);
+                return;
+            }
+
             // Asked as OcclusionQuery, not ThreeD. It has a capability identity of its own, and
             // using the broader one would have claimed that any renderer with a 3D pipeline can run
             // a query -- which is a different statement, and not one this test measures.

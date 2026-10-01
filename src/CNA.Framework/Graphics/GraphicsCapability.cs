@@ -70,8 +70,7 @@ public enum GraphicsCapability : uint
     /// accept the format still cannot do.</summary>
     HalfFloatTextureLinearFiltering = 16,
 
-    /// <summary>Compute shaders. The entry point to CNA's engine layer; see
-    /// <see cref="GraphicsDevice.IsCnaEngineLayerAvailable"/>.</summary>
+    /// <summary>Compute shaders.</summary>
     ComputeShaders = 17,
 
     /// <summary>Indirect draw submission, where draw arguments come from a buffer.</summary>

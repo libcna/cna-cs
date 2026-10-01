@@ -19,7 +19,7 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
-upstream_root=${CNA_UPSTREAM_ROOT:-"$repo_root/../../cnanext"}
+upstream_root=${CNA_UPSTREAM_ROOT:-"$repo_root/../cna"}
 include_dir=${CNA_C_INCLUDE_DIR:-"$upstream_root/modules/c-api/include"}
 doc=${1:-"$repo_root/docs/native-behavior-blockers.md"}
 

@@ -11,22 +11,19 @@ namespace CNA.Interop;
 internal static class CnaNativeAbiPolicy
 {
     internal const string PolicyVersion = "cna-cs-native-abi/1";
-    internal const uint ConsumerVersion = (0u << 16) | (21u << 8) | 0u;
+    internal const uint ConsumerVersion = (0u << 16) | (35u << 8) | 0u;
 
     /// <summary>
     /// The reviewed matrix. It is a point list, never a range: CNA documents that an experimental
     /// 0.x minor may be incompatible, so being newer than an accepted entry proves nothing.
     ///
-    /// It held 0.6.0, 0.7.0 and 0.8.0 until this binding began consuming routes CNA added after
-    /// them -- the render-target ContentLost subscription, the two optioned raw vertex uploads, the
-    /// caller-owned device pair and the engine-layer availability pair. A library from one of those
-    /// generations does not export those names, so admitting it would only move the failure from
-    /// load time to first use. 0.19.0 followed them out when 0.20.0 removed eleven renderer
-    /// identities, and 0.20.0 followed 0.19.0 when 0.21.0 added three routes and the device-type
-    /// identities: in both cases nothing this consumer touches changed, but a point matrix that
-    /// kept every generation it had ever accepted would stop being a review and start being a
-    /// range. See docs/native-abi-compatibility.md for the retired matrix and the evidence behind
-    /// each entry.
+    /// Every entry it has ever held was retired when a newer reviewed generation replaced it; the
+    /// last was 0.21.0, retired when this consumer moved to 0.35.0 by dropping the 44 engine-layer
+    /// routes CNA removed in 0.30.0 and re-measuring every remaining import against the 0.35.0
+    /// headers. A 0.21.0 library still exports every route imported here, with the same prototypes,
+    /// and is refused anyway: a point matrix that kept every generation it had ever accepted would
+    /// stop being a review and start being a range. See docs/native-abi-compatibility.md for the
+    /// retired matrix and the evidence behind each entry.
     /// </summary>
     private static readonly CnaNativeAbiProfile[] Profiles =
     [

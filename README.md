@@ -2,7 +2,7 @@
 
 > **Status: exact public metadata for the selected XNA 4.0 Windows runtime profile; not yet
 > behaviorally complete or release-ready.** The strict comparison reports 257/257 types, zero
-> differences, zero CNA leaks, and an empty allowlist. The binding targets CNA C ABI 0.20.0.
+> differences, zero CNA leaks, and an empty allowlist. The binding targets CNA C ABI 0.35.0.
 
 CNA.NET is the C#/.NET binding for [CNA](https://github.com/openeggbert/cna), a native C++ game
 framework. Its intended path is:
@@ -25,62 +25,21 @@ Binary compatibility with Microsoft's strong-named assemblies is not the primary
 
 ## Measured state
 
-As of 2026-08-30, against CNA `next` `e178282fc` (C ABI 0.20.0), OPENGLES3, Linux x64:
+As of 2026-10-01, against CNA `next` `bdf239360` (C ABI 0.35.0), OPENGLES3 with
+`CNA_EASYGL_COMPILED_EFFECTS=ON`, Linux x64:
 
 - Debug and Release solution builds: 0 warnings, 0 errors;
-- managed tests: 560/560 framework and 208/208 XNA-compat passing;
-- native integration tests: 125/125 passing in Debug and Release;
+- managed tests: 629/629 framework and 225/225 XNA-compat;
+- native integration tests: 200/200 in Debug and Release;
 - strict metadata profile: 257 reference types versus 257 target types, 0 differences, 0
   allowlisted;
-- standalone public/protected CNA-type leak gate: 0 findings;
-- compile-time hierarchy corpus: passes unchanged on XNA, CNA, FNA, and MonoGame; records one Kni
-  hierarchy difference (`VertexDeclaration` is not a `GraphicsResource` there);
-- real-game compile probe: an unmodified 18,391-line Windows Phone XNA game ported to MonoGame
-  compiles against the facade with exactly one unresolved call, `Mouse.SetCursor`, which is
-  MonoGame's addition rather than XNA 4.0 and is now offered as `CnaMouse.SetCursor` in
-  `CNA.XnaCompat.Extensions`. See [`tests/CNA.XnaCompat.GameCompileProbe`](tests/CNA.XnaCompat.GameCompileProbe);
-- compiled-content survey: of 517 assets in the XNA 4.0 sample collection, 498 load through CNA's
-  own content loader, 18 name a type only the game's own assembly supplies, none needs a built-in
-  content reader this binding lacks, and none is unreadable. See
-  [`tools/content-survey`](tools/content-survey);
-- deterministic behavior corpora: one manifest defines 470 observations: 83 Math, 23 Input, 153
-  Graphics, 13 Resource, 46 Content, 83 Audio, 7 XACT, 20 Media, 17 Video, 20 Storage, and 5
-  DeviceLifecycle. CNA executes all 470 on Linux: 199 pure, 166 device, and 105 runtime. FNA
-  completes all 199 pure observations before its own SoundEffect
-  finalizer aborts the process; its native runtime is unavailable here. MonoGame compiles the pure
-  probe but its audio initialization aborts before the new audio group, and its profile omits the
-  XACT/Storage runtime surface. Direct XNA IL establishes implemented strict semantics; the
-  independent Windows XNA snapshot remains pending;
-- isolated native ownership stress: 100/100 game create/use/finalize/destroy/recreate cycles pass
-  in both Debug and Release, now including the authored DXT3 `SpriteFont` the cycle used to
-  exclude. This is not an allocator-level leak claim;
-- portable C-authority ABI verification passes 86 native/managed measurements and prototype
-  compilation against the ABI 0.20.0 headers on Linux ELF x64; Windows PE and macOS Mach-O workflow
-  execution remains pending, and 86 is a floor rather than a coverage claim -- it measures 13 of the
-  80 interop structs;
-- the upstream ABI diff over the consumed surface (`tools/coverage/baselinediff.py`) reports
-  0.8.0 → 0.19.0 as purely additive, and 0.19.0 → 0.20.0 as twelve renderer-identity constant
-  differences and nothing else -- none of which this binding consumes, because it reads the
-  renderer's name rather than its identity;
-- native loading follows the reviewed `cna-cs-native-abi/1` matrix, resolves all 861 imports, and
-  passes 11 isolated compatibility fixtures (2 accepted, 9 rejected). The matrix accepts exactly
-  0.20.0: 0.6.0/0.7.0/0.8.0 were retired when this binding began importing routes CNA added after
-  them, 0.19.0 when 0.20.0 superseded it, and fixtures prove both kinds of retired generation are
-  actually refused;
-- sibling template: the checked-in repository project, the generated development project and the
-  isolated package consumer all build; the package-generated source has no checkout/sibling path
-  and 60/600-frame native runs pass;
-- FNA, MonoGame, and Kni template source builds pass; 60-frame MonoGame and Kni runs pass, while the
-  configured FNA assembly reports unavailable at runtime with a clean exit code 2;
-- NuGet/RID packages: none published. An explicit local-only harness successfully creates and
-  consumes `CNA.Interop`, `CNA.Framework`, and `CNA.XnaCompat` previews with an experimental
-  `linux-x64` native layout; this is not a shipping-RID claim.
+- ABI: 957 imports, all resolving with unchanged prototypes; `tools/abi-verify` measures 895
+  native/managed layout values with 0 mismatches and compiles all 957 prototypes; the
+  `cna-cs-native-abi/1` matrix accepts exactly 0.35.0 and 12 isolated fixtures pass (2 accepted, 10
+  rejected). See [`docs/native-abi-compatibility.md`](docs/native-abi-compatibility.md).
 
-The earlier name-level coverage claim that the XNA API was complete was false. The metadata tool
-now proves exactness for the selected runtime profile by checking type identity and hierarchy,
-interfaces, modifiers, generics, parameters, properties, events, constants/enums, delegates,
-nested types, and relevant layout/attributes. Broader XNA product profiles and behavioral parity
-remain separate work; see [`docs/xna-compatibility.md`](docs/xna-compatibility.md).
+The campaign plan and running evidence ledger is [`CAMPAIGN.md`](CAMPAIGN.md). Earlier measurements
+are in [`NEXT.md`](NEXT.md) and Git history; treat them as history, not current state.
 
 ## Build and test
 
@@ -104,8 +63,8 @@ CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so \
 The loader also accepts `CNA_NATIVE_DIR`. Explicit configuration is fail-fast and takes precedence
 over package-native lookup. Admission follows
 [`cna-cs-native-abi/1`](docs/native-abi-compatibility.md), not a same-major range: the version must
-have a reviewed matrix entry, all 861 imports must exist, and signature/shape canaries must pass.
-The one accepted entry today is C ABI 0.20.0.
+have a reviewed matrix entry, all 957 imports must exist, and signature/shape canaries must pass.
+The one accepted entry today is C ABI 0.35.0.
 Wrong ABI, missing symbols, conflicts, wrong architecture/load failure, and missing-library cases
 report the attempted configuration, consumer/detected ABI where available, RID, and remediation;
 `CNA_NATIVE_DIAGNOSTICS=1` enables low-level loader details.

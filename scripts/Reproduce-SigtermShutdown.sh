@@ -9,7 +9,7 @@
 #   scripts/Reproduce-SigtermShutdown.sh software
 #
 # Needs the template built at ../cna-cs-template/bin/Debug/net8.0/CnaCsTemplate and a CNA build at
-# ../../cnanext/cmake-build-<renderer>. Prints PURE_VIRTUAL_HITS and ABORT_HITS; anything above zero
+# ../cna/cmake-build-<renderer> (or CNA_UPSTREAM_ROOT). Prints PURE_VIRTUAL_HITS and ABORT_HITS; anything above zero
 # is the defect. A normal exit is clean on every renderer, so run the template's --smoke-test first
 # if a result looks like something other than the signal path.
 set -u
@@ -18,7 +18,7 @@ log=${SIGTERM_LOG:-$(mktemp -t "cna-sigterm-$renderer-XXXXXX.log")}
 echo "LOG $renderer=$log"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
-upstream=${CNA_UPSTREAM_ROOT:-"$repo_root/../../cnanext"}
+upstream=${CNA_UPSTREAM_ROOT:-"$repo_root/../cna"}
 template=${CNA_TEMPLATE_ROOT:-"$repo_root/../cna-cs-template"}
 export CNA_NATIVE_LIBRARY="$upstream/cmake-build-$renderer/modules/c-api/libcna_c_api.so"
 cd "$template"

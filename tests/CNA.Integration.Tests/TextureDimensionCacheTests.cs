@@ -21,7 +21,7 @@ namespace CNA.Integration.Tests;
 /// <c>SpriteBatch</c> as a <em>source</em> before, which is exactly why it is pinned here.
 ///
 /// No pixels are asserted: a renderer that cannot read a colour attachment back is a supported
-/// answer (see <c>RenderTargetPoolTests</c>), and these claims are about the dimensions the sprite
+/// answer, and these claims are about the dimensions the sprite
 /// path resolves, not about what the renderer draws.
 /// </summary>
 [Collection(NativeGameCollection.Name)]

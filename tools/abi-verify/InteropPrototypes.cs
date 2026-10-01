@@ -56,7 +56,6 @@ static class InteropPrototypes
     {
         ["cna_cnb_writer_add_chunk#2"] = "const uint8_t*",   // const, which C# cannot express on a pointer
         ["cna_cnb_texture_data_create_rgba8#2"] = "const uint8_t*",   // const, which C# cannot express on a pointer
-        ["cna_post_process_pass_copy_name#1"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_cnb_model_copy_bone_name#2"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_cnb_model_copy_mesh_name#2"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_cnb_model_copy_part_external_effect#2"] = "char*",   // text buffer: C char, which C# has no type for

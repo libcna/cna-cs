@@ -18,7 +18,7 @@ export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 # The game resolves its native library from the environment, so a capture run has to launch it the
 # same way the reporter does. Without this the game dies in its constructor, and every audio
 # question below then answers "no" for a reason that has nothing to do with audio.
-DEFAULT_NATIVE=/rv/data/development/github.com/openeggbert/cnanext/cmake-build-debug/modules/c-api/libcna_c_api.so
+DEFAULT_NATIVE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)/../cna/cmake-build-debug/modules/c-api/libcna_c_api.so"
 if [ -z "${CNA_NATIVE_LIBRARY:-}" ] && [ -z "${CNA_NATIVE_DIR:-}" ]; then
     if [ -f "$DEFAULT_NATIVE" ]; then
         export CNA_NATIVE_LIBRARY=$DEFAULT_NATIVE

@@ -165,34 +165,21 @@ public class SubsystemSmokeTests(ITestOutputHelper output, NativeGameFixture fix
     }
 
     /// <summary>
-    /// The CNAEXT engine layer's availability query, and the five graphics capabilities that had
-    /// been unreachable from managed code since CNA 0.8 added them.
-    ///
-    /// Both are CNA surface with no XNA counterpart, so this asserts shape rather than answers: the
-    /// queries must succeed and must agree with each other, whatever this build says. Asserting
-    /// that the layer *is* present would be asserting a build option.
+    /// The five graphics capabilities that had been unreachable from managed code since CNA 0.8
+    /// added them. CNA surface with no XNA counterpart, so this asserts that the queries answer
+    /// rather than what they answer: asserting a value would be asserting a renderer.
     /// </summary>
     [NativeFact]
-    public void CnaEngineLayer_AnswersItsAvailabilityAndVersionConsistently()
+    public void ExtendedCapabilities_AnswerOnEveryRenderer()
     {
         fixture.InsideAFrameWithDevice(device =>
         {
-            bool available = GraphicsDevice.IsCnaEngineLayerAvailable();
-            int version = GraphicsDevice.CnaEngineLayerVersion();
-            bool computeShaders = device.SupportsCapability(GraphicsCapability.ComputeShaders);
-
             output.WriteLine(
-                $"engine layer available={available} version={version} " +
-                $"compute={computeShaders} " +
+                $"compute={device.SupportsCapability(GraphicsCapability.ComputeShaders)} " +
                 $"floatRT={device.SupportsCapability(GraphicsCapability.FloatRenderTargets)} " +
                 $"halfFloatRT={device.SupportsCapability(GraphicsCapability.HalfFloatRenderTargets)} " +
                 $"halfFloatFilter={device.SupportsCapability(GraphicsCapability.HalfFloatTextureLinearFiltering)} " +
                 $"indirectDraw={device.SupportsCapability(GraphicsCapability.IndirectDraw)}");
-
-            // "Zero means no engine layer" is the header's own rule, so the two answers cannot
-            // disagree. A binding that read the wrong route would very likely break exactly here.
-            Assert.Equal(available, version != 0);
-            Assert.True(version >= 0);
         });
     }
 

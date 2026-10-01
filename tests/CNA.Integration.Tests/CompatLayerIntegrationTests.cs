@@ -450,7 +450,13 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
             Assert.Same(device.VertexTextures, device.VertexTextures);
             Assert.Same(SamplerState.LinearWrap, device.SamplerStates[0]);
 
-            using var blend = new BlendState { ColorSourceBlend = Blend.SourceAlpha };
+            // Colour and alpha share one function, so this state is valid in Reach too: a separate
+            // alpha function is HiDef-only, and XNA's BlendState.Apply refuses it on assignment.
+            using var blend = new BlendState
+            {
+                ColorSourceBlend = Blend.SourceAlpha,
+                AlphaSourceBlend = Blend.SourceAlpha,
+            };
             device.BlendState = blend;
             Assert.Same(blend, device.BlendState);
             Assert.Same(device, blend.GraphicsDevice);

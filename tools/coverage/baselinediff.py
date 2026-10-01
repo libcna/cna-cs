@@ -30,11 +30,12 @@ Usage:
 where each source is a CNA checkout directory, optionally suffixed with a git revision:
 
     python3 tools/coverage/baselinediff.py \\
-      --from ../../cna@1d6da4af8 --to ../../cnanext
+      --from ../cna@599d14e54 --to ../cna \\
+      --allowlist eng/cna-upstream-abi-allowlist.txt
 
 A difference that has been reviewed and adjudicated -- CNA removing renderers this binding does not
-name, say -- goes in an allowlist file passed with ``--allowlist``, one exact finding per line with
-a ``#`` comment saying who decided and why. The allowlist is checked in both directions: an entry
+name, say -- goes in an allowlist file passed with ``--allowlist``, one exact finding (or one ``*``
+glob over a reviewed family of findings) per line with a ``#`` comment saying who decided and why. The allowlist is checked in both directions: an entry
 that does not match anything is reported as stale and fails, because a reviewed exception that has
 silently stopped applying is how an allowlist turns into a blindfold.
 
@@ -46,6 +47,7 @@ says nothing about behavior that keeps its shape.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import os
 import re
@@ -322,9 +324,15 @@ def main(argv: list[str]) -> int:
                 if line.strip() and not line.lstrip().startswith("#")
             ]
 
-        accepted = [finding for finding in findings if finding in allowed]
-        findings = [finding for finding in findings if finding not in allowed]
-        stale = [entry for entry in allowed if entry not in accepted]
+        # An entry containing `*` is a glob, so a reviewed family -- "every export removed upstream
+        # that this binding does not import" -- is one decision rather than eight hundred lines. A
+        # glob is held to the same rule as an exact entry: it must match at least one finding.
+        def matches(entry: str, finding: str) -> bool:
+            return fnmatch.fnmatchcase(finding, entry) if "*" in entry else finding == entry
+
+        accepted = [f for f in findings if any(matches(entry, f) for entry in allowed)]
+        findings = [f for f in findings if f not in accepted]
+        stale = [entry for entry in allowed if not any(matches(entry, f) for f in accepted)]
         for entry in stale:
             findings.append(
                 f"allowlist entry matched nothing and is stale: {entry}"

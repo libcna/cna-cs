@@ -2,20 +2,77 @@
 #
 # An entry here is a difference someone looked at and decided this consumer does not care about.
 # It is not a way to quieten the tool: every entry must match an actual difference, and one that
-# stops matching fails the gate as stale rather than being ignored.
+# stops matching fails the gate as stale rather than being ignored. An entry containing `*` is a
+# glob over one reviewed family and is held to the same rule.
 #
 # The file is scoped to the transition currently being admitted -- the accepted generation in
 # eng/cna-native-abi-policy.json against the one proposed to replace it -- because a finding is a
 # statement about one step and matches nothing in the next.
 #
-# 2026-08-31, ABI 0.20.0 -> 0.21.0: **empty, and that is the measured result rather than an
-# omission.** The step is strictly additive over the consumed surface -- 3 exports, 1 scalar and 3
-# constants added, nothing removed or changed -- so the gate passes with no entry at all.
+# 2026-10-01, ABI 0.21.0 (CNA 599d14e54) -> 0.35.0 (CNA bdf239360), CAMPAIGN.md CSX-010..014.
+# Over the consumed surface the step is clean once this binding dropped its 44 engine-layer imports
+# and `cna_graphics_ext_is_available`: 957 consumed exports, 0 absent, 0 changed prototype. What
+# remains is upstream removing things this binding never imported or mirrored:
 #
-# The twelve entries this file used to hold covered 0.19.0 -> 0.20.0, where upstream removed eleven
-# renderers. They were removed here because they are stale against the current step, not because
-# the decision was reversed: it is recorded in the retired 0.20.0 entry of the policy file and in
-# docs/native-abi-compatibility.md. The reason that removal was a clean diff still governs new work
-# -- CNA.NET reads the renderer's *name* through cna_graphics_device_copy_renderer_name and binds
-# no CNA_GRAPHICS_RENDERER_* identity or sentinel. Keep it that way: binding the identity enum
-# would make every future renderer change a compatibility event.
+#   * ABI 0.30.0 (MOD-RETIRE-1) removed engine_layer.h -- pipelines, post-process passes, clustered
+#     lighting, shadows, probes, optional PBR materials, particles, sky, compute -- with their
+#     handles, enums and value layouts;
+#   * the retired renderer identities (CNA_GRAPHICS_RENDERER_*); this binding reads the renderer's
+#     name and binds no identity;
+#   * the avatar "real rendering" EXT routes and the field CNA_AvatarRendererInfo carried for them;
+#     this binding does not yet bind avatars at all;
+#   * SpriteBatch's 2D mesh route (0.29.0).
+#
+# A removed export that *was* consumed would appear as "consumed export ... is absent", which no
+# entry below matches. A removed or changed struct, scalar or constant that the managed side mirrors
+# is measured independently by tools/abi-verify (895 layout values, 350 constants, all matching on
+# 0.35.0), so these globs cannot hide a consumed layout.
+
+export * was removed upstream (not consumed here)
+scalars: * was removed
+integer constants: * was removed
+
+# Structs removed with the layers above; none has a managed mirror (CnaPostProcessContext was
+# deleted together with the Experimental post-process layer that used it).
+struct CNA_AreaLightBrdfTerms was removed
+struct CNA_AreaLightEXT was removed
+struct CNA_AvatarAppearanceEXT was removed
+struct CNA_AvatarRendererInfo: field is_real_rendering_enabled was removed
+struct CNA_ClusteredLightEXT was removed
+struct CNA_DirectionalLightEXT was removed
+struct CNA_GltfMaterialExtensionSourceEXT was removed
+struct CNA_GltfMaterialExtensionTexturesEXT was removed
+struct CNA_GltfMaterialSourceEXT was removed
+struct CNA_GltfMaterialTexturesEXT was removed
+struct CNA_GpuCullableInstance was removed
+struct CNA_LodLevelEXT was removed
+struct CNA_Particle was removed
+struct CNA_ParticleEmitterSettings was removed
+struct CNA_PassTimingEXT was removed
+struct CNA_PbrMaterial was removed
+struct CNA_PbrMaterialEXT was removed
+struct CNA_PointLightEXT was removed
+struct CNA_PostProcessContext was removed
+struct CNA_PunctualLightEXT was removed
+struct CNA_RenderPipelineFrameStatisticsEXT was removed
+struct CNA_RenderPipelineSettings was removed
+struct CNA_RenderPipelineSettingsEXT was removed
+struct CNA_ShadowCascadeStateEXT was removed
+struct CNA_SpotLightEXT was removed
+struct CNA_SpriteMeshEXT was removed
+
+# Avatar renderer info lost its real-rendering flag. Not mirrored: avatars are not bound yet, and
+# when they are, they are bound against 0.35.0's layout.
+struct CNA_AvatarRendererInfo: field is_real_rendering_enabled was removed
+struct CNA_AvatarRendererInfo: field reserved offset/size [14, 2] -> [13, 3]
+
+# Range sentinels moved because their enumerations grew or shrank; this binding binds none of the
+# MAXIMUM values. ShaderDialect gained the four identities it was missing (HLSL, MSL, WGSL, SPIR-V).
+integer constants: CNA_GRAPHICS_RENDERER_MAXIMUM changed 49 -> 43
+integer constants: CNA_RENDERER_FEATURE_MAXIMUM changed 29 -> 31
+integer constants: CNA_RENDERER_LIMIT_MAXIMUM changed 9 -> 21
+integer constants: CNA_SHADER_DIALECT_MAXIMUM changed 6 -> 7
+
+# The CNB sound-effect schema is a property of .cnb files, read and written by CNA itself; this
+# binding passes documents through and authors its fixtures with CNA's own encoder.
+integer constants: CNA_CNB_SOUND_EFFECT_SCHEMA_VERSION changed 1 -> 2

@@ -1,7 +1,7 @@
 namespace CNA.Graphics;
 
 /// <summary>
-/// The shading dialect a source-based <see cref="Effect"/>'s text must be written in --
+/// The shader payload a custom <see cref="Effect"/> must supply --
 /// <c>graphics.h</c>'s <c>CNA_SHADER_DIALECT_*</c> identities.
 ///
 /// Not an XNA type, and it has no XNA counterpart because XNA had one shader language. A
@@ -24,4 +24,17 @@ public enum ShaderDialect : uint
     /// <summary>GLSL compiled to SPIR-V, where <c>location</c>/<c>set</c>/<c>binding</c> are
     /// mandatory.</summary>
     GlslVulkan = 3,
+
+    /// <summary>Direct3D HLSL.</summary>
+    Hlsl = 4,
+
+    /// <summary>Metal Shading Language.</summary>
+    Msl = 5,
+
+    /// <summary>WebGPU WGSL.</summary>
+    Wgsl = 6,
+
+    /// <summary>Already-compiled SPIR-V: an effect's two byte views must hold SPIR-V modules rather
+    /// than source text.</summary>
+    Spirv = 7,
 }

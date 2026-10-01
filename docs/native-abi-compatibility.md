@@ -24,136 +24,69 @@ It cannot express CNA's documented experimental-0.x exception by itself.
 
 | CNA.NET consumer | Native library | CNA.NET result | Evidence |
 | --- | --- | --- | --- |
-| 0.21.0 | 0.21.0 | Accept | Consumer baseline at CNA `next` `599d14e54`. |
-| 0.21.0 | Any other 0.x | Reject | No audited matrix entry. |
-| 0.21.0 | Any 1.x+ | Reject | Different ABI major. |
+| 0.35.0 | 0.35.0 | Accept | Consumer baseline at CNA `next` `bdf239360`. |
+| 0.35.0 | Any other 0.x | Reject | No audited matrix entry. |
+| 0.35.0 | Any 1.x+ | Reject | Different ABI major. |
 
 One accepted entry is not a simplification of the policy; it is what the policy produces when the
-consumer moves. There is no `>= 0.21` rule and there never was a `>= 0.6` one.
+consumer moves. There is no `>= 0.35` rule and there never was a `>= 0.6` one.
+
+`bdf239360` matters beyond the version: it carries CBIND-128, without which a drawable component
+cannot borrow the game's device from the callbacks the game drives. A 0.35.0 library from before it
+is admitted -- the version cannot tell them apart, because CNA treated the fix as a contract
+correction within 0.35.0 -- and fails exactly one integration test,
+`DrawableComponent_UsesGraphicsDeviceFromGameDrivenCallbacks`, with `InvalidState`.
 
 ### Retired entries
 
-The matrix previously accepted 0.6.0, 0.7.0, 0.8.0, 0.19.0 and 0.20.0. Nothing was found wrong with
-any of those reviews; two different things moved.
+0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0 and 0.21.0 were accepted once. 0.6.0-0.8.0 were retired when
+this binding began importing routes they do not export; 0.19.0, 0.20.0 and 0.21.0 when the next
+reviewed generation superseded them. The retirements are enforced: `retired-0.8.0` and
+`retired-0.21.0` are refused.
 
-**0.6.0, 0.7.0 and 0.8.0** were retired because this binding began importing eight routes CNA
-introduced after 0.8.0:
+`retired-0.21.0` is the sharp control. Every route this binding still imports existed in 0.21.0
+with the same prototype, so a 0.21.0 library exports every required symbol and passes every runtime
+shape probe; the version rule alone refuses it. A policy written as "whatever exports the names we
+call" would take it.
 
-- `cna_render_target_subscribe_content_lost`, `cna_render_target_unsubscribe_content_lost`
-- `cna_vertex_buffer_set_data_raw_with_options`, `cna_vertex_buffer_set_data_raw_at_with_options`
-- `cna_graphics_device_create`, `cna_graphics_device_destroy`
-- `cna_graphics_ext_is_available`, `cna_engine_layer_get_version`
+### What the 0.35.0 admission measured
 
-No 0.6/0.7/0.8 library exports those names, so the loader's required-symbol check would refuse one
-anyway. Leaving the entries in place would have made the matrix promise something the loader could
-not deliver, and moved the failure from load time to first use.
+0.21.0 (CNA `599d14e54`) to 0.35.0 (CNA `bdf239360`), 2026-10-01:
 
-**0.19.0 and 0.20.0** were retired for the opposite reason: each is superseded by the generation
-after it and nothing this consumer touches differs between them. Keeping either would have been the
-first step towards a range, which is the shape this policy exists to avoid.
-
-Both retirements are enforced rather than merely documented: the `retired-0.8.0` and
-`retired-0.20.0` fixtures prove that a generation this consumer used to accept is actually refused.
-
-`retired-0.20.0` is the sharper of the two, and it is why the fixture was moved rather than left at
-0.19.0. 0.20.0 → 0.21.0 **added** three exports and removed nothing, so a 0.20.0 library exports
-every symbol the loader requires and passes every runtime shape probe; the version rule is the only
-thing standing between it and admission. A policy written as "0.20.0 or newer", or as "whatever
-exports the names we call", would take it. `retired-0.8.0` cannot make that point, because a 0.8.0
-library fails the required-symbol check anyway.
-
-The substantive part of the earlier 0.8.0 review still stands and carries forward: CNA 0.8 changed
-`CNA_GRAPHICS_CAPABILITY_MAXIMUM` from 13 to 18 and `CNA_GRAPHICS_RENDERER_MAXIMUM` from 49 to 50.
-0.20.0 keeps the capability value, moves the renderer sentinel again to 49, and CNA.NET binds
-neither. `tools/coverage/baselinediff.py` rediscovers exactly those constant changes when run from
-0.6.0 or 0.7.0 forward and nothing else, which is a useful cross-check on both the tool and that
-review.
-
-### What the 0.21.0 admission measured
-
-`tools/coverage/baselinediff.py` compares the already-accepted generation against the proposed one
-across both evidence paths.
-
-0.20.0 → 0.21.0, the current admission:
-
-| Measured | Result |
+| Measurement | Result |
 | --- | --- |
-| Consumed entry points absent | 0 of 1002 |
-| Consumed entry points with a changed header prototype | 0 |
-| Exports removed / added | 0 / 3 |
-| Struct size/alignment/field-offset changes | 0 (0 structs added) |
-| Scalar width changes | 0 (1 added) |
-| Existing integer constant values changed | 0 (3 added) |
-| String constants changed | 0 |
-| Allowlist entries needed | **0** |
+| Consumed entry points | 957, after dropping 45 (below) |
+| Consumed entry points absent / changed prototype | 0 / 0 |
+| Upstream findings outside the consumed surface | 1048 removals and changes, reviewed in [`eng/cna-upstream-abi-allowlist.txt`](../eng/cna-upstream-abi-allowlist.txt): 36 entries, 0 stale |
+| `tools/abi-verify` | 895 native and 895 managed layout/type values, 0 mismatches; 957 of 957 prototypes compiled; 6 callbacks; 350 constants; 12 of 12 negative controls rejected |
+| Documented contracts of the 957 routes, header text diffed | 14 changed |
+| Native integration, Debug and Release, OPENGLES3 with compiled effects | 200 of 200 |
 
-The step is strictly additive and the additions are named rather than counted:
-`cna_environment_get_device_type` with its `CNA_DeviceType` scalar and three `CNA_DEVICE_TYPE_*`
-identities, plus `cna_object_dictionary_ext_get_runtime_type_name_size` and
-`cna_object_dictionary_ext_copy_runtime_type_name`. Four further header changes in this step are
-documentation only and carry no ABI difference: `cna_content_manager_load_texture2d` and
-`cna_graphics_device_create_texture2d` dropped the Color-only restriction from their contracts, and
-the four `cna_network_session_create*` routes now document a two-to-31 `max_gamers` range that the
-asynchronous pair no longer discards. Those are behavior changes with an unchanged shape, which is
-exactly the class a diff over declarations cannot see and the reason admission also re-runs the
-behavioral gates.
+**The 45 dropped imports.** CNA removed `engine_layer.h` in 0.30.0 (`MOD-RETIRE-1`): the
+post-process chain/pass, bloom, tonemap, render-target pool and blit routes and
+`cna_engine_layer_get_version`, 44 routes this binding imported for its `CNA.Graphics.Experimental`
+layer (`PostProcessChain`, `RenderTargetPool`, the HDR pass settings). That layer was CNA surface
+with no XNA counterpart and was removed rather than rebuilt over a retired native layer;
+`RenderTarget2D` and effects remain the XNA way to post-process. `cna_graphics_ext_is_available`
+went with it, because its only caller was `GraphicsDevice.IsCnaEngineLayerAvailable`, whose meaning
+the retirement removed.
 
-`tools/abi-verify` independently passes **916 native and 916 managed** C-authority layout
-measurements with 0 mismatches, compiles 1002 of 1002 prototypes, checks 6 callbacks, asserts 359
-enum-like constants and rejects 12 of 12 negative controls against the 0.21.0 headers. Run before
-the version constant moved, its *only* finding was `abi.version` itself -- which is the shape a
-clean additive step should produce, and is what distinguishes this from a step that happens to
-compile.
+**The 14 changed contracts.** Three needed managed changes:
 
-#### The two earlier diffs, kept for the audit trail
+- `cna_graphics_device_clear_options` now refuses to clear a depth or stencil plane the target does
+  not have, as XNA's explicit `Clear` does. `Clear(Color)` had passed all three planes and
+  `Viewport.MaxDepth` (FNA's form, which masks missing planes); it is now XNA's own IL,
+  `Clear(DefaultClearOptions, color, 1f, 0)`.
+- `cna_graphics_device_get_shader_dialect_ext` can answer HLSL, MSL, WGSL and SPIR-V;
+  `ShaderDialect` named only the first four identities.
+- `cna_graphics_device_supports_capability`, occlusion queries and `cna_effect_set_current_technique`
+  now refuse what XNA refuses (Reach-profile limits, query sequencing, a null technique); the
+  managed code either already refused first or surfaces the native refusal.
 
-Two diffs, because the consumer moved twice on the way to 0.20.0.
-
-0.8.0 → 0.19.0, when the binding left the 0.6-era matrix:
-
-| Measured | Result |
-| --- | --- |
-| Consumed entry points absent | 0 |
-| Consumed entry points with a changed header prototype | 0 |
-| Exports removed | 0 (1,189 added) |
-| Struct size/alignment/field-offset changes | 0 (45 structs added) |
-| Scalar width changes | 0 (83 added) |
-| Existing integer constant values changed | 0 (326 added) |
-| String constants changed | 0 |
-
-0.19.0 → 0.20.0, the renderer removal:
-
-| Measured | Result |
-| --- | --- |
-| Consumed entry points absent | 0 of 861 |
-| Consumed entry points with a changed header prototype | 0 |
-| Exports removed / added | 0 / 0 |
-| Struct, scalar and string changes | 0 |
-| Integer constants | 11 removed, 1 changed |
-
-All twelve constant differences are renderer identities:
-`CNA_GRAPHICS_RENDERER_{BLEND2D,DILIGENT,IGL,LLGL,MAGNUM,NANOVG,OPENVG,SKIA,SOKOL,TINYGL,WICKED}`
-and `CNA_GRAPHICS_RENDERER_MAXIMUM` moving from 50 to 49. This binding reads the renderer's *name*
-through `cna_graphics_device_copy_renderer_name` and consumes no `CNA_GRAPHICS_RENDERER_*` identity
-or sentinel, which is why removing eleven renderers is a clean diff here rather than a breaking
-change. That is a design property worth keeping: binding the identity enum would turn every future
-renderer change into a compatibility event.
-
-The full native gate set -- integration tests, ownership stress, corpus capture, fixture matrix,
-package acceptance -- runs against the accepted library.
-
-[`eng/cna-upstream-abi-allowlist.txt`](../eng/cna-upstream-abi-allowlist.txt) carries the reviewed
-exceptions **for the transition currently being admitted**, so the diff gate can run in CI and still
-fail on anything else. An allowlist entry that matches nothing fails as stale, so an exception
-cannot outlive the difference it was written for -- and that is why the file is empty today: the
-twelve renderer-identity entries described the 0.19.0 → 0.20.0 step and match nothing in
-0.20.0 → 0.21.0. They were removed, not reversed; the decision behind them is recorded above and in
-the retired 0.20.0 policy entry. Running the current step *with* the old entries in place was tried
-first and reports all twelve as stale, which is the gate doing its job.
-
-Run `tools/abi-verify` against a pinned revision rather than a live `next` worktree. That branch
-moves, and a header tree ahead of the matrix makes the gate fail by design -- which is the gate
-working, not a configuration problem. It is how both the 0.20.0 and the 0.21.0 bumps were noticed.
+The rest are wording. Four integration tests encoded behaviour XNA does not have and were
+corrected rather than the binding: a quad behind the camera that only GL's depth range had drawn,
+a separate-alpha blend state in Reach, an occlusion query in Reach, and an audio buffer that was not
+a whole number of frames.
 
 ## Compatible evolution operations
 
@@ -171,7 +104,7 @@ An operation is compatible only when it preserves every contract an existing con
 - clarify documentation without changing ownership, error, threading, lifetime, or behavior.
 
 Additional exports are deliberately allowed by the loader. They cannot collide with or substitute
-for the 861 names imported by this build.
+for the 957 names imported by this build.
 
 ## Breaking operations
 
@@ -223,23 +156,19 @@ error, and lifetime rules are ABI contract just as much as its machine-level pro
 Before returning a library handle, the managed resolver now requires:
 
 1. readable `cna_get_abi_version` metadata and an exact reviewed matrix entry;
-2. every one of the 861 `LibraryImport` entry points declared by `CNA.Interop.Native`;
+2. every one of the 957 `LibraryImport` entry points declared by `CNA.Interop.Native`;
 3. a successful `cna_error_get_last_message_size` result/out-parameter signature canary;
 4. a successful guarded `cna_touch_capabilities_init` canary proving the 16-byte version-1 shape,
    canonical body, and write bounds.
 
 Version numbers and symbol names cannot describe every native prototype or POD layout. The runtime
 checks therefore complement, rather than replace, `tools/abi-verify`: the platform C compiler
-checks 86 selected native/managed size, alignment, offset, width, callback, and prototype facts
-against the headers, and now rejects headers outside this same version matrix. CNA's own complete
-ABI baseline supplies the reviewed release-to-release shape/export/value diff, which
-`tools/coverage/baselinediff.py` computes and which must report zero breaking differences. A new ABI
-version must pass both evidence paths before it is added to the matrix.
-
-86 is a floor rather than a coverage claim. This binding declares 80 interop structs and twenty
-enum-like identities; the C-authority probe measures thirteen of those structs. A layout change to
-an unmeasured struct would be caught by the upstream baseline diff and not by the probe, which is
-why the admission needs both and why widening the probe is tracked in `plan.md`.
+checks 895 native/managed size, alignment, offset, width and type values, compiles every import's
+prototype against the headers, checks the callbacks and asserts the enum-like constants, and rejects
+headers outside this same version matrix. CNA's own ABI baseline supplies the reviewed
+release-to-release shape/export/value diff, which `tools/coverage/baselinediff.py` computes and which
+must report zero unreviewed breaking differences. A new ABI version must pass both evidence paths
+before it is added to the matrix.
 
 ## Automated fixtures
 
@@ -248,15 +177,16 @@ a fresh managed process. The exact matrix is:
 
 | Fixture | Expected | Property proved |
 | --- | --- | --- |
-| `exact-0.21.0` | Accept | Exact expected ABI. |
-| `exact-0.21.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
+| `exact-0.35.0` | Accept | Exact expected ABI. |
+| `exact-0.35.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
 | `retired-0.8.0` | Reject | A generation retired because this consumer outgrew it. |
-| `retired-0.20.0` | Reject | A generation retired because a newer one superseded it -- being previously audited is not admission. It exports every required symbol and passes every shape probe, so the version rule alone refuses it. |
-| `unreviewed-0.22.0` | Reject | Neither is being newer: the matrix is a point list, not a floor. |
+| `retired-0.21.0` | Reject | A generation retired because a newer one superseded it -- being previously audited is not admission. It exports every required symbol and passes every shape probe, so the version rule alone refuses it. |
+| `unreviewed-0.34.0` | Reject | Older and unreviewed. |
+| `unreviewed-0.36.0` | Reject | Neither is being newer: the matrix is a point list, not a floor. |
 | `missing-required-symbol` | Reject | Any missing managed import fails at load, not at first use. |
 | `changed-required-signature` | Reject | A testable core signature/out-parameter change fails its canary. |
 | `incompatible-major-1.0.0` | Reject | Major mismatch. |
-| `structurally-incompatible-0.21.0` | Reject | An accepted version cannot override guarded shape evidence. |
+| `structurally-incompatible-0.35.0` | Reject | An accepted version cannot override guarded shape evidence. |
 | `malformed-metadata-0.0.0` | Reject | An incomplete/unrecognized encoded generation. |
 | `unreadable-metadata` | Reject | Missing version export. |
 

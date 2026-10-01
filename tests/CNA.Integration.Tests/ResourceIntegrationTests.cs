@@ -296,8 +296,12 @@ public class ResourceIntegrationTests(ITestOutputHelper output, NativeGameFixtur
 
             Assert.True(size > 0, "A one-second buffer cannot be zero bytes.");
 
-            dynamicInstance.SubmitBuffer(new byte[size / 10]);
+            // XNA's own arithmetic makes one second 44 099 frames (88 198 bytes), so a tenth of it
+            // is not a whole number of 2-byte frames. Ask for a duration's size instead, which is
+            // always whole frames -- and a buffer that is not is refused, as XNA refuses it.
+            dynamicInstance.SubmitBuffer(new byte[dynamicInstance.GetSampleSizeInBytes(TimeSpan.FromMilliseconds(100))]);
             output.WriteLine($"pending buffers: {dynamicInstance.PendingBufferCount}");
+            Assert.Throws<CnaException>(() => dynamicInstance.SubmitBuffer(new byte[3]));
         });
     }
 }

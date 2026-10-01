@@ -64,6 +64,91 @@ public class GameComponentTests(ITestOutputHelper output)
         Assert.True(game.Component.Updates > 0, "The component was added but never updated.");
     }
 
+    /// <summary>
+    /// cna-cs-samples CNA-REPORT-004: a drawable component reads <c>GraphicsDevice</c> from the
+    /// callbacks the game itself drives -- LoadContent from <c>Game.Initialize</c>, Update and Draw
+    /// from the base passes -- which is where XNA code uses it.
+    ///
+    /// Native opened the device borrow only around the game's own callback, and the base passes run
+    /// after it returns, so every one of these threw <c>InvalidState</c>. Fixed in CNA CBIND-128
+    /// (`RuntimeComponentDeviceBorrow.c` is the C-level twin); nothing here caches a device handle.
+    /// </summary>
+    [NativeFact]
+    public void DrawableComponent_UsesGraphicsDeviceFromGameDrivenCallbacks()
+    {
+        using var game = new DeviceComponentHost();
+
+        for (int i = 0; i < 4; i++)
+        {
+            game.RunOneFrame();
+        }
+
+        DeviceComponent component = game.Component;
+        output.WriteLine(
+            $"load {component.Loads}, update {component.Updates}, draw {component.Draws}; " +
+            $"viewport {component.LastViewportWidth}; failure: {component.Failure?.Message ?? "none"}");
+        Assert.Null(component.Failure);
+        Assert.Equal(1, component.Loads);
+        Assert.True(component.Updates > 0, "The component was never updated.");
+        Assert.True(component.Draws > 0, "The component was never drawn.");
+        Assert.True(component.LastViewportWidth > 0, "The borrowed device answered no viewport.");
+    }
+
+    private sealed class DeviceComponent(CNA.Game game) : CNA.DrawableGameComponent(game)
+    {
+        public int Loads { get; private set; }
+
+        public int Updates { get; private set; }
+
+        public int Draws { get; private set; }
+
+        public int LastViewportWidth { get; private set; }
+
+        public Exception? Failure { get; private set; }
+
+        protected internal override void LoadContent()
+        {
+            Loads++;
+            Touch();
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            Updates++;
+            Touch();
+        }
+
+        public override void Draw(GameTime gameTime)
+        {
+            Draws++;
+            Touch();
+        }
+
+        // Recorded rather than thrown: an exception must not unwind through the native frame.
+        private void Touch()
+        {
+            try
+            {
+                LastViewportWidth = GraphicsDevice.Viewport.Width;
+            }
+            catch (Exception exception)
+            {
+                Failure ??= exception;
+            }
+        }
+    }
+
+    private sealed class DeviceComponentHost : CNA.Game
+    {
+        public DeviceComponentHost()
+        {
+            Component = new DeviceComponent(this);
+            Components.Add(Component);
+        }
+
+        public DeviceComponent Component { get; }
+    }
+
     private sealed class CountingComponent(CNA.Game game) : CNA.GameComponent(game)
     {
         public int Updates { get; private set; }
