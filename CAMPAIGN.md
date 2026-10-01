@@ -125,6 +125,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-103 | `PhoneApplicationService.StartupMode`: a desktop process is always launched | done |
 | CSX-105 | A song whose `.wma` was converted plays from the `.ogg`/`.oga`/`.qoa` beside it, as in CNA and FNA | done |
 | CSX-106 | `ActivatedEventArgs.IsApplicationInstancePreserved` (Windows Phone 7.5): a desktop process always is | done |
+| CSX-107 | A stock effect in `SpriteBatch.Begin` places the sprites in 3D, as XNA does (CNA Task 1120) | done |
 
 ### P9 -- portability
 
@@ -134,6 +135,18 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-107: sprites in a 3D world
+
+Kosmic Warz played with a black sky: its starfield is a DPSF `Sprite3DBillboard` particle system, which
+draws through `SpriteBatch.Begin(..., AlphaTestEffect)` with each particle's view-space position as
+`(x, y)` and its depth as `layerDepth` -- XNA 4.0's way to place sprites in 3D, as 3D text with
+`BasicEffect` is. XNA applies the custom effect's pass after the sprite effect's, so the stock effect's
+vertex shader places the sprite; CNA kept its 2D sprite projection, and the sprites were clipped.
+Fixed in CNA (Task 1120, `7661f6981`): such a batch is drawn as XNA draws it, through the device.
+`CompatLayerIntegrationTests.CompatSpriteBatch_AStockEffectPlacesTheSprites` reads it back (a one-unit
+sprite through an orthographic [-1, 1] projection covers the top-right quadrant; before the fix
+nothing). Integration 228/228 on CNA `7661f6981`. Kosmic Warz now draws its stars.
 
 ### 2026-10-02 -- CSX-106: Kosmic Warz's activation handler
 

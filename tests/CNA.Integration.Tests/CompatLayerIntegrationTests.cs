@@ -688,6 +688,62 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         });
     }
 
+    /// <summary>
+    /// A stock effect handed to <c>SpriteBatch.Begin</c> places the sprites: its vertex shader
+    /// transforms them, with <c>layerDepth</c> as their z. This is XNA 4.0's way to draw sprites in a
+    /// 3D world -- DPSF's 3D billboard particles (Kosmic Warz's starfield) and 3D text both use it.
+    /// Through an orthographic projection over [-1, 1], a one-unit sprite at the origin covers the
+    /// target's top-right quadrant; drawn in pixel space instead it covers one pixel.
+    /// </summary>
+    [global::CNA.Integration.Tests.Native3DFact]
+    public void CompatSpriteBatch_AStockEffectPlacesTheSprites()
+    {
+        InsideACompatFrame(game =>
+        {
+            GraphicsDevice device = game.GraphicsDevice;
+            const int size = 32;
+            using var target = new RenderTarget2D(device, size, size);
+            using var batch = new SpriteBatch(device);
+            using var white = new Texture2D(device, 1, 1);
+            white.SetData(new[] { Color.White });
+            using var effect = new AlphaTestEffect(device)
+            {
+                Projection = Matrix.CreateOrthographicOffCenter(-1, 1, -1, 1, 0, 10),
+                VertexColorEnabled = true,
+            };
+
+            device.SetRenderTarget(target);
+            device.Clear(Color.Black);
+            batch.Begin(SpriteSortMode.Deferred, BlendState.Opaque, null, DepthStencilState.None, RasterizerState.CullNone, effect);
+            batch.Draw(white, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, -1f);
+            batch.End();
+            device.SetRenderTarget(null);
+
+            var pixels = new Color[size * size];
+            target.GetData(pixels);
+            var rows = new System.Text.StringBuilder();
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    rows.Append(pixels[(y * size) + x].R > 127 ? '#' : '.');
+                }
+
+                rows.AppendLine();
+            }
+
+            output.WriteLine(rows.ToString());
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    bool lit = pixels[(y * size) + x].R > 127;
+                    Assert.True(lit == (x >= size / 2 && y < size / 2), $"pixel {x},{y} is {(lit ? "lit" : "dark")}");
+                }
+            }
+        });
+    }
+
     [global::CNA.Integration.Tests.NativeFact]
     public void CompatGraphicsResource_DisposingSeesDisposedStateAndFiresOnceAfterHandlerFailure()
     {
