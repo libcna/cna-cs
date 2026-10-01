@@ -13,3 +13,7 @@ using System.Runtime.CompilerServices;
 // modifier a test's own ContentTypeReader subclass has to use, which is not a thing a test should
 // have to know.
 [assembly: InternalsVisibleTo("cna-content-survey")]
+//
+// CNA.PhoneCompat is the opt-in Windows Phone SDK assembly: its PhoneApplicationService raises
+// Launching at the internal Game.Started (cna-cs CSX-097).
+[assembly: InternalsVisibleTo("CNA.PhoneCompat")]

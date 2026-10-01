@@ -115,6 +115,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-094 | A Windows Phone title's `IsFullScreen` is its status bar, not a desktop display mode | done |
 | CSX-095 | A Windows Phone title's player one is the phone: connected, Back on Escape | done |
 | CSX-096 | File paths given to XNA's file-taking APIs resolve as on Windows (separators, case) | done |
+| CSX-097 | `Microsoft.Phone.Shell.PhoneApplicationService` in CNA.PhoneCompat: Launching after LoadContent, Closing at exit | done |
 
 ### P9 -- portability
 
@@ -124,6 +125,21 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-097: a phone game's application lifetime, off the phone
+
+cna-cs-samples NinjAcademy (CSSAMPLE-065) did not compile: it subscribes to
+`PhoneApplicationService.Current.Launching/Activated/Deactivated` in its constructor and keeps its
+tombstone in `State`. A Windows Phone SDK type, so it goes into the opt-in CNA.PhoneCompat, not the
+facade: `Microsoft.Phone.Shell.PhoneApplicationService` (Current, State, the four lifetime events)
+and their event-args types, nothing else. Launching is raised once the game runs -- after
+`Initialize` and `LoadContent`, before the first `Update`, because the sample's handler plays music
+through the AudioManager it creates in `Initialize` -- through an internal `Game.Started` the facade
+grants CNA.PhoneCompat; Closing on the game's `Exiting`. Nothing tombstones a desktop process, so
+Activated/Deactivated are never raised. `PhoneApplicationServiceTests` (order of Initialize,
+LoadContent, Launching, Update, and Closing last; one State per process). api-compat 256/256, 0
+diagnostics. NinjAcademy: 0 px from the C++ campaign's menu frame, exits 0 on Escape (its Back).
+Integration 222.
 
 ### 2026-10-01 -- CSX-096: XNA's file-taking APIs read paths as Windows did
 

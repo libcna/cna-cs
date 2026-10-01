@@ -30,6 +30,15 @@ public class Game : IDisposable
     internal CNA.Game Backend => _backend;
 
     /// <summary>
+    /// Raised once per run, after <c>Initialize</c> and <c>LoadContent</c> and before the first
+    /// <c>Update</c>: where a Windows Phone title's <c>PhoneApplicationService.Launching</c> arrived
+    /// on the phone (CNA.PhoneCompat, cna-cs CSX-097). Not XNA API.
+    /// </summary>
+    internal static event Action<Game>? Started;
+
+    private bool _startedRaised;
+
+    /// <summary>
     /// The XNA manager is owned by its game for native-lifetime purposes. CNA's native game tears
     /// down devices while it is being destroyed; dispose the facade's subscriptions before that
     /// boundary so native can never call a freed managed event context during game destruction.
@@ -446,6 +455,12 @@ public class Game : IDisposable
 
         protected override void Update(CNA.GameTime gameTime)
         {
+            if (!_owner._startedRaised)
+            {
+                _owner._startedRaised = true;
+                Started?.Invoke(_owner);
+            }
+
             _owner.ComponentsUpdatedThisFrame = false;
             _owner.Update(GameTime.FromFramework(gameTime));
         }
