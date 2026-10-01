@@ -265,7 +265,7 @@ public class ContentManager : IDisposable
 
         if (typeof(T) == typeof(Graphics.Model))
         {
-            Graphics.Model model;
+            Graphics.Model? model;
             try
             {
                 model = LoadCompatModel(backend, assetName);
@@ -276,6 +276,11 @@ public class ContentManager : IDisposable
                 // anything. A model naming one of the game's own -- a Tag of the game's type, as
                 // HeightmapCollision's HeightMapInfo -- is read through the managed ContentReader,
                 // which resolves it as XNA does.
+                model = null;
+            }
+
+            if (model is null)
+            {
                 using Stream stream = OpenStream(assetName);
                 return ManagedXnbContentLoader.Load<T>(this, stream, assetName, recordDisposableObject);
             }
@@ -355,13 +360,19 @@ public class ContentManager : IDisposable
         Graphics.GraphicsDevice.FromFramework(backend.GraphicsDevice) ?? throw new ContentLoadException(
             $"Cannot load {typeof(T).Name} '{assetName}': no compatible GraphicsDevice is available.");
 
-    private Graphics.Model LoadCompatModel(CNA.Content.ContentManager backend, string assetName)
+    /// <returns>The model, or null when its tags hold values only the managed
+    /// <see cref="ContentReader"/> constructs as XNA's types (see
+    /// <see cref="Graphics.XnbCompatModelBuilder.TagsAreXnaTyped"/>).</returns>
+    private Graphics.Model? LoadCompatModel(CNA.Content.ContentManager backend, string assetName)
     {
         Graphics.GraphicsDevice graphicsDevice = RequireGraphicsDevice<Graphics.Model>(backend, assetName);
 
         if (File.Exists(CNA.Content.XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".xnb")))
         {
-            return Graphics.XnbCompatModelBuilder.Build(graphicsDevice, backend.LoadXnbModelData(assetName), this);
+            CNA.Content.Xnb.XnbModelData data = backend.LoadXnbModelData(assetName);
+            return Graphics.XnbCompatModelBuilder.TagsAreXnaTyped(data)
+                ? Graphics.XnbCompatModelBuilder.Build(graphicsDevice, data, this)
+                : null;
         }
 
         if (File.Exists(CNA.Content.XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".cnj")))

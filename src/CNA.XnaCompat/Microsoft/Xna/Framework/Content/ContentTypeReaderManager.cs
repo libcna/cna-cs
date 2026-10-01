@@ -3,7 +3,13 @@ namespace Microsoft.Xna.Framework.Content;
 /// <summary>Builds and owns the type-reader table for one XNB asset.</summary>
 public sealed class ContentTypeReaderManager
 {
-    private readonly Dictionary<Type, ContentTypeReader> _readersByTargetType = [];
+    // XNA's manager starts every table with a reader for System.Object, so a collection of
+    // object -- Dictionary<string, object> as TrianglePicking's model tag -- finds an element
+    // reader without the file declaring one (cna-cs CSX-093).
+    private readonly Dictionary<Type, ContentTypeReader> _readersByTargetType = new()
+    {
+        [typeof(object)] = new ObjectReader(),
+    };
 
     internal ContentTypeReaderManager()
     {
@@ -112,6 +118,22 @@ public sealed class ContentTypeReaderManager
                 $"Failed to construct content type reader '{serializedName}' while loading '{assetName}'.", exception);
         }
     }
+}
+
+/// <summary>
+/// XNA's <c>ObjectReader</c>: the element reader for <c>object</c>. A value of a reference type is
+/// always read through the type id in front of it, never by its declared element reader, so this
+/// one's <c>Read</c> is unreachable and throws as XNA's does.
+/// </summary>
+internal sealed class ObjectReader : ContentTypeReader
+{
+    internal ObjectReader()
+        : base(typeof(object))
+    {
+    }
+
+    protected internal override object Read(ContentReader input, object? existingInstance) =>
+        throw new NotSupportedException();
 }
 
 /// <summary>Reader factories for primitive XNA reader names commonly nested in custom assets.</summary>

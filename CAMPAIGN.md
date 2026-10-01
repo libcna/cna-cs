@@ -111,6 +111,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-090 | `base.Update`/`base.Draw` update and draw the components at the call, once per frame | done |
 | CSX-091 | `Color.Transparent` is XNA 4.0's transparent black | done |
 | CSX-092 | The managed model path reads every stock effect XNA writes into a model | done |
+| CSX-093 | A model tag holds XNA's types, and `object` has an element reader | done |
 
 ### P9 -- portability
 
@@ -120,6 +121,23 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-093: model tags hold XNA's types
+
+cna-cs-samples TrianglePicking (CSSAMPLE-048) died in its first `Update`: "Unable to cast object of
+type 'CNA.BoundingSphere' to type 'Microsoft.Xna.Framework.BoundingSphere'". Its processor tags each
+model with a `Dictionary<string, object>` holding a `BoundingSphere` and a `Vector3[]`, all built-in
+readers, so the facade took CNA.Framework's parser -- which builds math values as `CNA.*` types,
+right for CNA's API -- and handed its tag object to the game unchanged. The facade now checks the
+parsed model's, meshes' and parts' tags: anything typed from CNA.Framework (directly, as an array
+or generic element, or inside a collection) sends the model through the managed `ContentReader`,
+whose readers construct XNA's types (CSX-089's path). That path then needed XNA's `ObjectReader`:
+XNA's `ContentTypeReaderManager` starts every table with a reader for `System.Object` (IL: the
+static constructor registers it; its `Read` throws, since a reference-typed value is always read
+through its own type id), and `DictionaryReader<string, object>` asks for it. Both in
+`CompatModelTagTests.Model_WhoseTagHoldsXnaMathValues_ReturnsThemAsXnaTypes` (the real asset's
+reader names; fails without the change). TrianglePicking: 1 px from its C++ port. Unit 272 + 638,
+integration 219.
 
 ### 2026-10-01 -- CSX-092: the managed model path reads the skinned and other stock effects
 

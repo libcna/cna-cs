@@ -37,6 +37,98 @@ namespace Microsoft.Xna.Framework.Graphics;
 /// </summary>
 internal static class XnbCompatModelBuilder
 {
+    private static readonly System.Reflection.Assembly FrameworkAssembly = typeof(CNA.Vector3).Assembly;
+
+    /// <summary>
+    /// Whether every tag in the model holds only values a game reads back as XNA's own types
+    /// (cna-cs CSX-093). CNA.Framework's parser builds a tag's math values as <c>CNA.*</c> types,
+    /// which is right for CNA's API and wrong here: TrianglePicking reads
+    /// <c>(BoundingSphere)tagData["BoundingSphere"]</c> from a <c>Dictionary&lt;string, object&gt;</c>.
+    /// A model that fails this is read through the managed <c>ContentReader</c> instead, whose
+    /// readers construct XNA's types as XNA's do.
+    /// </summary>
+    internal static bool TagsAreXnaTyped(XnbModelData data)
+    {
+        if (!IsXnaTyped(data.Tag, 0))
+        {
+            return false;
+        }
+
+        foreach (XnbMeshData mesh in data.Meshes)
+        {
+            if (!IsXnaTyped(mesh.Tag, 0))
+            {
+                return false;
+            }
+
+            foreach (XnbMeshPartData part in mesh.Parts)
+            {
+                if (!IsXnaTyped(part.Tag, 0))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsXnaTyped(object? value, int depth)
+    {
+        if (value is null or string)
+        {
+            return true;
+        }
+
+        // A tag graph this deep is not something the pipeline writes; the managed reader is the
+        // safe answer rather than a guess.
+        if (depth > 32 || NamesFrameworkType(value.GetType()))
+        {
+            return false;
+        }
+
+        if (value is System.Collections.IDictionary dictionary)
+        {
+            foreach (System.Collections.DictionaryEntry entry in dictionary)
+            {
+                if (!IsXnaTyped(entry.Key, depth + 1) || !IsXnaTyped(entry.Value, depth + 1))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if (value is System.Collections.IEnumerable items)
+        {
+            foreach (object? item in items)
+            {
+                if (!IsXnaTyped(item, depth + 1))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool NamesFrameworkType(Type type)
+    {
+        if (type.Assembly == FrameworkAssembly)
+        {
+            return true;
+        }
+
+        if (type.HasElementType && NamesFrameworkType(type.GetElementType()!))
+        {
+            return true;
+        }
+
+        return type.IsGenericType && type.GetGenericArguments().Any(NamesFrameworkType);
+    }
+
     internal static Model Build(
         GraphicsDevice graphicsDevice, XnbModelData data, Content.ContentManager contentManager)
     {
