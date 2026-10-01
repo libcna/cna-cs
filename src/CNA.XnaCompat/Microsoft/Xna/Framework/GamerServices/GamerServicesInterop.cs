@@ -101,6 +101,33 @@ internal static class GamerServicesInterop
 
     internal static byte Bool(bool value) => value ? (byte)1 : (byte)0;
 
+    /// <summary>A caller-initialized structure: its size and version 1 in the leading header.</summary>
+    internal static unsafe T Versioned<T>()
+        where T : unmanaged
+    {
+        T value = default;
+        uint* header = (uint*)&value;
+        header[0] = (uint)sizeof(T);
+        header[1] = 1;
+        return value;
+    }
+
+    internal static CnaMatrix ToNative(Matrix value) => new(
+        value.M11, value.M12, value.M13, value.M14,
+        value.M21, value.M22, value.M23, value.M24,
+        value.M31, value.M32, value.M33, value.M34,
+        value.M41, value.M42, value.M43, value.M44);
+
+    internal static Matrix FromNative(CnaMatrix value) => new(
+        value.M11, value.M12, value.M13, value.M14,
+        value.M21, value.M22, value.M23, value.M24,
+        value.M31, value.M32, value.M33, value.M34,
+        value.M41, value.M42, value.M43, value.M44);
+
+    internal static CnaVector3 ToNative(Vector3 value) => new(value.X, value.Y, value.Z);
+
+    internal static Vector3 FromNative(CnaVector3 value) => new(value.X, value.Y, value.Z);
+
     /// <summary>
     /// An exception thrown by game code a native callback ran -- an <c>AsyncCallback</c>, a
     /// <c>SignedIn</c> handler. It cannot unwind through native, so it goes to the running game,
@@ -232,18 +259,26 @@ internal sealed class GamerServicesAsyncResult : IAsyncResult
     /// <summary>XNA's End checks: the right Begin, and only once.</summary>
     internal static GamerServicesAsyncResult ForEnd(IAsyncResult result, object owner, string parameterName = "result")
     {
-        ArgumentNullException.ThrowIfNull(result, parameterName);
-        if (result is not GamerServicesAsyncResult ours || !ReferenceEquals(ours.Owner, owner))
-        {
-            throw new ArgumentException("The IAsyncResult was not returned by the matching Begin call.", parameterName);
-        }
-
+        GamerServicesAsyncResult ours = ForRepeatableEnd(result, owner, parameterName);
         if (ours.Ended)
         {
             throw new InvalidOperationException("End has already been called for this IAsyncResult.");
         }
 
         ours.Ended = true;
+        return ours;
+    }
+
+    /// <summary>The End checks of an XNA End that may be called more than once for one result
+    /// (<c>AvatarDescription.EndGetFromGamer</c> checks only that the result is its own).</summary>
+    internal static GamerServicesAsyncResult ForRepeatableEnd(IAsyncResult result, object owner, string parameterName = "result")
+    {
+        ArgumentNullException.ThrowIfNull(result, parameterName);
+        if (result is not GamerServicesAsyncResult ours || !ReferenceEquals(ours.Owner, owner))
+        {
+            throw new ArgumentException("The IAsyncResult was not returned by the matching Begin call.", parameterName);
+        }
+
         return ours;
     }
 }

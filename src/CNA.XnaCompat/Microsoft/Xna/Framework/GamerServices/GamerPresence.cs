@@ -36,7 +36,7 @@ public sealed class GamerPresence
 
     private CnaGamerPresence Read()
     {
-        CnaGamerPresence presence = SignedInGamer.Versioned<CnaGamerPresence>();
+        CnaGamerPresence presence = GamerServicesInterop.Versioned<CnaGamerPresence>();
         GamerServicesInterop.Check(Native.cna_signed_in_gamer_get_presence(_gamer.Handle, ref presence), nameof(GamerPresence));
         return presence;
     }

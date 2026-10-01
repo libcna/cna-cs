@@ -64,7 +64,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | --- | --- | --- |
 | CSX-040 | Inventory current CNA GamerServices/Guide/Avatar/Net C API vs XNA 4.0 metadata | done (fbff5e7): 426 routes bound, abi-verify clean |
 | CSX-041 | `Microsoft.Xna.Framework.GamerServices` runtime profile (Gamer, SignedInGamer, Guide, GamerServicesComponent, profiles, achievements, leaderboards) | done: 55/75 of the GS/Net profile exact; rest is CSX-042/043 |
-| CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | todo |
+| CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | done: 58/75 exact, renderer reaches Ready and draws |
 | CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | todo |
 | CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | todo |
 | CSX-045 | Separate opt-in phone compatibility assembly (`Microsoft.Devices` etc.) only where samples need it | todo |
@@ -110,6 +110,24 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-042: Avatar description, animation and renderer
+
+`AvatarDescription`, `AvatarAnimation` and `AvatarRenderer` against the XNA IL, over CNA's native
+avatar routes. XNA semantics kept: a signed-in player's description is one object until that
+avatar changes (slot per player, emptied by the native shared `Changed` event, which is then raised
+with the gamer as sender); `EndGetFromGamer` may be called repeatedly; the description bytes are
+copied out; animation position/length/face/bones are the object's own state, refreshed by `Update`,
+one `BoneTransforms` collection changing in place and readable after `Dispose`; renderer
+transforms and lights are its own fields (initialized from native's defaults, handed to native at
+`Draw`), `BindPose` refuses until `Ready`, `State`/`Draw` refuse after `Dispose`.
+
+Tests (`AvatarTests`, 5): byte round trip and XNA's argument checks; per-player identity through
+Begin/End; animation state after dispose; renderer draws inside a frame; a renderer goes
+Loading -> Ready (116 ms on build-probe) and then exposes a 71-bone bind pose. Not exercised: a
+stored avatar changing under a signed-in player (no test route to change it).
+
+Results: GS/Net profile 58/75 (17 Net types missing), GamerServices integration 12/12.
 
 ### 2026-10-01 -- CSX-040/041: GamerServices and Guide over CNA's native gamer services
 

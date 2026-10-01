@@ -46,7 +46,7 @@ public sealed unsafe class Achievement
 
     private CnaAchievementInfo Info()
     {
-        CnaAchievementInfo info = SignedInGamer.Versioned<CnaAchievementInfo>();
+        CnaAchievementInfo info = GamerServicesInterop.Versioned<CnaAchievementInfo>();
         GamerServicesInterop.Check(Native.cna_achievement_get_info(Handle, ref info), nameof(Achievement));
         return info;
     }

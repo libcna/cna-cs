@@ -38,7 +38,7 @@ public sealed class SignedInGamer : Gamer
     {
         get
         {
-            CnaGameDefaults defaults = Versioned<CnaGameDefaults>();
+            CnaGameDefaults defaults = GamerServicesInterop.Versioned<CnaGameDefaults>();
             GamerServicesInterop.Check(Native.cna_signed_in_gamer_get_game_defaults(Handle, ref defaults), nameof(GameDefaults));
             return new GameDefaults(defaults);
         }
@@ -48,7 +48,7 @@ public sealed class SignedInGamer : Gamer
     {
         get
         {
-            CnaGamerPrivileges privileges = Versioned<CnaGamerPrivileges>();
+            CnaGamerPrivileges privileges = GamerServicesInterop.Versioned<CnaGamerPrivileges>();
             GamerServicesInterop.Check(Native.cna_signed_in_gamer_get_privileges(Handle, ref privileges), nameof(Privileges));
             return new GamerPrivileges(privileges);
         }
@@ -175,16 +175,6 @@ public sealed class SignedInGamer : Gamer
     {
         GamerServicesInterop.Check(query(Handle, out byte value), operation);
         return value != 0;
-    }
-
-    internal static unsafe T Versioned<T>()
-        where T : unmanaged
-    {
-        T value = default;
-        uint* header = (uint*)&value;
-        header[0] = (uint)sizeof(T);
-        header[1] = 1;
-        return value;
     }
 
     private static unsafe CnaHandle Subscribe(bool signedIn)

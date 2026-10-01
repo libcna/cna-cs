@@ -87,7 +87,7 @@ public sealed unsafe class GamerProfile : IDisposable
 
     private CnaGamerProfileInfo Info()
     {
-        CnaGamerProfileInfo info = SignedInGamer.Versioned<CnaGamerProfileInfo>();
+        CnaGamerProfileInfo info = GamerServicesInterop.Versioned<CnaGamerProfileInfo>();
         GamerServicesInterop.Check(Native.cna_gamer_profile_get_info(Handle, ref info), nameof(GamerProfile));
         return info;
     }

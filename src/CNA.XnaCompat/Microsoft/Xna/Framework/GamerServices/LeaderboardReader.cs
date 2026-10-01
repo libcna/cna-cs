@@ -32,7 +32,7 @@ public sealed unsafe class LeaderboardReader : IDisposable
     {
         get
         {
-            CnaLeaderboardIdentity identity = SignedInGamer.Versioned<CnaLeaderboardIdentity>();
+            CnaLeaderboardIdentity identity = GamerServicesInterop.Versioned<CnaLeaderboardIdentity>();
             GamerServicesInterop.Check(Native.cna_leaderboard_reader_get_identity(Handle, ref identity), nameof(LeaderboardIdentity));
             return FromNative(identity);
         }
@@ -117,7 +117,7 @@ public sealed unsafe class LeaderboardReader : IDisposable
 
     internal static unsafe CnaLeaderboardIdentity ToNative(LeaderboardIdentity identity)
     {
-        CnaLeaderboardIdentity native = SignedInGamer.Versioned<CnaLeaderboardIdentity>();
+        CnaLeaderboardIdentity native = GamerServicesInterop.Versioned<CnaLeaderboardIdentity>();
         native.GameMode = identity.GameMode;
         byte[] key = Encoding.UTF8.GetBytes(identity.Key ?? string.Empty);
         if (key.Length >= 64)
@@ -173,7 +173,7 @@ public sealed unsafe class LeaderboardReader : IDisposable
 
     private CnaLeaderboardReaderInfo Info()
     {
-        CnaLeaderboardReaderInfo info = SignedInGamer.Versioned<CnaLeaderboardReaderInfo>();
+        CnaLeaderboardReaderInfo info = GamerServicesInterop.Versioned<CnaLeaderboardReaderInfo>();
         GamerServicesInterop.Check(Native.cna_leaderboard_reader_get_info(Handle, ref info), nameof(LeaderboardReader));
         return info;
     }

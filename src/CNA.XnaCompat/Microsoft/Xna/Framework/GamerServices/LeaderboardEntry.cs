@@ -39,7 +39,7 @@ public sealed class LeaderboardEntry
     {
         get
         {
-            CnaLeaderboardEntryInfo info = SignedInGamer.Versioned<CnaLeaderboardEntryInfo>();
+            CnaLeaderboardEntryInfo info = GamerServicesInterop.Versioned<CnaLeaderboardEntryInfo>();
             GamerServicesInterop.Check(Native.cna_leaderboard_entry_get_info(Handle, ref info), nameof(Rating));
             return info.Rating;
         }

@@ -39,7 +39,7 @@ public sealed unsafe class FriendGamer : Gamer
 
     private CnaFriendGamerInfo Info()
     {
-        CnaFriendGamerInfo info = SignedInGamer.Versioned<CnaFriendGamerInfo>();
+        CnaFriendGamerInfo info = GamerServicesInterop.Versioned<CnaFriendGamerInfo>();
         GamerServicesInterop.Check(Native.cna_friend_gamer_get_info(Handle, ref info), nameof(FriendGamer));
         return info;
     }
