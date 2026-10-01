@@ -239,6 +239,24 @@ unsupported/platform behavior. Omission is not justified merely because FNA omit
 
 ## Binary compatibility
 
-Already-compiled Microsoft XNA binaries expect Microsoft's assembly identities and strong names.
-CNA.NET does not counterfeit those identities. Recompile source against `CNA.XnaCompat`; investigate
-binary compatibility separately without sacrificing source/API/behavior correctness.
+A game is compiled from source against `CNA.XnaCompat`. A library it uses may instead be a binary
+compiled against XNA 4.0 -- physics, animation or UI middleware shipped as a `.dll` -- and that
+binary runs unchanged:
+
+- `src/XnaAssemblies` holds XNA's ten runtime assemblies by their simple names and version 4.0.0.0,
+  each containing only type forwards to `CNA.XnaCompat` (every public XNA 4.0 type; generated and
+  checked by `tools/xna-assemblies` against XNA's reference assemblies), as FNA's `abi/` assemblies
+  are for FNA. They carry no public key: CNA.NET does not take Microsoft's identity. The runtime
+  resolves the binary's XNA references through them by name.
+- The C# compiler, unlike the runtime, compares public key tokens. `CNA.XnaCompat.targets` therefore
+  hands it a copy of such a library (`CnaRetargetXnaReferences`) whose XNA references carry no
+  token, and the build ships that copy. An x86-only library -- the XNA Game Library default -- is
+  also marked loadable by a 64-bit process there, which a pure-IL assembly allows. Nothing else in
+  the library changes.
+
+A game references the XNA-named projects its libraries name. Evidence: `XnaBinaryLibraryTests` (an
+x86 library compiled with XNA Game Studio 4.0's own reference assemblies) and resonance-game, which
+plays with its own prebuilt BEPUphysics v1.0.0. A library that is 32-bit by construction stays so:
+that BEPUphysics' x86 build lays out a struct with an object field at offset 20, which no 64-bit
+runtime loads; the game's Windows Phone build of the same release is what runs. An XNA game's own
+`.exe` is not run as a binary.

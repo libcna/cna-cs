@@ -15,6 +15,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CNA.XnaCompat\CNA.XnaCompat.csproj" />
+    <!-- XnaBinaryLibraryTests: a library compiled against XNA 4.0, and the XNA identities it names. -->
+    <ProjectReference Include="..\..\src\XnaAssemblies\Microsoft.Xna.Framework\Microsoft.Xna.Framework.csproj" />
+    <ProjectReference Include="..\..\src\XnaAssemblies\Microsoft.Xna.Framework.Game\Microsoft.Xna.Framework.Game.csproj" />
+    <ProjectReference Include="..\..\src\XnaAssemblies\Microsoft.Xna.Framework.Graphics\Microsoft.Xna.Framework.Graphics.csproj" />
+    <Reference Include="XnaBinaryLibrary" HintPath="..\fixtures\xna-binary-library\XnaBinaryLibrary.dll" />
   </ItemGroup>
 
   <ItemGroup>

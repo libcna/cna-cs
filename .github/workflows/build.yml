@@ -275,6 +275,13 @@ jobs:
           --reference-dir "$env:RUNNER_TEMP\xna-references"
           --profile tools/api-compat/profiles/xna40-gamerservices-net.json
           --target src/CNA.XnaCompat/bin/Release/net8.0/CNA.XnaCompat.dll --format github
+      - run: dotnet build tools/xna-assemblies/CNA.XnaAssemblies.csproj -c Release --no-restore -m:1
+      - name: Require XNA-named assemblies forwarding every XNA 4.0 public type
+        shell: pwsh
+        run: >-
+          dotnet run --project tools/xna-assemblies/CNA.XnaAssemblies.csproj -c Release --no-build --
+          --xna "$env:RUNNER_TEMP\xna-references"
+          --facade src/CNA.XnaCompat/bin/Release/net8.0/CNA.XnaCompat.dll
 
   strict-api-status:
     runs-on: ubuntu-latest

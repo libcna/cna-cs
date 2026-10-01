@@ -61,6 +61,28 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNA.GamerServices.Integrati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNA.PhoneCompat", "src\CNA.PhoneCompat\CNA.PhoneCompat.csproj", "{960D6ABA-02F0-4331-AAC9-4E46955BAEA9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework", "src\XnaAssemblies\Microsoft.Xna.Framework\Microsoft.Xna.Framework.csproj", "{F52B1F36-B8C0-4F92-9A67-F3CA045C41AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Avatar", "src\XnaAssemblies\Microsoft.Xna.Framework.Avatar\Microsoft.Xna.Framework.Avatar.csproj", "{2739BF5E-FE9F-4A53-8997-ED0E85110F81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Game", "src\XnaAssemblies\Microsoft.Xna.Framework.Game\Microsoft.Xna.Framework.Game.csproj", "{A7EC62AD-3FAD-46AF-BBD4-DD7DC70ECDC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.GamerServices", "src\XnaAssemblies\Microsoft.Xna.Framework.GamerServices\Microsoft.Xna.Framework.GamerServices.csproj", "{640CEF81-102B-41EF-B7AA-BB91936F3ED4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Graphics", "src\XnaAssemblies\Microsoft.Xna.Framework.Graphics\Microsoft.Xna.Framework.Graphics.csproj", "{77E12E33-2BB5-4586-9EDF-E86CC14D9890}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Input.Touch", "src\XnaAssemblies\Microsoft.Xna.Framework.Input.Touch\Microsoft.Xna.Framework.Input.Touch.csproj", "{4C9E27FF-3A57-4BEF-8635-5ECF32384914}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Net", "src\XnaAssemblies\Microsoft.Xna.Framework.Net\Microsoft.Xna.Framework.Net.csproj", "{5256EDE9-18EF-412E-81CA-6E5A8AB0D8E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Storage", "src\XnaAssemblies\Microsoft.Xna.Framework.Storage\Microsoft.Xna.Framework.Storage.csproj", "{1061F4AD-1880-44FF-96AF-A1D34969DE0C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Video", "src\XnaAssemblies\Microsoft.Xna.Framework.Video\Microsoft.Xna.Framework.Video.csproj", "{6E116CE0-2964-481A-BDDB-F5068F8B86CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Xna.Framework.Xact", "src\XnaAssemblies\Microsoft.Xna.Framework.Xact\Microsoft.Xna.Framework.Xact.csproj", "{1F4AC86F-E286-498F-9442-936EA4A02738}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNA.XnaAssemblies", "tools\xna-assemblies\CNA.XnaAssemblies.csproj", "{5C277C95-C5E7-4676-918F-41B93538E9A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -155,6 +177,50 @@ Global
 		{960D6ABA-02F0-4331-AAC9-4E46955BAEA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{960D6ABA-02F0-4331-AAC9-4E46955BAEA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{960D6ABA-02F0-4331-AAC9-4E46955BAEA9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F52B1F36-B8C0-4F92-9A67-F3CA045C41AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F52B1F36-B8C0-4F92-9A67-F3CA045C41AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F52B1F36-B8C0-4F92-9A67-F3CA045C41AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F52B1F36-B8C0-4F92-9A67-F3CA045C41AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2739BF5E-FE9F-4A53-8997-ED0E85110F81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2739BF5E-FE9F-4A53-8997-ED0E85110F81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2739BF5E-FE9F-4A53-8997-ED0E85110F81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2739BF5E-FE9F-4A53-8997-ED0E85110F81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7EC62AD-3FAD-46AF-BBD4-DD7DC70ECDC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7EC62AD-3FAD-46AF-BBD4-DD7DC70ECDC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7EC62AD-3FAD-46AF-BBD4-DD7DC70ECDC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7EC62AD-3FAD-46AF-BBD4-DD7DC70ECDC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{640CEF81-102B-41EF-B7AA-BB91936F3ED4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{640CEF81-102B-41EF-B7AA-BB91936F3ED4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{640CEF81-102B-41EF-B7AA-BB91936F3ED4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{640CEF81-102B-41EF-B7AA-BB91936F3ED4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{77E12E33-2BB5-4586-9EDF-E86CC14D9890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77E12E33-2BB5-4586-9EDF-E86CC14D9890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77E12E33-2BB5-4586-9EDF-E86CC14D9890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77E12E33-2BB5-4586-9EDF-E86CC14D9890}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C9E27FF-3A57-4BEF-8635-5ECF32384914}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C9E27FF-3A57-4BEF-8635-5ECF32384914}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C9E27FF-3A57-4BEF-8635-5ECF32384914}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C9E27FF-3A57-4BEF-8635-5ECF32384914}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5256EDE9-18EF-412E-81CA-6E5A8AB0D8E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5256EDE9-18EF-412E-81CA-6E5A8AB0D8E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5256EDE9-18EF-412E-81CA-6E5A8AB0D8E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5256EDE9-18EF-412E-81CA-6E5A8AB0D8E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1061F4AD-1880-44FF-96AF-A1D34969DE0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1061F4AD-1880-44FF-96AF-A1D34969DE0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1061F4AD-1880-44FF-96AF-A1D34969DE0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1061F4AD-1880-44FF-96AF-A1D34969DE0C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E116CE0-2964-481A-BDDB-F5068F8B86CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E116CE0-2964-481A-BDDB-F5068F8B86CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E116CE0-2964-481A-BDDB-F5068F8B86CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E116CE0-2964-481A-BDDB-F5068F8B86CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F4AC86F-E286-498F-9442-936EA4A02738}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F4AC86F-E286-498F-9442-936EA4A02738}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F4AC86F-E286-498F-9442-936EA4A02738}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F4AC86F-E286-498F-9442-936EA4A02738}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C277C95-C5E7-4676-918F-41B93538E9A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C277C95-C5E7-4676-918F-41B93538E9A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C277C95-C5E7-4676-918F-41B93538E9A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C277C95-C5E7-4676-918F-41B93538E9A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -180,6 +246,17 @@ Global
 		{0EB3E33B-CAF6-4B43-A11C-520734A62673} = {0B4A16A4-71B3-4603-BD4F-8B4325ABC15F}
 		{95EAB60B-0BCC-40B3-A403-0E1F2DF8B7DB} = {0B4A16A4-71B3-4603-BD4F-8B4325ABC15F}
 		{960D6ABA-02F0-4331-AAC9-4E46955BAEA9} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{F52B1F36-B8C0-4F92-9A67-F3CA045C41AA} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{2739BF5E-FE9F-4A53-8997-ED0E85110F81} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{A7EC62AD-3FAD-46AF-BBD4-DD7DC70ECDC7} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{640CEF81-102B-41EF-B7AA-BB91936F3ED4} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{77E12E33-2BB5-4586-9EDF-E86CC14D9890} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{4C9E27FF-3A57-4BEF-8635-5ECF32384914} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{5256EDE9-18EF-412E-81CA-6E5A8AB0D8E6} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{1061F4AD-1880-44FF-96AF-A1D34969DE0C} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{6E116CE0-2964-481A-BDDB-F5068F8B86CF} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{1F4AC86F-E286-498F-9442-936EA4A02738} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{5C277C95-C5E7-4676-918F-41B93538E9A6} = {C69A1311-EA6A-466E-BEF7-FAEBDEB77FA1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {99B27873-E001-4C1E-B5E4-777769287C5A}

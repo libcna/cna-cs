@@ -33,4 +33,195 @@
     </ItemGroup>
   </Target>
 
+  <!--
+    A library compiled against XNA 4.0 (middleware a game ships as a .dll) names XNA's assemblies
+    with Microsoft's public key token, 842cf8be1de50553. At run time the XNA-named forwarders
+    (src/XnaAssemblies) answer those names whatever the token; the C# compiler does not unify a
+    strong-named reference with an assembly that has no key, and CNA.NET does not take Microsoft's.
+    So the compiler is handed a copy of such a library whose XNA references carry no token, and the
+    copy is what the build ships. A library built for x86 only (32BITREQUIRED, the XNA Game Library
+    default) is also marked loadable by a 64-bit process in the copy: .NET refuses it otherwise,
+    and a pure-IL assembly has nothing 32-bit in it to keep. The library's own bytes are not
+    otherwise touched. A reference that needs neither change is left as it is.
+  -->
+  <UsingTask TaskName="CnaRetargetXnaReferences" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <References ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <OutputDirectory ParameterType="System.String" Required="true" />
+      <Originals ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+      <Retargeted ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <!-- ECMA-335 read by hand: an inline task compiles against netstandard, which has no
+           System.Reflection.Metadata. Only what locates the AssemblyRef table is measured. -->
+      <Code Type="Class" Language="cs"><![CDATA[
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+public sealed class CnaRetargetXnaReferences : Task
+{
+    [Required] public ITaskItem[] References { get; set; }
+    [Required] public string OutputDirectory { get; set; }
+    [Output] public ITaskItem[] Originals { get; set; }
+    [Output] public ITaskItem[] Retargeted { get; set; }
+
+    static readonly byte[] XnaToken = { 0x84, 0x2c, 0xf8, 0xbe, 0x1d, 0xe5, 0x05, 0x53 };
+
+    public override bool Execute()
+    {
+        var originals = new List<ITaskItem>();
+        var retargeted = new List<ITaskItem>();
+        foreach (ITaskItem reference in References)
+        {
+            string path = reference.GetMetadata("HintPath");
+            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+                continue;
+            byte[] image = File.ReadAllBytes(path);
+            bool changed;
+            try { changed = Retarget(image); }
+            catch (Exception) { continue; }   // not a managed assembly this reader understands
+            if (!changed)
+                continue;
+            Directory.CreateDirectory(OutputDirectory);
+            string copy = Path.GetFullPath(Path.Combine(OutputDirectory, Path.GetFileName(path)));
+            if (!File.Exists(copy) || !File.ReadAllBytes(copy).SequenceEqual(image))
+                File.WriteAllBytes(copy, image);
+            var item = new TaskItem(reference);
+            item.SetMetadata("HintPath", copy);
+            originals.Add(reference);
+            retargeted.Add(item);
+            Log.LogMessage(MessageImportance.Normal, "CNA.NET: " + Path.GetFileName(path) + " is compiled against XNA 4.0; building against " + copy);
+        }
+        Originals = originals.ToArray();
+        Retargeted = retargeted.ToArray();
+        return true;
+    }
+
+    static int U16(byte[] b, int at) { return b[at] | (b[at + 1] << 8); }
+    static int U32(byte[] b, int at) { return U16(b, at) | (U16(b, at + 2) << 16); }
+
+    /// Clears the XNA public key token of every Microsoft.Xna.Framework* reference, and
+    /// 32BITREQUIRED on a pure-IL image. True when anything changed.
+    static bool Retarget(byte[] b)
+    {
+        int pe = U32(b, 0x3C);
+        if (U32(b, pe) != 0x00004550) return false;
+        int sections = U16(b, pe + 6), optional = pe + 24, optionalSize = U16(b, pe + 20);
+        int directories = optional + (U16(b, optional) == 0x20B ? 112 : 96);
+        int sectionTable = optional + optionalSize;
+        Func<int, int> file = rva => {
+            for (int i = 0; i < sections; i++) {
+                int s = sectionTable + i * 40, va = U32(b, s + 12), size = Math.Max(U32(b, s + 8), U32(b, s + 16));
+                if (rva >= va && rva < va + size) return rva - va + U32(b, s + 20);
+            }
+            throw new InvalidDataException("RVA outside every section");
+        };
+        int cliRva = U32(b, directories + 14 * 8);
+        if (cliRva == 0) return false;
+        int cli = file(cliRva), root = file(U32(b, cli + 8));
+        if (U32(b, root) != 0x424A5342) return false;
+        int streamCount = U16(b, root + 16 + U32(b, root + 12) + 2), header = root + 16 + U32(b, root + 12) + 4;
+        int tables = -1, strings = -1, blobs = -1;
+        for (int i = 0; i < streamCount; i++) {
+            int offset = U32(b, header), end = header + 8;
+            while (b[end] != 0) end++;
+            string name = Encoding.ASCII.GetString(b, header + 8, end - header - 8);
+            if (name == "#~" || name == "#-") tables = root + offset;
+            else if (name == "#Strings") strings = root + offset;
+            else if (name == "#Blob") blobs = root + offset;
+            header = (end + 4) & ~3;
+        }
+        if (tables < 0 || strings < 0 || blobs < 0) return false;
+
+        int heapSizes = b[tables + 6];
+        int str = (heapSizes & 1) != 0 ? 4 : 2, guid = (heapSizes & 2) != 0 ? 4 : 2, blob = (heapSizes & 4) != 0 ? 4 : 2;
+        long valid = (long)U32(b, tables + 8) | ((long)U32(b, tables + 12) << 32);
+        var rows = new int[64];
+        int at = tables + 24;
+        for (int t = 0; t < 64; t++)
+            if ((valid >> t & 1) != 0) { rows[t] = U32(b, at); at += 4; }
+        if ((heapSizes & 0x40) != 0) at += 4;   // extra data
+        Func<int, int> index = t => rows[t] < 0x10000 ? 2 : 4;
+        Func<int, int[], int> coded = (tagBits, ts) => ts.Max(t => rows[t]) < (1 << (16 - tagBits)) ? 2 : 4;
+        int typeDefOrRef = coded(2, new[] { 0x02, 0x01, 0x1B });
+        int hasConstant = coded(2, new[] { 0x04, 0x08, 0x17 });
+        int hasCustomAttribute = coded(5, new[] { 0x06, 0x04, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x00, 0x0E, 0x17, 0x14, 0x11, 0x1A, 0x1B, 0x20, 0x23, 0x26, 0x27, 0x28, 0x2A, 0x2C, 0x2B });
+        int hasFieldMarshal = coded(1, new[] { 0x04, 0x08 });
+        int hasDeclSecurity = coded(2, new[] { 0x02, 0x06, 0x20 });
+        int memberRefParent = coded(3, new[] { 0x02, 0x01, 0x1A, 0x06, 0x1B });
+        int hasSemantics = coded(1, new[] { 0x14, 0x17 });
+        int methodDefOrRef = coded(1, new[] { 0x06, 0x0A });
+        int memberForwarded = coded(1, new[] { 0x04, 0x06 });
+        int customAttributeType = coded(3, new[] { 0x06, 0x0A });
+        int resolutionScope = coded(2, new[] { 0x00, 0x1A, 0x23, 0x01 });
+        int[] rowSize = {
+            2 + str + 3 * guid,                                         // 0x00 Module
+            resolutionScope + 2 * str,                                  // 0x01 TypeRef
+            4 + 2 * str + typeDefOrRef + index(0x04) + index(0x06),     // 0x02 TypeDef
+            index(0x04), 2 + str + blob, index(0x06),                   // 0x03 FieldPtr, 0x04 Field, 0x05 MethodPtr
+            8 + str + blob + index(0x08), index(0x08), 4 + str,         // 0x06 MethodDef, 0x07 ParamPtr, 0x08 Param
+            index(0x02) + typeDefOrRef,                                 // 0x09 InterfaceImpl
+            memberRefParent + str + blob,                               // 0x0A MemberRef
+            2 + hasConstant + blob,                                     // 0x0B Constant
+            hasCustomAttribute + customAttributeType + blob,            // 0x0C CustomAttribute
+            hasFieldMarshal + blob, 2 + hasDeclSecurity + blob,         // 0x0D FieldMarshal, 0x0E DeclSecurity
+            6 + index(0x02), 4 + index(0x04), blob,                     // 0x0F ClassLayout, 0x10 FieldLayout, 0x11 StandAloneSig
+            index(0x02) + index(0x14), index(0x14),                     // 0x12 EventMap, 0x13 EventPtr
+            2 + str + typeDefOrRef,                                     // 0x14 Event
+            index(0x02) + index(0x17), index(0x17), 2 + str + blob,     // 0x15 PropertyMap, 0x16 PropertyPtr, 0x17 Property
+            2 + index(0x06) + hasSemantics,                             // 0x18 MethodSemantics
+            index(0x02) + 2 * methodDefOrRef, str, blob,                // 0x19 MethodImpl, 0x1A ModuleRef, 0x1B TypeSpec
+            2 + memberForwarded + str + index(0x1A),                    // 0x1C ImplMap
+            4 + index(0x04), 8, 4,                                      // 0x1D FieldRVA, 0x1E ENCLog, 0x1F ENCMap
+            16 + blob + 2 * str, 4, 12,                                 // 0x20 Assembly, 0x21 AssemblyProcessor, 0x22 AssemblyOS
+            12 + 2 * blob + 2 * str,                                    // 0x23 AssemblyRef
+        };
+        for (int t = 0; t < 0x23; t++) at += rows[t] * rowSize[t];
+
+        bool changed = false;
+        for (int r = 0; r < rows[0x23]; r++, at += rowSize[0x23]) {
+            int blobIndex = blob == 2 ? U16(b, at + 12) : U32(b, at + 12);
+            int nameIndex = str == 2 ? U16(b, at + 12 + blob) : U32(b, at + 12 + blob);
+            int nameEnd = strings + nameIndex;
+            while (b[nameEnd] != 0) nameEnd++;
+            string name = Encoding.UTF8.GetString(b, strings + nameIndex, nameEnd - strings - nameIndex);
+            int length = b[blobs + blobIndex];   // a token is 8 bytes: a one-byte length prefix
+            if (name.StartsWith("Microsoft.Xna.Framework", StringComparison.Ordinal) && length == 8 &&
+                XnaToken.SequenceEqual(b.Skip(blobs + blobIndex + 1).Take(8))) {
+                Array.Clear(b, at + 12, blob);
+                changed = true;
+            }
+        }
+
+        const int ilOnly = 0x1, requires32Bit = 0x2;
+        int flags = U32(b, cli + 16);
+        if ((flags & ilOnly) != 0 && (flags & requires32Bit) != 0) {
+            b[cli + 16] = (byte)(b[cli + 16] & ~requires32Bit);
+            changed = true;
+        }
+        return changed;
+    }
+}
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="CnaRetargetXnaReferences" BeforeTargets="ResolveAssemblyReferences" Condition="'@(Reference)' != ''">
+    <CnaRetargetXnaReferences References="@(Reference)" OutputDirectory="$(IntermediateOutputPath)cna-xna-references/">
+      <Output TaskParameter="Originals" ItemName="_CnaXnaCompiledReference" />
+      <Output TaskParameter="Retargeted" ItemName="_CnaXnaRetargetedReference" />
+    </CnaRetargetXnaReferences>
+    <ItemGroup>
+      <Reference Remove="@(_CnaXnaCompiledReference)" />
+      <Reference Include="@(_CnaXnaRetargetedReference)" />
+      <FileWrites Include="@(_CnaXnaRetargetedReference->'%(HintPath)')" />
+    </ItemGroup>
+  </Target>
+
 </Project>

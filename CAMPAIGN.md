@@ -117,6 +117,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-096 | File paths given to XNA's file-taking APIs resolve as on Windows (separators, case) | done |
 | CSX-097 | `Microsoft.Phone.Shell.PhoneApplicationService` in CNA.PhoneCompat: Launching after LoadContent, Closing at exit | done |
 | CSX-098 | A Windows Phone title off a phone gets the mouse as a finger, as in the emulator | done |
+| CSX-099 | A library compiled against XNA 4.0 runs unchanged: XNA-named forwarders, no Microsoft key | done |
 | CSX-100 | A game's own worker thread loads content, creates resources and moves their data, as XNA allowed | done |
 | CSX-101 | ABI 0.39.0: the rest of a loading thread's calls run on the game thread (CNA CBIND-141) | done |
 
@@ -128,6 +129,25 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-099: XNA-compiled libraries run unchanged
+
+resonance-game ships BEPUphysics v1.0.0 as binaries compiled against XNA 4.0, so its references
+name `Microsoft.Xna.Framework, Version=4.0.0.0, PublicKeyToken=842cf8be1de50553`. `src/XnaAssemblies`
+now holds XNA's ten runtime assemblies by simple name and version, each only type forwards to
+CNA.XnaCompat -- all 325 public XNA 4.0 types; `tools/xna-assemblies` generates them from XNA's
+reference assemblies and CI checks them (the counts match FNA's `abi/` exactly). They carry no public
+key, keeping docs/xna-compatibility.md's rule that CNA.NET does not take Microsoft's identity. The
+runtime binds by name regardless of the token (measured); the C# compiler does not, so
+`CNA.XnaCompat.targets` gains `CnaRetargetXnaReferences`: a referenced library that names XNA by its
+token is built against a copy without the token, and an x86-only pure-IL library (the XNA Game
+Library default, which .NET 8 x64 refuses outright) is marked loadable in that copy. The task reads
+ECMA-335 tables itself because an inline task compiles against netstandard. `XnaBinaryLibraryTests`
+run an x86 library compiled with XNA Game Studio 4.0's own reference assemblies (math, a vertex
+type implementing `IVertexType`, a `ContentTypeReader<T>` loading an XNB); before, the same binary
+failed all four with BadImageFormatException. resonance-game plays with its prebuilt Windows Phone
+BEPUphysics (its x86 build lays out a struct with an object field at offset 20, which no 64-bit
+runtime loads). XnaCompat 285, Framework 644, Integration 224.
 
 ### 2026-10-01 -- CSX-101: the rest of a loading thread, through CNA
 
