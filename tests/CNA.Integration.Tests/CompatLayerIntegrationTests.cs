@@ -505,6 +505,115 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         });
     }
 
+    /// <summary>
+    /// A SpriteBatch's states become the device's, where XNA's <c>SetRenderState</c> assigns them
+    /// through the device properties: at End for a deferred batch -- an empty one included -- and at
+    /// Begin for an Immediate one, null meaning the slot's default.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatSpriteBatch_AppliedStatesAreTheDevicesStates()
+    {
+        InsideACompatFrame(game =>
+        {
+            GraphicsDevice device = game.GraphicsDevice;
+            using var batch = new SpriteBatch(device);
+
+            batch.Begin();
+            Assert.Same(BlendState.Opaque, device.BlendState);
+            batch.End();
+            Assert.Same(BlendState.AlphaBlend, device.BlendState);
+            Assert.Same(DepthStencilState.None, device.DepthStencilState);
+            Assert.Same(RasterizerState.CullCounterClockwise, device.RasterizerState);
+            Assert.Same(SamplerState.LinearClamp, device.SamplerStates[0]);
+
+            batch.Begin(
+                SpriteSortMode.Immediate,
+                BlendState.Additive,
+                SamplerState.PointWrap,
+                DepthStencilState.DepthRead,
+                RasterizerState.CullNone);
+            Assert.Same(BlendState.Additive, device.BlendState);
+            Assert.Same(DepthStencilState.DepthRead, device.DepthStencilState);
+            Assert.Same(RasterizerState.CullNone, device.RasterizerState);
+            Assert.Same(SamplerState.PointWrap, device.SamplerStates[0]);
+            batch.End();
+            Assert.Same(BlendState.Additive, device.BlendState);
+        });
+    }
+
+    /// <summary>
+    /// <c>BlendFactor</c>, <c>MultiSampleMask</c> and <c>ReferenceStencil</c> override a field of the
+    /// active state object, so -- as in XNA, whose setters mark that state dirty -- assigning the same
+    /// object again re-applies it rather than being skipped.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGraphicsDevice_ReassigningAnOverriddenStateReappliesIt()
+    {
+        InsideACompatFrame(game =>
+        {
+            GraphicsDevice device = game.GraphicsDevice;
+            device.BlendState = BlendState.Opaque;
+            device.DepthStencilState = DepthStencilState.Default;
+
+            device.BlendFactor = Color.Red;
+            device.MultiSampleMask = 0x0F;
+            device.ReferenceStencil = 5;
+            Assert.Equal(Color.Red, device.BlendFactor);
+            Assert.Equal(5, device.ReferenceStencil);
+
+            device.BlendState = BlendState.Opaque;
+            device.DepthStencilState = DepthStencilState.Default;
+            Assert.Equal(BlendState.Opaque.BlendFactor, device.BlendFactor);
+            Assert.Equal(BlendState.Opaque.MultiSampleMask, device.MultiSampleMask);
+            Assert.Equal(DepthStencilState.Default.ReferenceStencil, device.ReferenceStencil);
+        });
+    }
+
+    /// <summary>
+    /// The state a game assigns after a SpriteBatch reaches the renderer. The device's cache used to
+    /// keep the pre-batch <c>Opaque</c> while native held the batch's <c>AlphaBlend</c>, so the
+    /// game's own <c>BlendState = Opaque</c> was skipped as already set -- the ColorReplacement
+    /// sample's tyres, whose texels carry alpha 0, blended away. A transparent black quad over the
+    /// clear colour reads back black under Opaque and as the clear colour under AlphaBlend.
+    /// </summary>
+    [global::CNA.Integration.Tests.Native3DFact]
+    public void CompatSpriteBatch_StateAssignedAfterABatchReachesTheRenderer()
+    {
+        InsideACompatFrame(game =>
+        {
+            GraphicsDevice device = game.GraphicsDevice;
+            using var target = new RenderTarget2D(device, 4, 4);
+            using var batch = new SpriteBatch(device);
+            using var effect = new BasicEffect(device) { VertexColorEnabled = true };
+            var transparent = new Color(0, 0, 0, 0);
+            var quad = new[]
+            {
+                new VertexPositionColor(new Vector3(-1, -1, 0), transparent),
+                new VertexPositionColor(new Vector3(-1, 1, 0), transparent),
+                new VertexPositionColor(new Vector3(1, -1, 0), transparent),
+                new VertexPositionColor(new Vector3(1, -1, 0), transparent),
+                new VertexPositionColor(new Vector3(-1, 1, 0), transparent),
+                new VertexPositionColor(new Vector3(1, 1, 0), transparent),
+            };
+
+            device.SetRenderTarget(target);
+            device.Clear(Color.CornflowerBlue);
+            device.BlendState = BlendState.Opaque;
+            batch.Begin();
+            batch.End();
+            device.BlendState = BlendState.Opaque;
+            device.RasterizerState = RasterizerState.CullNone;
+            effect.CurrentTechnique.Passes[0].Apply();
+            device.DrawUserPrimitives(PrimitiveType.TriangleList, quad, 0, 2);
+            device.SetRenderTarget(null);
+
+            var pixels = new Color[16];
+            target.GetData(pixels);
+            output.WriteLine($"centre {pixels[5]}");
+            Assert.All(pixels, pixel => Assert.Equal(transparent, pixel));
+        });
+    }
+
     [global::CNA.Integration.Tests.NativeFact]
     public void CompatGraphicsResource_DisposingSeesDisposedStateAndFiresOnceAfterHandlerFailure()
     {

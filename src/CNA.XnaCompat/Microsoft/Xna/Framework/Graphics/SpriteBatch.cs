@@ -7,6 +7,11 @@ namespace Microsoft.Xna.Framework.Graphics;
 public class SpriteBatch : GraphicsResource
 {
     private readonly CNA.Graphics.SpriteBatch _inner;
+    private SpriteSortMode _sortMode;
+    private BlendState? _blendState;
+    private SamplerState? _samplerState;
+    private DepthStencilState? _depthStencilState;
+    private RasterizerState? _rasterizerState;
 
     public SpriteBatch(GraphicsDevice graphicsDevice)
         : base(graphicsDevice)
@@ -14,23 +19,33 @@ public class SpriteBatch : GraphicsResource
         _inner = new CNA.Graphics.SpriteBatch(graphicsDevice.Framework);
     }
 
-    public void Begin() => _inner.Begin();
+    public void Begin()
+    {
+        _inner.Begin();
+        Begun(SpriteSortMode.Deferred, null, null, null, null);
+    }
 
-    public void Begin(SpriteSortMode sortMode, BlendState? blendState) =>
+    public void Begin(SpriteSortMode sortMode, BlendState? blendState)
+    {
         _inner.Begin((CNA.Graphics.SpriteSortMode)(int)sortMode, blendState?.Framework);
+        Begun(sortMode, blendState, null, null, null);
+    }
 
     public void Begin(
         SpriteSortMode sortMode,
         BlendState? blendState,
         SamplerState? samplerState,
         DepthStencilState? depthStencilState,
-        RasterizerState? rasterizerState) =>
+        RasterizerState? rasterizerState)
+    {
         _inner.Begin(
             (CNA.Graphics.SpriteSortMode)(int)sortMode,
             blendState?.Framework,
             samplerState?.Framework,
             depthStencilState?.Framework,
             rasterizerState?.Framework);
+        Begun(sortMode, blendState, samplerState, depthStencilState, rasterizerState);
+    }
 
     public void Begin(
         SpriteSortMode sortMode,
@@ -38,7 +53,8 @@ public class SpriteBatch : GraphicsResource
         SamplerState? samplerState,
         DepthStencilState? depthStencilState,
         RasterizerState? rasterizerState,
-        Effect? effect) =>
+        Effect? effect)
+    {
         _inner.Begin(
             (CNA.Graphics.SpriteSortMode)(int)sortMode,
             blendState?.Framework,
@@ -46,6 +62,8 @@ public class SpriteBatch : GraphicsResource
             depthStencilState?.Framework,
             rasterizerState?.Framework,
             effect?.Inner);
+        Begun(sortMode, blendState, samplerState, depthStencilState, rasterizerState);
+    }
 
     public void Begin(
         SpriteSortMode sortMode,
@@ -54,7 +72,8 @@ public class SpriteBatch : GraphicsResource
         DepthStencilState? depthStencilState,
         RasterizerState? rasterizerState,
         Effect? effect,
-        Matrix transformMatrix) =>
+        Matrix transformMatrix)
+    {
         _inner.Begin(
             (CNA.Graphics.SpriteSortMode)(int)sortMode,
             blendState?.Framework,
@@ -63,8 +82,43 @@ public class SpriteBatch : GraphicsResource
             rasterizerState?.Framework,
             effect?.Inner,
             transformMatrix.ToFramework());
+        Begun(sortMode, blendState, samplerState, depthStencilState, rasterizerState);
+    }
 
-    public void End() => _inner.End();
+    public void End()
+    {
+        _inner.End();
+        if (_sortMode != SpriteSortMode.Immediate)
+        {
+            NoteRenderState();
+        }
+    }
+
+    /// <summary>
+    /// Remembers the states this batch applies, null meaning XNA's default for the slot. Native
+    /// applies them where XNA's <c>SetRenderState</c> does -- at Begin for Immediate, at End for
+    /// every other mode, an empty batch included -- and the device's cache is told at the same point.
+    /// </summary>
+    private void Begun(
+        SpriteSortMode sortMode,
+        BlendState? blendState,
+        SamplerState? samplerState,
+        DepthStencilState? depthStencilState,
+        RasterizerState? rasterizerState)
+    {
+        _sortMode = sortMode;
+        _blendState = blendState ?? BlendState.AlphaBlend;
+        _samplerState = samplerState ?? SamplerState.LinearClamp;
+        _depthStencilState = depthStencilState ?? DepthStencilState.None;
+        _rasterizerState = rasterizerState ?? RasterizerState.CullCounterClockwise;
+        if (sortMode == SpriteSortMode.Immediate)
+        {
+            NoteRenderState();
+        }
+    }
+
+    private void NoteRenderState() =>
+        GraphicsDevice.NoteSpriteBatchRenderState(_blendState!, _depthStencilState!, _rasterizerState!, _samplerState!);
 
     public void Draw(Texture2D texture, Vector2 position, Color color) =>
         _inner.Draw(Backend(texture), position.ToFramework(), color.ToFramework());

@@ -73,7 +73,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-050 | Requalify existing checked-in C# rows against migrated binding | todo |
+| CSX-050 | Requalify existing checked-in C# rows against migrated binding | doing: 28/30 build, run and exit cleanly; ColorReplacement's missing tyres were CSX-083 |
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | todo |
@@ -101,6 +101,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | doing: ABI 0.37.0 names the canonical exception (CNA e9dd5d879); GS/Net/Avatar/Guide, PhoneCompat and the audio/media/content boundaries samples catch around re-raise it; other facade calls still leak CnaException |
 | CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | done; samples' Directory.Build.targets import + per-sample XnaProfile is part of CSX-050 |
+| CSX-083 | Device state cache coherent with what native SpriteBatch applies; BlendFactor/MultiSampleMask/ReferenceStencil dirty the state as XNA's setters do | done |
 
 ### P9 -- portability
 
@@ -110,6 +111,33 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-083: the device's state cache follows native SpriteBatch
+
+ColorReplacement (CSX-050) drew the car without tyres or headlights. A probe drawing the same model
+to the back buffer drew them; adding one `SpriteBatch` string made them vanish. The facade's
+`BlendState`/`DepthStencilState`/`RasterizerState`/`SamplerStates[i]` setters skip an assignment of
+the object they last set, as XNA's do -- but XNA's SpriteBatch assigns its states through those
+same properties (`SetRenderState`), while here native End applies them itself. The cache kept the
+game's `Opaque`, native held the batch's `AlphaBlend`, and the sample's next `BlendState = Opaque`
+was skipped; the tyre texels carry alpha 0 (Car_0's alpha is the colour-replacement mask) and blended
+away. The C++ port has no such cache and drew them.
+
+Fix: the compat SpriteBatch tells the device the states native applied (End for deferred modes,
+an empty batch included; Begin for Immediate; null meaning the slot default), keeping XNA's object
+identity (`Assert.Same(BlendState.AlphaBlend, device.BlendState)` after End). The CNA layer has no
+early-out but cached its getters, so its SpriteBatch drops them for the next read to query native.
+`BlendFactor`/`MultiSampleMask` and `ReferenceStencil` now dirty the blend and depth-stencil state as
+XNA's setters do, so re-assigning the same object re-applies it. The early-out stays: re-assigning
+the active, disposed state object must remain a no-op (XNA IL; native mirrors it).
+
+Tests: `CompatSpriteBatch_StateAssignedAfterABatchReachesTheRenderer` (transparent black quad under
+`Opaque` after a batch reads back black; CornflowerBlue before the fix),
+`CompatSpriteBatch_AppliedStatesAreTheDevicesStates`,
+`CompatGraphicsDevice_ReassigningAnOverriddenStateReappliesIt`,
+`SpriteBatch_EndLeavesTheBatchStatesOnTheDevice` (CNA layer); each fails with its mechanism removed.
+Results: integration 210/210, framework 631/631, XnaCompat 272/272. ColorReplacement re-captured: tyres
+present, 2.24% of pixels differ from the C++ capture (rotation phase at the edges) against 5.25% before.
 
 ### 2026-10-01 -- CSX-080: XNA's exception types, from the exception native actually threw
 

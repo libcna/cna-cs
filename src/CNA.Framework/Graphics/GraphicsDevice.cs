@@ -1194,6 +1194,15 @@ public class GraphicsDevice : IDisposable
         }
     }
 
+    /// <summary>Drops the cached blend, depth-stencil and rasterizer states after native code --
+    /// a <see cref="SpriteBatch"/> -- changed them, so the next read asks the device again.</summary>
+    internal void ForgetRenderStates()
+    {
+        _blendState = null;
+        _depthStencilState = null;
+        _rasterizerState = null;
+    }
+
     protected virtual BlendState QueryBlendState()
     {
         var native = CnaBlendState.Versioned();

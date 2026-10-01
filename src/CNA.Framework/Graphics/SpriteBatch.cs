@@ -87,10 +87,13 @@ public class SpriteBatch : IDisposable
     /// </summary>
     internal void ForceGlyphQuadTextForTesting() => _nativeTextRefused = true;
     private bool _hasBegun;
+    private readonly GraphicsDevice _graphicsDevice;
+    private SpriteSortMode _sortMode;
 
     public SpriteBatch(GraphicsDevice graphicsDevice)
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
+        _graphicsDevice = graphicsDevice;
 
         CnaResult result = Native.cna_sprite_batch_create(graphicsDevice.ResolveNativeDeviceHandle(), out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(SpriteBatch));
@@ -109,7 +112,7 @@ public class SpriteBatch : IDisposable
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(Begin));
 
-        BeginSucceeded();
+        BeginSucceeded(SpriteSortMode.Deferred);
     }
 
     /// <summary>Matches real XNA's <c>Begin(SpriteSortMode, BlendState)</c>.</summary>
@@ -151,7 +154,7 @@ public class SpriteBatch : IDisposable
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(Begin));
 
-        BeginSucceeded();
+        BeginSucceeded(sortMode);
     }
 
     /// <summary>Matches real XNA's six-argument <c>Begin</c>, with a custom
@@ -201,7 +204,7 @@ public class SpriteBatch : IDisposable
         GC.KeepAlive(effect);
         CnaException.ThrowIfFailed(result, nameof(Begin));
 
-        BeginSucceeded();
+        BeginSucceeded(sortMode);
     }
 
     /// <summary>Shared precondition. Extracted when the four state-taking overloads landed, so
@@ -217,9 +220,16 @@ public class SpriteBatch : IDisposable
     }
 
     /// <summary>Shared post-condition. Runs only after the native call succeeded, so a failed
-    /// <c>Begin</c> leaves the batch closed rather than half-open.</summary>
-    private void BeginSucceeded()
+    /// <c>Begin</c> leaves the batch closed rather than half-open. An Immediate batch has applied
+    /// its render states by now; see <see cref="End"/> for every other mode.</summary>
+    private void BeginSucceeded(SpriteSortMode sortMode)
     {
+        _sortMode = sortMode;
+        if (sortMode == SpriteSortMode.Immediate)
+        {
+            _graphicsDevice.ForgetRenderStates();
+        }
+
         _commandBuffer.Clear();
         _pendingText.Clear();
         _referencedTextures.Clear();
@@ -489,6 +499,13 @@ public class SpriteBatch : IDisposable
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(End));
         _hasBegun = false;
+
+        // Native End applies the batch's blend, depth-stencil and rasterizer states to the device
+        // in every mode but Immediate, an empty batch included, as XNA's End does.
+        if (_sortMode != SpriteSortMode.Immediate)
+        {
+            _graphicsDevice.ForgetRenderStates();
+        }
     }
 
     /// <summary>

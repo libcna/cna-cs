@@ -209,6 +209,32 @@ public class GraphicsIntegrationTests(ITestOutputHelper output, NativeGameFixtur
         });
     }
 
+    /// <summary>
+    /// Native End applies a deferred batch's states to the device, an empty batch included, so the
+    /// device's state getters report them afterwards instead of what was set before the batch.
+    /// </summary>
+    [NativeFact]
+    public void SpriteBatch_EndLeavesTheBatchStatesOnTheDevice()
+    {
+        fixture.InsideAFrameWithDevice(device =>
+        {
+            using var batch = new SpriteBatch(device);
+            device.BlendState = BlendState.Opaque;
+            device.DepthStencilState = DepthStencilState.Default;
+            device.RasterizerState = RasterizerState.CullNone;
+
+            batch.Begin();
+            batch.End();
+
+            Assert.Equal(Blend.InverseSourceAlpha, device.BlendState.ColorDestinationBlend);
+            Assert.False(device.DepthStencilState.DepthBufferEnable);
+            Assert.Equal(CullMode.CullCounterClockwiseFace, device.RasterizerState.CullMode);
+            device.BlendState = BlendState.Opaque;
+            device.DepthStencilState = DepthStencilState.Default;
+            device.RasterizerState = RasterizerState.CullCounterClockwise;
+        });
+    }
+
     /// <summary>Adapter enumeration, which reaches native through the ambient game rather than
     /// through a device handle the caller holds. A different code path from everything above.</summary>
     [NativeFact]

@@ -13,6 +13,8 @@ public class GraphicsDevice : IDisposable
     private readonly CNA.Graphics.GraphicsDevice _framework;
     private BlendState _blendState;
     private DepthStencilState _depthStencilState;
+    private bool _blendStateDirty;
+    private bool _depthStencilStateDirty;
     private RasterizerState _rasterizerState;
     private readonly SamplerStateCollection _samplerStates;
     private readonly SamplerStateCollection _vertexSamplerStates;
@@ -184,16 +186,27 @@ public class GraphicsDevice : IDisposable
 
     public bool IsDisposed => _disposed || _framework.IsDisposed;
 
+    /// <summary>Overrides one field of the active blend state, so -- as in XNA -- assigning that
+    /// same <see cref="BlendState"/> object again applies it again instead of being skipped.</summary>
     public int MultiSampleMask
     {
         get => _framework.MultiSampleMask;
-        set => _framework.MultiSampleMask = value;
+        set
+        {
+            _framework.MultiSampleMask = value;
+            _blendStateDirty = true;
+        }
     }
 
+    /// <summary>The depth-stencil counterpart of <see cref="MultiSampleMask"/>.</summary>
     public int ReferenceStencil
     {
         get => _framework.ReferenceStencil;
-        set => _framework.ReferenceStencil = value;
+        set
+        {
+            _framework.ReferenceStencil = value;
+            _depthStencilStateDirty = true;
+        }
     }
 
     private EventHandler<EventArgs>? _disposing;
@@ -443,7 +456,7 @@ public class GraphicsDevice : IDisposable
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            if (ReferenceEquals(value, _blendState))
+            if (ReferenceEquals(value, _blendState) && !_blendStateDirty)
             {
                 return;
             }
@@ -451,6 +464,7 @@ public class GraphicsDevice : IDisposable
             value.Bind(this);
             _framework.BlendState = value.Framework;
             _blendState = value;
+            _blendStateDirty = false;
         }
     }
 
@@ -460,7 +474,7 @@ public class GraphicsDevice : IDisposable
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            if (ReferenceEquals(value, _depthStencilState))
+            if (ReferenceEquals(value, _depthStencilState) && !_depthStencilStateDirty)
             {
                 return;
             }
@@ -468,6 +482,7 @@ public class GraphicsDevice : IDisposable
             value.Bind(this);
             _framework.DepthStencilState = value.Framework;
             _depthStencilState = value;
+            _depthStencilStateDirty = false;
         }
     }
 
@@ -486,6 +501,30 @@ public class GraphicsDevice : IDisposable
             _framework.RasterizerState = value.Framework;
             _rasterizerState = value;
         }
+    }
+
+    /// <summary>
+    /// Records the states a <see cref="SpriteBatch"/> has just applied in native code. XNA's
+    /// SpriteBatch assigns them through these properties; here native applies them itself, and
+    /// without this the setters above would compare against the state set before the batch and
+    /// skip the game's next assignment of it -- the ColorReplacement sample's opaque tyres, whose
+    /// texels carry alpha 0, then blended away under the batch's AlphaBlend.
+    /// </summary>
+    internal void NoteSpriteBatchRenderState(
+        BlendState blendState,
+        DepthStencilState depthStencilState,
+        RasterizerState rasterizerState,
+        SamplerState samplerState)
+    {
+        blendState.Bind(this);
+        depthStencilState.Bind(this);
+        rasterizerState.Bind(this);
+        _blendState = blendState;
+        _blendStateDirty = false;
+        _depthStencilState = depthStencilState;
+        _depthStencilStateDirty = false;
+        _rasterizerState = rasterizerState;
+        _samplerStates.NoteApplied(0, samplerState);
     }
 
     public SamplerStateCollection SamplerStates => _samplerStates;
@@ -507,7 +546,11 @@ public class GraphicsDevice : IDisposable
     public Color BlendFactor
     {
         get => _framework.BlendFactor.ToCompat();
-        set => _framework.BlendFactor = value.ToFramework();
+        set
+        {
+            _framework.BlendFactor = value.ToFramework();
+            _blendStateDirty = true;
+        }
     }
 
     /// <summary>

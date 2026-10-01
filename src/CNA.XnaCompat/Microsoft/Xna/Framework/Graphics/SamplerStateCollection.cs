@@ -36,6 +36,13 @@ public sealed class SamplerStateCollection
         }
     }
 
+    /// <summary>Records a state native has already applied to <paramref name="index"/>.</summary>
+    internal void NoteApplied(int index, SamplerState value)
+    {
+        value.Bind(_graphicsDevice);
+        _states[index] = value;
+    }
+
     private void ValidateSlot(int index)
     {
         if (index < 0 || index >= _states.Length)
