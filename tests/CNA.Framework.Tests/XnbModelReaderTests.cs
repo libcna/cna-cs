@@ -157,7 +157,12 @@ public class XnbModelReaderTests
             sharedResourceCount: 0,
             writeRoot: w => w.Write7BitEncodedInt(1));
 
-        Assert.Throws<ContentLoadException>(() => reader.ReadRootObjectAndResolveSharedResources());
+        // The typed refusal (CSX-089), which a layer with a managed ContentReader reads itself;
+        // still a ContentLoadException for every other caller.
+        XnbUnsupportedReaderException refusal = Assert.Throws<XnbUnsupportedReaderException>(
+            () => reader.ReadRootObjectAndResolveSharedResources());
+        Assert.IsAssignableFrom<ContentLoadException>(refusal);
+        Assert.Equal("Microsoft.Xna.Framework.Content.SomeReaderThisProjectDoesNotSupport", refusal.ReaderName);
     }
 
     [Fact]
