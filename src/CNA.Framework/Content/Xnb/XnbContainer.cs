@@ -74,7 +74,7 @@ internal static class XnbContainer
         ArgumentNullException.ThrowIfNull(rootDirectory);
         ArgumentNullException.ThrowIfNull(assetName);
 
-        string path = XnaContentPath.ToFilePath(rootDirectory, assetName, ".xnb");
+        string path = XnaContentPath.ToTitleFilePath(rootDirectory, assetName, ".xnb");
         if (!File.Exists(path))
         {
             throw new ContentLoadException($"Content file '{path}' was not found.");

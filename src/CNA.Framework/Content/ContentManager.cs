@@ -506,12 +506,12 @@ public class ContentManager : IDisposable
                 $"Cannot load Model '{assetName}': no GraphicsDevice is available yet (ContentManager.GraphicsDevice is null).");
         }
 
-        if (File.Exists(XnaContentPath.ToFilePath(RootDirectory, assetName, ".xnb")))
+        if (File.Exists(XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".xnb")))
         {
             return XnbModelBuilder.Build(GraphicsDevice, LoadXnbModelData(assetName), this);
         }
 
-        if (File.Exists(XnaContentPath.ToFilePath(RootDirectory, assetName, ".cnj")))
+        if (File.Exists(XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".cnj")))
         {
             return CnjModelBuilder.Build(GraphicsDevice, LoadCnjModelData(assetName));
         }
@@ -529,19 +529,19 @@ public class ContentManager : IDisposable
     {
         ArgumentNullException.ThrowIfNull(assetName);
 
-        string path = XnaContentPath.ToFilePath(RootDirectory, assetName, ".cnj");
+        string path = XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".cnj");
         if (!File.Exists(path))
         {
             throw new ContentLoadException($"Content file '{path}' was not found.");
         }
 
         string json = File.ReadAllText(path);
-        return CnjModelReader.Read(json, assetName, RootDirectory);
+        return CnjModelReader.Read(json, assetName, XnaContentPath.ToTitlePath(RootDirectory));
     }
 
     private string ResolveXnbAssetPath(string assetName)
     {
-        string path = XnaContentPath.ToFilePath(RootDirectory, assetName, ".xnb");
+        string path = XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".xnb");
         if (!File.Exists(path))
         {
             throw new ContentLoadException($"Content file '{path}' was not found.");

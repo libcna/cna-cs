@@ -116,8 +116,33 @@ internal static class XnaContentPath
             .Replace('/', Path.DirectorySeparatorChar);
 
         string exact = Path.Combine(rootDirectory, relative + extension);
-        return File.Exists(exact) ? exact : MatchIgnoringCase(exact);
+
+        // Probed where the file is, not where the process happens to be: XNA's
+        // ContentManager.OpenStream reads a relative content path through TitleContainer, so a
+        // relative root is the title's (XNA IL). The answer keeps the caller's relative form, which
+        // is what TitleContainer.OpenStream takes; only a re-cased file name is carried over.
+        string onDisk = ToTitlePath(exact);
+        if (File.Exists(onDisk))
+        {
+            return exact;
+        }
+        string matched = MatchIgnoringCase(onDisk);
+        return ReferenceEquals(matched, onDisk)
+            ? exact
+            : Path.Combine(Path.GetDirectoryName(exact) ?? string.Empty, Path.GetFileName(matched));
     }
+
+    /// <summary>
+    /// <see cref="ToFilePath"/> as a path the filesystem can open: a content path under a relative
+    /// root is resolved against the title's directory, as XNA resolves it, never the working
+    /// directory -- a game started from anywhere else would otherwise find none of its content.
+    /// </summary>
+    internal static string ToTitleFilePath(string rootDirectory, string assetName, string extension) =>
+        ToTitlePath(ToFilePath(rootDirectory, assetName, extension));
+
+    /// <summary>A path relative to the title, as an absolute one; an absolute path unchanged.</summary>
+    internal static string ToTitlePath(string path) =>
+        Path.IsPathRooted(path) ? path : Path.Combine(AppContext.BaseDirectory, path);
 
     /// <summary>
     /// The file whose name differs from <paramref name="exact"/> only in case, or

@@ -345,12 +345,12 @@ public class ContentManager : IDisposable
     {
         Graphics.GraphicsDevice graphicsDevice = RequireGraphicsDevice<Graphics.Model>(backend, assetName);
 
-        if (File.Exists(CNA.Content.XnaContentPath.ToFilePath(RootDirectory, assetName, ".xnb")))
+        if (File.Exists(CNA.Content.XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".xnb")))
         {
             return Graphics.XnbCompatModelBuilder.Build(graphicsDevice, backend.LoadXnbModelData(assetName), this);
         }
 
-        if (File.Exists(CNA.Content.XnaContentPath.ToFilePath(RootDirectory, assetName, ".cnj")))
+        if (File.Exists(CNA.Content.XnaContentPath.ToTitleFilePath(RootDirectory, assetName, ".cnj")))
         {
             return Graphics.CnjCompatModelBuilder.Build(graphicsDevice, backend.LoadCnjModelData(assetName));
         }

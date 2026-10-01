@@ -105,6 +105,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-084 | SIGTERM/SIGINT during `Run` end the game through its own exit instead of the runtime's `exit()` racing the game thread | done |
 | CSX-085 | A `CNA_Handle` is held as the 64-bit value it is, not narrowed to pointer width (WebAssembly, any 32-bit target) | done |
 | CSX-086 | `Game` lifecycle in XNA's order: `BeginRun` after Initialize/LoadContent, `EndRun` after `Exiting`, `Disposed` raised | done |
+| CSX-087 | Managed content paths resolve against the title directory, as XNA's `ContentManager.OpenStream` does through `TitleContainer`, not the working directory | done for the managed loaders; CNA's native `ContentManager` still resolves a relative root against the working directory (open) |
 
 ### P9 -- portability
 
@@ -114,6 +115,30 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-087: content is found from any working directory
+
+Found on Android, where the working directory is `/`: ColorReplacement's `Model` was "not found"
+although its texture loaded. The managed loaders -- the `Model` probe, `XnbContainer`, `.cnj`
+models and sidecars, media references -- combined `RootDirectory` with the asset name and asked
+`System.IO`, which resolves a relative path against the working directory. XNA's
+`ContentManager.OpenStream` opens a relative content path through `TitleContainer.OpenStream`,
+i.e. under `TitleLocation.Path` (XNA IL), so only the game's directory matters. Reproduced on the
+desktop: SimpleAnimation started from another directory died with "Content file 'tank' was not
+found".
+
+`XnaContentPath.ToFilePath` now probes (and re-cases) under the title directory while keeping the
+caller's relative form, which `TitleContainer.OpenStream` needs; `ToTitleFilePath` gives the path to
+open, used by every loader that touches the filesystem itself. `AudioEngine` is unchanged: XNA's own
+constructor calls `Path.GetFullPath(settingsFile)`, against the working directory.
+`XnaContentPathTitleTests` (non-parallel; moves the working directory away from the title): a
+relative root is probed and re-cased under the title, a title file path opens from anywhere, an
+absolute root is not moved; the first two fail without the change. `CNA.Framework.Tests` 638/638.
+
+Still open: CNA's native `ContentManager` resolves a relative root against the working directory
+too, so from another directory SimpleAnimation now gets past its `Model` and stops at the native
+texture load. The content module cannot see `TitleLocation` (runtime sits above it), so the fix
+needs a layering decision in CNA.
 
 ### 2026-10-01 -- CSX-070: an unchanged XNA sample on Android
 

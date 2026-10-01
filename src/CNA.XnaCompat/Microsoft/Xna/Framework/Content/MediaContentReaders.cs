@@ -121,7 +121,7 @@ internal static class ContentReferencePaths
             ?? throw new ContentLoadException(
                 $"Content asset '{input.AssetName}' references a media file by an empty path.");
 
-        return CNA.Content.XnaContentPath.ToFilePath(
+        return CNA.Content.XnaContentPath.ToTitleFilePath(
             input.ContentManager.RootDirectory, assetName, extension: string.Empty);
     }
 }
