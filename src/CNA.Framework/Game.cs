@@ -585,6 +585,12 @@ public class Game : IDisposable
     private IDisposable RegisterTerminationSignals()
     {
         _terminationRequested = false;
+        // Android and iOS own an app's lifecycle and offer no signal registration; nothing to do.
+        if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+        {
+            return new SignalRegistrations();
+        }
+
         Action<PosixSignalContext> handler = context =>
         {
             if (_terminationRequested)

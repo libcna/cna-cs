@@ -218,6 +218,14 @@ public static class NativeLibraryResolver
             return ($"explicit {DirectoryVariable}", configured);
         }
 
+        // An Android app's native libraries live in its APK's library directory, which only the
+        // dynamic loader knows: it is not the application's base directory, and dlopen finds a
+        // bare file name there. The admission checks below apply to it as to any other.
+        if (OperatingSystem.IsAndroid())
+        {
+            return ("the Android app's native libraries", ["libcna_c_api.so"]);
+        }
+
         List<string> applicationDirectories = [];
         AddUniqueDirectory(applicationDirectories, AppContext.BaseDirectory);
         AddUniqueDirectory(applicationDirectories, Path.GetDirectoryName(typeof(Native).Assembly.Location));

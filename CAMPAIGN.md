@@ -91,7 +91,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-070 | Toolchain check (`~/Android/Sdk`, NDK, .NET android workload), per-ABI CNA build | todo |
+| CSX-070 | Toolchain check (`~/Android/Sdk`, NDK, .NET android workload), per-ABI CNA build | done: NDK 29 builds CNA's C API for x86_64 (CBIND-136); `eng/android` runs an unchanged XNA `Main` on SDL's thread; AimingSample draws, takes touch and Back, survives pause/resume and relaunch on the emulator |
 | CSX-071 | Android host + sample, emulator run: lifecycle, graphics recreation, touch, content, audio | todo |
 
 ### P5b -- behavioural gaps found on the way
@@ -114,6 +114,40 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-070: an unchanged XNA sample on Android
+
+Toolchain: Android SDK `~/Android/Sdk` (NDK 29.0.14206865, emulator 36.5, AVD `Medium_Phone`,
+x86_64 Google APIs image), .NET 11 RC1 with the `android` workload (`~/deps/dotnet11`).
+
+`scripts/Build-AndroidNative.sh` builds CNA's C API with the NDK into `../cna/cmake-build-android-<abi>`
+(OPENGLES3, SDL3, compiled effects, shared C API) and stages, under `build-consumer/cna-native-android`,
+the stripped `libcna_c_api.so` (261 MB with the NDK's default `-g`, 50 MB stripped, 3,208 `cna_*`
+exports), the SDL libraries it needs, `libmain.so` and SDL's Java sources. CNA needed CBIND-136 first:
+no libcurl, nlohmann_json or libopus in the NDK.
+
+How a game runs (`eng/android`): SDL's own `SDLActivity`, unchanged (`com.libcna.cna.CnaGameActivity`
+only gives it a name in the app's namespace; SDL's Java is compiled in, not bound), loads `libmain.so`
+and runs `SDL_main` on its thread, where the window, GL context and event pump belong. Android creates
+the app's `CnaGameApplication` -- and so .NET -- before any activity; it hands `libmain` an
+`UnmanagedCallersOnly` entry, and SDL's thread calls the game's own `Main`, which blocks in `Game.Run`
+as on a desktop. Two managed changes: the resolver loads `libcna_c_api.so` by bare name on Android
+(the APK's library directory is the loader's, not `AppContext.BaseDirectory`), and `Game.Run` skips
+`PosixSignalRegistration`, which throws `PlatformNotSupportedException` on Android and iOS.
+
+cna-cs-samples `scripts/android-sample.sh <Sample>` generates a `net11.0-android` app around a sample's
+unchanged sources and Content (APK assets), installs it on a headless read-only emulator
+(`-no-window -no-audio -gpu swiftshader_indirect`) and captures the screen.
+
+AimingSample (Release, 33 MB APK): content loads, draws at its 853x480 back buffer scaled 2.25x and
+pillarboxed into 2400x1080 -- 0.3% of pixels differ from the desktop capture after scaling back, all
+resampling edges; a long press moves the cat to the touched point (touch -> mouse through the scale);
+Home then relaunch resumes with its textures (SDL keeps the EGL context); a relaunch after exit starts a
+fresh process (SDL ends the old one). A Back tap did not exit: the press is down and up between two
+updates -- fixed in CNA as CBIND-137, which also gives `GamePad(PlayerIndex.One).Buttons.Back`, the
+only exit most phone samples have; after it AimingSample and TouchThumbsticks end on one Back tap.
+Not covered: audio (the emulator runs with `-no-audio`), arm64-v8a (the script builds it, nothing
+ran), a device that loses its GL context.
 
 ### 2026-10-01 -- CSX-063: every checked-in sample in a browser
 

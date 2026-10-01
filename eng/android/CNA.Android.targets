@@ -1,0 +1,31 @@
+<Project>
+  <!--
+    A CNA.NET game on Android. Import from a net11.0-android app project that references the
+    CNA.NET assemblies, has an [Application] deriving from CNA.Android.CnaGameApplication and
+    declares com.libcna.cna.CnaGameActivity as its launcher activity.
+
+    The game runs in SDL's Android activity: SDL's Java sources and the two-line activity are
+    compiled into the app (not bound - nothing in C# derives from them), and libSDL3, libcna_c_api
+    and libmain - the entry shim SDL's thread calls - are packaged per ABI.
+    scripts/Build-AndroidNative.sh builds and stages them.
+  -->
+  <PropertyGroup>
+    <CnaAndroidNativeDirectory Condition="'$(CnaAndroidNativeDirectory)' == ''">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-android</CnaAndroidNativeDirectory>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AndroidJavaSource Include="$(CnaAndroidNativeDirectory)/java/*.java" Bind="false" />
+    <AndroidJavaSource Include="$(MSBuildThisFileDirectory)CnaGameActivity.java" Bind="false" />
+    <AndroidNativeLibrary Include="$(CnaAndroidNativeDirectory)/x86_64/*.so" Abi="x86_64" />
+    <AndroidNativeLibrary Include="$(CnaAndroidNativeDirectory)/arm64-v8a/*.so" Abi="arm64-v8a" />
+    <Compile Include="$(MSBuildThisFileDirectory)CnaGameApplication.cs" />
+    <!-- Content readers are created by reflection; see eng/browser/CNA.Browser.targets. -->
+    <TrimmerRootAssembly Include="CNA.Interop;CNA.Framework;CNA.XnaCompat" />
+  </ItemGroup>
+
+  <Target Name="CnaAndroidRequireNativeLibraries" BeforeTargets="Build">
+    <Error Condition="!Exists('$(CnaAndroidNativeDirectory)/java/SDLActivity.java')"
+           Text="No staged CNA Android libraries at $(CnaAndroidNativeDirectory). Build them with scripts/Build-AndroidNative.sh." />
+  </Target>
+</Project>
