@@ -113,6 +113,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-092 | The managed model path reads every stock effect XNA writes into a model | done |
 | CSX-093 | A model tag holds XNA's types, and `object` has an element reader | done |
 | CSX-094 | A Windows Phone title's `IsFullScreen` is its status bar, not a desktop display mode | done |
+| CSX-095 | A Windows Phone title's player one is the phone: connected, Back on Escape | done |
 
 ### P9 -- portability
 
@@ -122,6 +123,20 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-095: a phone title's player one is the phone
+
+cna-cs-samples UISample (CSSAMPLE-082) could not be left: its main menu exits on
+`IsNewButtonPress(Buttons.Back)` only, the phone's hardware Back button, and a desktop has no pad.
+Nine other phone rows likewise test only `Buttons.Back` and answered no key at all. On Windows
+Phone, `GamePad.GetState(PlayerIndex.One)` is the phone itself -- always connected, Back being the
+hardware button. For a phone title off a phone (`PhoneTitle`, the RuntimeProfile check CSX-094
+introduced, now set by each `Game`), player one reads as connected and Escape as Back, merged into a
+real pad's state when one is present. Escape is the substitute the owner chose on 2026-09-27 for
+the C++ ports of these samples, which edited the games to get it; here the games are unchanged.
+Android and iOS are untouched (CNA CBIND-137 latches the system Back there). Unit:
+`PhoneTitleTests` (4). All ten phone rows now exit 0 on Escape; UISample's requalify exit check
+passes. Unit 281 + 638, integration 220.
 
 ### 2026-10-01 -- CSX-094: a phone title's full screen stays in the game on a desktop
 

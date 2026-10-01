@@ -16,6 +16,7 @@ public class Game : IDisposable
 
     public Game()
     {
+        PhoneTitle.Active = PhoneTitle.IsOffAPhone(GraphicsDeviceManager.ReadRuntimeProfileLine(GetType().Assembly));
         Services = new GameServiceContainer();
         _backend = new BackendGame(this);
         _content = new Content.ContentManager(_backend.Content, Services);

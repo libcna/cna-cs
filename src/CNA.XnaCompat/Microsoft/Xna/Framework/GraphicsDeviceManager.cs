@@ -36,7 +36,7 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
     {
         ArgumentNullException.ThrowIfNull(game);
         Game = game;
-        _phoneTitleWindowed = KeepsFullScreenInTheGame(runtimeProfileLine, OperatingSystem.IsAndroid() || OperatingSystem.IsIOS());
+        _phoneTitleWindowed = PhoneTitle.IsOffAPhone(runtimeProfileLine);
         _backend = new CNA.GraphicsDeviceManager(game.Backend);
         _backend.GraphicsProfile = (CNA.Graphics.GraphicsProfile)(int)ParseGraphicsProfile(runtimeProfileLine);
         _backend.DeviceCreated += (_, args) => OnDeviceCreated(this, args);
@@ -79,8 +79,7 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
     /// on a host that is not a phone. On Android and iOS the platform's full screen is the phone's.
     /// </summary>
     internal static bool KeepsFullScreenInTheGame(string? runtimeProfileLine, bool hostIsPhone) =>
-        !hostIsPhone && runtimeProfileLine is not null &&
-        runtimeProfileLine.StartsWith("WindowsPhone.", StringComparison.Ordinal);
+        PhoneTitle.IsOffAPhone(runtimeProfileLine, hostIsPhone);
 
     internal static Graphics.GraphicsProfile ParseGraphicsProfile(string? line)
     {
