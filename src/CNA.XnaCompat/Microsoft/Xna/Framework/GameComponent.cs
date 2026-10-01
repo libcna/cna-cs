@@ -97,7 +97,7 @@ public class GameComponent : IGameComponent, IUpdateable, IDisposable
             _owner = owner;
         }
 
-        public override void Initialize() => _owner.Initialize();
+        public override void Initialize() => _owner.Game.InitializeComponentOnce(_owner);
 
         public override void Update(CNA.GameTime gameTime) =>
             _owner.Update(GameTime.FromFramework(gameTime));
@@ -113,7 +113,7 @@ public class GameComponent : IGameComponent, IUpdateable, IDisposable
             _owner = owner;
         }
 
-        public override void Initialize() => _owner.Initialize();
+        public override void Initialize() => _owner.Game.InitializeComponentOnce(_owner);
 
         public override void Update(CNA.GameTime gameTime) =>
             _owner.Update(GameTime.FromFramework(gameTime));

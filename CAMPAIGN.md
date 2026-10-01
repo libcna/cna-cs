@@ -106,6 +106,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-085 | A `CNA_Handle` is held as the 64-bit value it is, not narrowed to pointer width (WebAssembly, any 32-bit target) | done |
 | CSX-086 | `Game` lifecycle in XNA's order: `BeginRun` after Initialize/LoadContent, `EndRun` after `Exiting`, `Disposed` raised | done |
 | CSX-087 | Managed content paths resolve against the title directory, as XNA's `ContentManager.OpenStream` does through `TitleContainer`, not the working directory | done for the managed loaders; CNA's native `ContentManager` still resolves a relative root against the working directory (open) |
+| CSX-088 | Components initialized, content included, inside `base.Initialize()` in XNA's order, once | done |
 
 ### P9 -- portability
 
@@ -115,6 +116,27 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-088: components initialize inside base.Initialize(), once
+
+Found with cna-cs-samples SoundAndMusic (CSSAMPLE-060): its `Initialize` calls `base.Initialize()`
+and then reads `button.TextureCenter`, a texture its `Button : DrawableGameComponent` loads in
+`LoadContent` -- a `NullReferenceException` here. XNA's `Game.Initialize` initializes every component
+not yet initialized, front of the list first, then calls `LoadContent` (XNA IL); its
+`DrawableGameComponent.Initialize` loads the component's content on the first call, inside it, when
+a device exists (IL). The facade's `base.Initialize()` only loaded the game's content, and its
+`DrawableGameComponent.Initialize` loaded nothing: components were initialized by CNA's own
+`Game::Initialize`, which runs after the game's override returns, and their content arrived after
+their own `Initialize` bodies.
+
+`Game.Initialize` now initializes each component in collection order (one a component adds while
+initializing included) and then loads content; a per-game set makes the later native pass, through
+the adapters, a no-op, and removal clears a component's mark so re-adding initializes it again.
+`DrawableGameComponent.Initialize` loads content on its first call when an `IGraphicsDeviceService`
+has a device, and skips the one native `LoadContent` that follows (device-recreation reloads still
+pass). `CompatComponentInitializationTests`: a constructor-added component is initialized with its
+content inside `base.Initialize()`, a component added while running likewise, each exactly once;
+fails without the change. Integration 215/215, `CNA.XnaCompat.Tests` 272/272.
 
 ### 2026-10-01 -- CSX-087: content is found from any working directory
 

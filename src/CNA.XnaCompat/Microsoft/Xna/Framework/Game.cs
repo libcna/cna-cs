@@ -251,7 +251,37 @@ public class Game : IDisposable
     /// draw, each delivered separately -- and that is a coherent contract for a CNA-first game. XNA's
     /// contract is a different one, and this is the layer that owes it.
     /// </summary>
-    protected virtual void Initialize() => EnsureContentLoaded();
+    /// <summary>
+    /// XNA's <c>Game.Initialize</c>: every component not yet initialized, in collection order --
+    /// one a component adds while initializing included -- then <see cref="LoadContent"/> (XNA IL).
+    /// A game's override that reads a component's content right after <c>base.Initialize()</c>
+    /// sees it. CNA's own <c>Game::Initialize</c> runs after the override returns and reaches the
+    /// same components; <see cref="InitializeComponentOnce"/> makes that the no-op it is in XNA.
+    /// </summary>
+    protected virtual void Initialize()
+    {
+        for (int index = 0; index < Components.Count; index++)
+        {
+            InitializeComponentOnce(Components[index]);
+        }
+
+        EnsureContentLoaded();
+    }
+
+    private readonly HashSet<IGameComponent> _initializedComponents = new(ReferenceEqualityComparer.Instance);
+
+    /// <summary>Initializes a component unless this game already has since it was added.</summary>
+    internal void InitializeComponentOnce(IGameComponent component)
+    {
+        if (_initializedComponents.Add(component))
+        {
+            component.Initialize();
+        }
+    }
+
+    /// <summary>A removed component is initialized again when it is added again, as in XNA.</summary>
+    internal void ForgetComponentInitialization(IGameComponent component) =>
+        _initializedComponents.Remove(component);
 
     protected virtual void LoadContent()
     {

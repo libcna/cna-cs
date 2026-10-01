@@ -64,6 +64,7 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
     protected override void RemoveItem(int index)
     {
         IGameComponent item = this[index];
+        _game?.ForgetComponentInitialization(item);
         if (_native is not null && !_native.Remove(GetAdapter(item)))
         {
             throw new InvalidOperationException("The native CNA component collection did not contain the managed component.");
@@ -138,12 +139,14 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
 
     private sealed class InterfaceComponentAdapter : CNA.GameComponent
     {
+        private readonly Game _game;
         private readonly IGameComponent _component;
         private readonly IUpdateable? _updateable;
 
         internal InterfaceComponentAdapter(Game game, IGameComponent component)
             : base(game.Backend)
         {
+            _game = game;
             _component = component;
             _updateable = component as IUpdateable;
             if (_updateable is not null)
@@ -155,7 +158,7 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
             }
         }
 
-        public override void Initialize() => _component.Initialize();
+        public override void Initialize() => _game.InitializeComponentOnce(_component);
 
         public override void Update(CNA.GameTime gameTime) =>
             _updateable?.Update(GameTime.FromFramework(gameTime));
@@ -178,6 +181,7 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
 
     private sealed class InterfaceDrawableAdapter : CNA.DrawableGameComponent
     {
+        private readonly Game _game;
         private readonly IGameComponent _component;
         private readonly IUpdateable? _updateable;
         private readonly IDrawable _drawable;
@@ -185,6 +189,7 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
         internal InterfaceDrawableAdapter(Game game, IGameComponent component)
             : base(game.Backend)
         {
+            _game = game;
             _component = component;
             _updateable = component as IUpdateable;
             _drawable = (IDrawable)component;
@@ -202,7 +207,7 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
             _drawable.DrawOrderChanged += OnDrawOrderChanged;
         }
 
-        public override void Initialize() => _component.Initialize();
+        public override void Initialize() => _game.InitializeComponentOnce(_component);
 
         public override void Update(CNA.GameTime gameTime) =>
             _updateable?.Update(GameTime.FromFramework(gameTime));

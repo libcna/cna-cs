@@ -31,7 +31,31 @@ public class DrawableGameComponent : GameComponent, IDrawable
 
     public event EventHandler<EventArgs>? DrawOrderChanged;
 
-    public override void Initialize() => base.Initialize();
+    private bool _initialized;
+    private bool _nativeLoadContentAlreadyDone;
+
+    /// <summary>
+    /// XNA's <c>DrawableGameComponent.Initialize</c> loads the component's content on its first
+    /// call, inside the call, when a device exists (XNA IL): an override that reads what
+    /// <see cref="LoadContent"/> set right after <c>base.Initialize()</c> sees it. CNA's own
+    /// component loads its content when its native initialization follows; that first native
+    /// <c>LoadContent</c> is the one already done here and is skipped once.
+    /// </summary>
+    public override void Initialize()
+    {
+        base.Initialize();
+        if (!_initialized &&
+            Game.Services.GetService(typeof(Graphics.IGraphicsDeviceService)) is Graphics.IGraphicsDeviceService
+            {
+                GraphicsDevice: not null,
+            })
+        {
+            LoadContent();
+            _nativeLoadContentAlreadyDone = true;
+        }
+
+        _initialized = true;
+    }
 
     public virtual void Draw(GameTime gameTime)
     {
@@ -47,7 +71,16 @@ public class DrawableGameComponent : GameComponent, IDrawable
 
     protected override void Dispose(bool disposing) => base.Dispose(disposing);
 
-    internal void InvokeLoadContent() => LoadContent();
+    internal void InvokeLoadContent()
+    {
+        if (_nativeLoadContentAlreadyDone)
+        {
+            _nativeLoadContentAlreadyDone = false;
+            return;
+        }
+
+        LoadContent();
+    }
 
     internal void InvokeUnloadContent() => UnloadContent();
 
