@@ -77,6 +77,9 @@ public class Game : IDisposable
     /// <summary>Set by a SIGTERM or SIGINT during <see cref="Run"/>; see <see cref="RegisterTerminationSignals"/>.</summary>
     private volatile bool _terminationRequested;
 
+    /// <summary>A <see cref="Dispose()"/> asked for while the browser's run was live.</summary>
+    private bool _disposeWhenRunEnds;
+
     /// <summary>See <see cref="CallComponentHandlers"/>.</summary>
     private int _componentCallDepth;
 
@@ -504,9 +507,17 @@ public class Game : IDisposable
         ThrowIfDrivingFailed(result, context);
     }
 
-    /// <summary>Hands control to native CNA. Blocks until the game exits.</summary>
+    /// <summary>Hands control to native CNA. Blocks until the game exits -- except in a browser,
+    /// where a page cannot block: there the run goes on in the page's animation frames
+    /// (<see cref="BrowserGameLoop"/>) and this returns at once.</summary>
     public void Run()
     {
+        if (OperatingSystem.IsBrowser())
+        {
+            RunInBrowser(null);
+            return;
+        }
+
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
         CnaResult result;
         using (RegisterTerminationSignals())
@@ -516,6 +527,46 @@ public class Game : IDisposable
 
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
         ThrowIfDrivingFailed(result, "cna_game_run");
+    }
+
+    /// <summary>
+    /// Starts the browser's run, which ends on a later animation frame; <paramref name="ended"/>
+    /// runs then, followed by a <see cref="Dispose()"/> requested while the run was live.
+    /// </summary>
+    internal void RunInBrowser(Action? ended)
+    {
+        if (!OperatingSystem.IsBrowser())
+        {
+            throw new PlatformNotSupportedException("A run driven by animation frames exists only in a browser.");
+        }
+
+        BrowserGameLoop.Start(this, () =>
+        {
+            try
+            {
+                ended?.Invoke();
+            }
+            finally
+            {
+                if (_disposeWhenRunEnds)
+                {
+                    Dispose();
+                }
+            }
+        });
+    }
+
+    /// <summary>Whether this game's browser run is still live.</summary>
+    internal bool IsRunningInBrowser => OperatingSystem.IsBrowser() && BrowserGameLoop.IsRunning(this);
+
+    /// <summary>One frame of the browser's run; false once the run has ended.</summary>
+    internal bool RunFrame()
+    {
+        NativeResourceHandle.DrainPendingReleasesForCurrentThread();
+        CnaResult result = Native.cna_game_run_frame_ext(_nativeHandle, out byte running);
+        NativeResourceHandle.DrainPendingReleasesForCurrentThread();
+        ThrowIfDrivingFailed(result, "cna_game_run_frame_ext");
+        return running != 0;
     }
 
     /// <summary>
@@ -775,6 +826,14 @@ public class Game : IDisposable
     {
         if (_disposed)
         {
+            return;
+        }
+
+        // In a browser Run returns while the game is still running, so the Dispose that follows it
+        // -- `using (var game = new Game1()) game.Run();` -- waits for the run to end.
+        if (disposing && IsRunningInBrowser)
+        {
+            _disposeWhenRunEnds = true;
             return;
         }
 

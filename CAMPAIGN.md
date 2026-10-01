@@ -83,7 +83,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-060 | Experiment: .NET wasm + `wasm-tools` workload + static CNA via `NativeFileReference` | done: .NET 11 (emscripten 6.0.3, libc++ 21) links CNA's WebGL2 archives; a C# XNA game draws in headless Chromium. .NET 10/8 pin emscripten 3.1.56/3.1.34, whose libc++ 17 has no `std::jthread` |
-| CSX-061 | Frame-stepped game loop on browser event loop | doing: CNA CBIND-134 (ABI 0.38.0, `cna_game_run_frame_ext`) admitted and imported; managed `Game.Run` on the browser next |
+| CSX-061 | Frame-stepped game loop on browser event loop | done: `Game.Run` on the browser runs CNA's host-driven run (ABI 0.38.0) from `requestAnimationFrame`; an unchanged XNA `Main` (`using (game) game.Run();`) runs to `Disposed` in Chromium |
 | CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | todo |
 | CSX-063 | Browser sample corpus | todo |
 
@@ -114,6 +114,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-061: Game.Run in a browser
+
+An XNA game's `Main` is `using (var game = new Game1()) game.Run();`, and a page cannot block in it.
+Native gained the host-driven run (CNA CBIND-134, ABI 0.38.0, admitted in `ba65cd2`); the CNA layer's
+`Run` now, in a browser, starts `BrowserGameLoop` and returns. The loop asks for animation frames
+itself -- a `[JSImport]` of `globalThis.requestAnimationFrame` with a managed callback -- so a page
+needs only `runMain()`; each frame calls `cna_game_run_frame_ext`, which begins the run on the first
+and ends it (`Exiting`, `EndRun`) on the one that finds the game exited. The `Dispose` the `using`
+performs as soon as `Run` returns waits, in both layers, until the run has ended. A frame whose
+callback threw ends the run before the exception reaches the page. Only one game runs per page.
+
+Measured in headless Chromium (`build-consumer/browser-probe`, the binding unchanged but for this):
+ABI 0x2600 admitted from the linked library; `Main returned` straight after `Run`; `LoadContent
+800x480`, `BeginRun`, 180 updates at 60 Hz until the game's own `Exit()`, `Exiting`, `EndRun`,
+`Disposed`. Desktop unchanged: framework 635, XnaCompat 272, integration 213, GamerServices 24.
+
+Not yet: an `Exit` in the browser leaves the last frame on the canvas (there is no window to close);
+packaging -- a host template, the CNA archives and the MSBuild glue a game project imports; a real
+sample with content, input and audio in Chrome (CSX-062).
 
 ### 2026-10-01 -- CSX-086: the game lifecycle arrives in XNA's order, Disposed included
 

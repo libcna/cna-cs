@@ -12,6 +12,7 @@ public class Game : IDisposable
     private GameWindow? _window;
     private GraphicsDeviceManager? _graphicsDeviceManager;
     private bool _disposed;
+    private bool _disposeWhenRunEnds;
 
     public Game()
     {
@@ -108,7 +109,26 @@ public class Game : IDisposable
 
     /// <summary>BeginRun and EndRun arrive from the run itself, where XNA calls them: after
     /// Initialize and LoadContent, and after the last frame.</summary>
-    public void Run() => _backend.Run();
+    public void Run()
+    {
+        if (OperatingSystem.IsBrowser())
+        {
+            // A page cannot block here, so the run goes on in the browser's animation frames and
+            // ends later; a Dispose the caller asks for meanwhile waits for that end.
+            _backend.RunInBrowser(DisposeIfRequested);
+            return;
+        }
+
+        _backend.Run();
+    }
+
+    private void DisposeIfRequested()
+    {
+        if (_disposeWhenRunEnds)
+        {
+            Dispose();
+        }
+    }
 
     public void RunOneFrame() => _backend.RunOneFrame();
 
@@ -139,6 +159,13 @@ public class Game : IDisposable
     {
         if (_disposed)
         {
+            return;
+        }
+
+        // See Run: in a browser the run outlives the call, and so does the game.
+        if (disposing && _backend is not null && _backend.IsRunningInBrowser)
+        {
+            _disposeWhenRunEnds = true;
             return;
         }
 
