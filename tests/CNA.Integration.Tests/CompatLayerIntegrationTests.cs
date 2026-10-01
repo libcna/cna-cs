@@ -320,7 +320,7 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         {
             game.Content.RootDirectory = Path.Combine(AppContext.BaseDirectory, "assets", "xnb");
             Model model = game.Content.Load<Model>("BlenderDefaultCube");
-            Effect effect = model.Meshes[0].MeshParts[0].Effect;
+            Effect effect = model.Meshes[0].MeshParts[0].Effect!;
             EffectTechnique technique = effect.CurrentTechnique;
 
             for (int frame = 0; frame < 3; frame++)

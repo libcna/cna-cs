@@ -4,7 +4,7 @@ from paths import REPO_ROOT, find_cna_root
 
 CNA_ROOT = find_cna_root()
 H = str(CNA_ROOT / 'modules/c-api/include/CNA/C') + '/'
-src = (REPO_ROOT / 'src/CNA.Interop/Native.cs').read_text()
+src = ''.join(p.read_text() for p in sorted((REPO_ROOT / 'src/CNA.Interop').glob('Native*.cs')))
 bound={m.group(1) for m in re.finditer(r'partial \w+ (cna_\w+)\s*\(', src)}
 by=collections.defaultdict(list)
 for p in sorted(glob.glob(H+'*.h')):

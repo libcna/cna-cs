@@ -4,7 +4,7 @@ from paths import REPO_ROOT, find_cna_root, find_native_libraries
 
 CNA_ROOT = find_cna_root()
 H = str(CNA_ROOT / 'modules/c-api/include/CNA/C') + '/'
-CS = str(REPO_ROOT / 'src/CNA.Interop/Native.cs')
+CS = [str(p) for p in sorted((REPO_ROOT / 'src/CNA.Interop').glob('Native*.cs'))]
 
 # --- headers: name -> (param list, doc)
 hdr={}
@@ -42,7 +42,7 @@ def split_params(text):
         out.append(tail)
     return [x for x in out if x]
 
-src=open(CS).read()
+src=''.join(open(p).read() for p in CS)
 decls={}
 for m in re.finditer(r'internal static (?:unsafe )?partial \w+ (cna_\w+)\s*\(([^;]*?)\)\s*;', src, re.S):
     name=m.group(1)

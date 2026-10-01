@@ -24,7 +24,7 @@ using CNA.Interop;
 /// <c>PROTO_CALLBACK_TYPE_FROM_HEADER</c>. The callback's own shape is then proven separately, from
 /// the managed delegate that is actually passed.
 /// </summary>
-static class InteropPrototypes
+static partial class InteropPrototypes
 {
     /// <summary>
     /// Parameters whose C type C# has no way to spell, keyed <c>function#index</c>.
@@ -323,8 +323,10 @@ static class InteropPrototypes
             List<string?> parameters = [];
             for (int index = 0; index < managedParameters.Length; index++)
             {
+                string key = $"{entryPoint}#{index}";
                 parameters.Add(
-                    ParameterOverrides.TryGetValue($"{entryPoint}#{index}", out string? spelled)
+                    ParameterOverrides.TryGetValue(key, out string? spelled) ||
+                    GamerServicesNetParameterOverrides.TryGetValue(key, out spelled)
                         ? spelled
                         : ParameterType(managedParameters[index]));
             }

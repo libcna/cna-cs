@@ -113,11 +113,13 @@ public class CnaAbiTests
             .Order(StringComparer.Ordinal)
             .ToArray();
 
-        // 957: the 1002 the 0.21.0 binding imported, less the 44 engine-layer routes CNA retired in
-        // 0.30.0 and cna_graphics_ext_is_available, whose only caller described that layer.
+        // 1383: the 1002 the 0.21.0 binding imported, less the 44 engine-layer routes CNA retired in
+        // 0.30.0 and cna_graphics_ext_is_available, whose only caller described that layer (957),
+        // plus the 239 routes of gamer_services.h and the 187 of net.h, net_gamers.h and
+        // net_sessions.h that the XNA GamerServices/Avatar/Net surface is built on.
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(957, declared.Length);
+        Assert.Equal(1383, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 

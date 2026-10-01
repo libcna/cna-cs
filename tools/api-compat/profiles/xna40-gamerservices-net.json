@@ -1,0 +1,14 @@
+{
+  "name": "XNA 4.0 GamerServices, Avatar and Net",
+  "description": "The Windows XNA 4.0 GamerServices, Avatar and Net assemblies. Backed by CNA's native GamerServices/Guide/Avatar/Net implementation; kept as a profile of its own so the 257-type runtime profile's result is not mixed with it. Game.dll is listed only for GamerServicesComponent, which XNA declares there; the namespace filter keeps nothing else from it.",
+  "referenceAssemblies": [
+    "Microsoft.Xna.Framework.GamerServices.dll",
+    "Microsoft.Xna.Framework.Avatar.dll",
+    "Microsoft.Xna.Framework.Net.dll",
+    "Microsoft.Xna.Framework.Game.dll"
+  ],
+  "namespacePrefixes": [
+    "Microsoft.Xna.Framework.GamerServices",
+    "Microsoft.Xna.Framework.Net"
+  ]
+}

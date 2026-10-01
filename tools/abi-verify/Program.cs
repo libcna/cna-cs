@@ -257,7 +257,7 @@ try
     int importCount = InteropPrototypes.Imports().Count();
     Console.WriteLine($"PROTO_IMPORTS={importCount}");
     Console.WriteLine($"PROTO_VERIFIED={importCount - prototypeUnmappable.Count}");
-    Console.WriteLine($"PROTO_PARAM_OVERRIDES={InteropPrototypes.ParameterOverrides.Count}");
+    Console.WriteLine($"PROTO_PARAM_OVERRIDES={InteropPrototypes.ParameterOverrides.Count + InteropPrototypes.GamerServicesNetParameterOverrides.Count}");
     Console.WriteLine($"PROTO_UNMAPPABLE={prototypeUnmappable.Count}");
     Console.WriteLine($"CALLBACKS_CHECKED={InteropCallbacks.Pairings.Length - callbackUnresolved.Count}");
     Console.WriteLine($"CALLBACKS_UNRESOLVED={callbackUnresolved.Count}");
@@ -290,9 +290,19 @@ try
     Console.WriteLine($"ABI_STATUS={report.status}");
     return mismatches.Count == 0 ? 0 : 1;
 }
+catch (InvalidOperationException exception)
+{
+    // A compiler failure. Handled here rather than left unhandled, because an unhandled exception
+    // ends the process without running the finally below, and that left both directories in /tmp.
+    Console.Error.WriteLine(exception.Message);
+    Console.WriteLine("ABI_STATUS=failed");
+    return 2;
+}
 finally
 {
+    // Both: the source directory used to be left behind in /tmp on every run.
     Directory.Delete(temporaryDirectory, recursive: true);
+    Directory.Delete(temporaryDirectoryForSource, recursive: true);
 }
 
 static string FormatVersion(uint version) =>
@@ -616,8 +626,13 @@ static class InteropLayout
         // struct's own offsets and size are what has to agree, and they are measured.
         "CnaReservedBytes2",
         "CnaReservedBytes3",
+        "CnaReservedBytes4",
         "CnaReservedBytes5",
+        "CnaReservedBytes6",
         "CnaReservedBytes7",
+
+        // char[64] inside CNA_LeaderboardIdentity, spelled the same way as the padding runs.
+        "CnaChars64",
     };
 
     public static IEnumerable<Type> Structs() =>
@@ -831,6 +846,11 @@ static class InteropLayout
     /// </summary>
     public static readonly Dictionary<string, string> FieldTypeOverrides = new(StringComparer.Ordinal)
     {
+        // A char[64] array has no "T*" spelling the probe's pointer check can take; its offset and
+        // size are measured like any field's, and the generated C type is all this skips.
+        ["CNA_LeaderboardIdentity.key"] = "",
+        // A borrowed packet pointer the binding reads, never writes; nint produced void**.
+        ["CNA_NetworkEventInfo.packet"] = "const uint8_t*",
         ["CNA_GameCallbacks.draw"] = "CNA_Result (*)(CNA_Handle,  const CNA_GameTime*, void*, CNA_CallbackError*)",
         ["CNA_GameCallbacks.exiting"] = "CNA_Result (*)(CNA_Handle,  const CNA_GameTime*, void*, CNA_CallbackError*)",
         ["CNA_GameCallbacks.load_content"] = "CNA_Result (*)(CNA_Handle,  const CNA_GameTime*, void*, CNA_CallbackError*)",

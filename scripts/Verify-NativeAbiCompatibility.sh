@@ -79,7 +79,7 @@ extract_declared_symbols()
                                   $_ ne "cna_error_get_last_message_size" &&
                                   $_ ne "cna_touch_capabilities_init" &&
                                   $_ ne "cna_game_destroy" } sort keys %symbols), "\n" }
-  ' "$repo_root/src/CNA.Interop/Native.cs"
+  ' "$repo_root"/src/CNA.Interop/Native*.cs
 }
 
 declared_symbols=$(extract_declared_symbols)

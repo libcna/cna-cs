@@ -60,7 +60,7 @@ from paths import REPO_ROOT
 
 HEADER_SUBPATH = Path("modules/c-api/include/CNA/C")
 BASELINE_SUBPATH = Path("tools/c-api/abi_baseline.json")
-NATIVE_CS = REPO_ROOT / "src/CNA.Interop/Native.cs"
+NATIVE_SOURCES = sorted((REPO_ROOT / "src/CNA.Interop").glob("Native*.cs"))
 
 _BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.S)
 _LINE_COMMENT = re.compile(r"//[^\n]*")
@@ -170,7 +170,7 @@ def _header_abi_version(header_dir: Path) -> str:
 
 
 def _consumed_symbols() -> set[str]:
-    return set(_IMPORT.findall(NATIVE_CS.read_text(encoding="utf-8")))
+    return {name for path in NATIVE_SOURCES for name in _IMPORT.findall(path.read_text(encoding="utf-8"))}
 
 
 def _diff_mapping(old, new, label: str, findings: list[str], notes: list[str]) -> None:
