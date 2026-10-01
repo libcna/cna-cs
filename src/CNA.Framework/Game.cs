@@ -1,3 +1,4 @@
+using System.Runtime.ExceptionServices;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -69,6 +70,14 @@ public class Game : IDisposable
 
     private GCHandle _selfHandle;
     private bool _graphicsDeviceInitialized;
+
+    /// <summary>See <see cref="ThrowIfDrivingFailed"/>.</summary>
+    private Exception? _pendingCallbackException;
+
+    /// <summary>See <see cref="CallComponentHandlers"/>.</summary>
+    private int _componentCallDepth;
+
+    private Exception? _componentCallFailure;
     private bool _disposed;
 
     /// <summary>Public, as in XNA, now that this class is concrete. It was <c>protected</c>, which
@@ -472,7 +481,7 @@ public class Game : IDisposable
     {
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
         CnaResult result = call(_nativeHandle);
-        CnaException.ThrowIfFailed(result, context);
+        ThrowIfDrivingFailed(result, context);
     }
 
     /// <summary>Hands control to native CNA. Blocks until the game exits.</summary>
@@ -481,7 +490,78 @@ public class Game : IDisposable
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
         CnaResult result = Native.cna_game_run(_nativeHandle);
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
-        CnaException.ThrowIfFailed(result, "cna_game_run");
+        ThrowIfDrivingFailed(result, "cna_game_run");
+    }
+
+    /// <summary>
+    /// The first exception a game or component callback threw, rethrown with its own type and
+    /// stack once native has returned -- which is what XNA's <c>Run</c> does, because there the
+    /// exception simply unwinds out of it. A managed exception cannot cross the native frames, so
+    /// the callback reports <c>Callback</c> (or a component asks the game to exit) and the original
+    /// is kept here rather than flattened into a message.
+    /// </summary>
+    private void ThrowIfDrivingFailed(CnaResult result, string context)
+    {
+        if (_pendingCallbackException is { } pending)
+        {
+            _pendingCallbackException = null;
+            ExceptionDispatchInfo.Capture(pending).Throw();
+        }
+
+        CnaException.ThrowIfFailed(result, context);
+    }
+
+    /// <summary>
+    /// A component callback threw. Component handlers return nothing, so the game takes the
+    /// exception and stops at its next safe point; <see cref="Run"/> then rethrows it.
+    /// </summary>
+    internal void ReportComponentFailure(Exception exception)
+    {
+        if (_componentCallDepth > 0)
+        {
+            _componentCallFailure ??= exception;
+            return;
+        }
+
+        if (_pendingCallbackException is not null)
+        {
+            return;
+        }
+
+        _pendingCallbackException = exception;
+        _ = Native.cna_game_request_exit(_nativeHandle);
+    }
+
+    /// <summary>
+    /// Runs a managed-initiated native call that may run component handlers synchronously --
+    /// adding a component to a running game initializes it -- and rethrows what a handler threw
+    /// from this call, where XNA's <c>Components.Add</c> would have thrown it. The game keeps
+    /// running if the caller catches it, as it would in XNA.
+    /// </summary>
+    internal CnaResult CallComponentHandlers(Func<CnaResult> nativeCall)
+    {
+        CnaResult result;
+        Exception? failure = null;
+        _componentCallDepth++;
+        try
+        {
+            result = nativeCall();
+        }
+        finally
+        {
+            if (--_componentCallDepth == 0)
+            {
+                failure = _componentCallFailure;
+                _componentCallFailure = null;
+            }
+        }
+
+        if (failure is not null)
+        {
+            ExceptionDispatchInfo.Capture(failure).Throw();
+        }
+
+        return result;
     }
 
     /// <summary>Runs a single frame -- update and draw -- without entering the loop. Matches real
@@ -749,6 +829,7 @@ public class Game : IDisposable
     /// </summary>
     private unsafe CnaResult ReportCallbackFailure(CnaCallbackError* outError, Exception exception)
     {
+        _pendingCallbackException ??= exception;
         if (outError is not null)
         {
             string message = exception.Message;

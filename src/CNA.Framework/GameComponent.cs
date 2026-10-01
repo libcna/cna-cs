@@ -17,18 +17,16 @@ namespace CNA;
 /// <b>Exception handling has no error channel here.</b> Unlike <see cref="Game"/>'s lifecycle
 /// callbacks, which return <c>CNA_Result</c> and carry an <c>out_error</c>, every
 /// <c>CNA_GameComponentCallbacks</c> handler returns <c>void</c>. A managed exception still must
-/// not unwind across the <c>UnmanagedCallersOnly</c> boundary, so the wrappers below catch
-/// everything -- but rather than swallow it (which would make a broken component fail silently
-/// forever), the first exception is stashed in <see cref="PendingException"/> and rethrown from the
-/// next managed-initiated call on this component. That is the closest thing to propagation this
-/// ABI shape allows.
+/// not unwind across the <c>UnmanagedCallersOnly</c> boundary, so the wrappers below catch it and
+/// hand it to the <see cref="Game"/>, which makes it unwind where XNA's would: out of the managed
+/// call that ran the handler (<c>Components.Add</c>), or out of <c>Run</c> once the game has
+/// stopped at its next safe point.
 /// </summary>
 public class GameComponent : IGameComponent, IUpdateable, IComparable<GameComponent>, IDisposable
 {
     private readonly CnaHandle _handle;
     private GCHandle _selfHandle;
     private bool _disposed;
-    private int _suppressedFailureCount;
 
     public GameComponent(Game game)
         : this(game, drawable: false)
@@ -82,23 +80,16 @@ public class GameComponent : IGameComponent, IUpdateable, IComparable<GameCompon
     /// </summary>
     internal CnaHandle NativeHandle => _handle;
 
-    /// <summary>The first exception a callback threw, if any -- see this class's own doc comment.
-    /// Cleared when rethrown.</summary>
-    private Exception? PendingException { get; set; }
-
     public bool Enabled
     {
         get
         {
-            ThrowPendingException();
             CnaResult result = Native.cna_game_component_get_enabled(_handle, out byte value);
             CnaException.ThrowIfFailed(result, nameof(Enabled));
             return value != 0;
         }
         set
         {
-            ThrowPendingException();
-
             // Real XNA -- and runtime_components.h, which says "setting it to what it already is
             // does not" raise the event -- only signal an actual change. Raising unconditionally
             // makes a component that re-asserts its flags every frame fire an event every frame.
@@ -117,15 +108,12 @@ public class GameComponent : IGameComponent, IUpdateable, IComparable<GameCompon
     {
         get
         {
-            ThrowPendingException();
             CnaResult result = Native.cna_game_component_get_update_order(_handle, out int value);
             CnaException.ThrowIfFailed(result, nameof(UpdateOrder));
             return value;
         }
         set
         {
-            ThrowPendingException();
-
             if (UpdateOrder == value)
             {
                 return;
@@ -163,47 +151,10 @@ public class GameComponent : IGameComponent, IUpdateable, IComparable<GameCompon
     {
     }
 
-    /// <summary>Rethrows and clears whatever a callback threw. Called at the top of every
-    /// managed-initiated member so a failure surfaces at the next opportunity rather than being
-    /// lost -- see this class's own doc comment for why it cannot be reported at the callback
-    /// itself.</summary>
-    private protected void ThrowPendingException()
-    {
-        if (PendingException is null)
-        {
-            return;
-        }
-
-        Exception exception = PendingException;
-        PendingException = null;
-
-        // Rethrows the ORIGINAL exception, not a fresh wrapper around it. Wrapping looks more
-        // informative but is a trap here: this method is reachable from inside a callback (a
-        // component that reads Enabled from its own Update), so the wrapper would be caught by
-        // that callback's own handler and re-captured, growing one InnerException layer per frame
-        // without bound. A code-review pass found that. The explanation lives in Data instead,
-        // which survives the rethrow and costs nothing.
-        int suppressed = _suppressedFailureCount;
-        _suppressedFailureCount = 0;
-
-        exception.Data["CnaGameComponent"] =
-            $"Thrown from a {GetType().Name} callback. The CNA game-component ABI has no error " +
-            "channel (its handlers return void), so it was captured and rethrown at the next " +
-            "managed-initiated call on this component." +
-            (suppressed > 0 ? $" {suppressed} later failure(s) on this component were dropped." : string.Empty);
-        throw exception;
-    }
-
-    /// <summary>Disposes the component, then surfaces any callback failure that never got the
-    /// chance to be rethrown. A component that only overrides <c>Update</c>/<c>Draw</c> and never
-    /// reads <see cref="Enabled"/>/<see cref="UpdateOrder"/> would otherwise capture its first
-    /// exception and silently discard it forever -- the exact "fail silently" outcome this
-    /// machinery exists to avoid, found by a code-review pass.</summary>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
-        ThrowPendingException();
     }
 
     protected virtual void Dispose(bool disposing)
@@ -264,22 +215,8 @@ public class GameComponent : IGameComponent, IUpdateable, IComparable<GameCompon
         }
     }
 
-    /// <summary>Records <paramref name="exception"/> if nothing is pending yet. Keeps the *first*
-    /// failure rather than the latest: once a component is broken, later exceptions are usually
-    /// consequences of the first, and the first is the one worth reporting. Every later one is
-    /// counted, so <see cref="Dispose()"/> can say how many were dropped rather than leaving the
-    /// impression there was only ever one.</summary>
-    private void Capture(Exception exception)
-    {
-        if (PendingException is null)
-        {
-            PendingException = exception;
-        }
-        else
-        {
-            _suppressedFailureCount++;
-        }
-    }
+    /// <summary>A handler threw; see this class's own doc comment for where it surfaces.</summary>
+    private void Capture(Exception exception) => Game.ReportComponentFailure(exception);
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
     private static unsafe void OnInitialize(nint context)

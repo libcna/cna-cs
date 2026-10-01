@@ -76,7 +76,8 @@ public class GameComponentCollection : ICollection<GameComponent>
         // find itself unresolvable. Rolled back if the add fails.
         _known[item.NativeHandle.Value] = item;
 
-        CnaResult result = Native.cna_game_components_add(GameHandle, item.NativeHandle);
+        CnaResult result = _game.CallComponentHandlers(
+            () => Native.cna_game_components_add(GameHandle, item.NativeHandle));
         if (result.IsFailure())
         {
             _known.Remove(item.NativeHandle.Value);
@@ -105,7 +106,8 @@ public class GameComponentCollection : ICollection<GameComponent>
         // prototype probe compared the two: the argument register's upper half was never written,
         // which happens to work on x86-64 because a 32-bit move zero-extends, and is not something
         // to rely on. The negative case is refused above, so the widening is total.
-        CnaResult result = Native.cna_game_components_insert(GameHandle, (ulong)index, item.NativeHandle);
+        CnaResult result = _game.CallComponentHandlers(
+            () => Native.cna_game_components_insert(GameHandle, (ulong)index, item.NativeHandle));
         if (result.IsFailure())
         {
             _known.Remove(item.NativeHandle.Value);

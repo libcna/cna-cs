@@ -18,8 +18,68 @@ public class GameComponentTests(ITestOutputHelper output)
     {
         using var game = new FailingUpdateHost();
 
-        Assert.ThrowsAny<Exception>(game.RunOneFrame);
+        // The game's own exception, not a CnaException wrapping its message: in XNA it unwinds out
+        // of the call that drives the frame.
+        var thrown = Assert.Throws<InvalidOperationException>(game.RunOneFrame);
+        Assert.Equal("update-failure", thrown.Message);
         Assert.Equal(0, game.BufferNeededEvents);
+    }
+
+    /// <summary>
+    /// A component's exception surfaces from the driving call with its own type and stack. Component
+    /// handlers have no error channel, so it used to be kept on the component and rethrown from the
+    /// next unrelated member access -- ParticleSample's showed up from a DrawOrder setter -- while
+    /// the game ran on.
+    /// </summary>
+    [NativeFact]
+    public void ComponentException_SurfacesFromTheDrivingCall()
+    {
+        using var game = new ThrowingComponentHost();
+
+        var thrown = Assert.Throws<FormatException>(() =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                game.RunOneFrame();
+            }
+        });
+        Assert.Equal("component-update-failure", thrown.Message);
+        Assert.Contains(nameof(ThrowingComponent.Update), thrown.StackTrace);
+    }
+
+    /// <summary>
+    /// Adding a component to a game that has already initialized initializes it inside the add, so
+    /// an exception from its Initialize comes out of <c>Components.Add</c>, as in XNA -- and the
+    /// game keeps running when the caller catches it.
+    /// </summary>
+    [NativeFact]
+    public void ComponentInitializeException_SurfacesFromAdd()
+    {
+        using var game = new ComponentHost();
+        game.RunOneFrame();
+
+        var thrown = Assert.Throws<ArithmeticException>(
+            () => game.Components.Add(new ThrowingInitializeComponent(game)));
+        Assert.Equal("component-initialize-failure", thrown.Message);
+
+        game.RunOneFrame();
+    }
+
+    private sealed class ThrowingInitializeComponent(CNA.Game game) : CNA.GameComponent(game)
+    {
+        public override void Initialize() =>
+            throw new ArithmeticException("component-initialize-failure");
+    }
+
+    private sealed class ThrowingComponent(CNA.Game game) : CNA.GameComponent(game)
+    {
+        public override void Update(GameTime gameTime) =>
+            throw new FormatException("component-update-failure");
+    }
+
+    private sealed class ThrowingComponentHost : CNA.Game
+    {
+        public ThrowingComponentHost() => Components.Add(new ThrowingComponent(this));
     }
 
     /// <summary>

@@ -21,14 +21,12 @@ public class DrawableGameComponent : GameComponent, IDrawable
     {
         get
         {
-            ThrowPendingException();
             CnaResult result = Native.cna_drawable_game_component_get_visible(NativeHandle, out byte value);
             CnaException.ThrowIfFailed(result, nameof(Visible));
             return value != 0;
         }
         set
         {
-            ThrowPendingException();
             CnaResult result = Native.cna_drawable_game_component_set_visible(NativeHandle, (byte)(value ? 1 : 0));
             CnaException.ThrowIfFailed(result, nameof(Visible));
             VisibleChanged?.Invoke(this, EventArgs.Empty);
@@ -39,14 +37,12 @@ public class DrawableGameComponent : GameComponent, IDrawable
     {
         get
         {
-            ThrowPendingException();
             CnaResult result = Native.cna_drawable_game_component_get_draw_order(NativeHandle, out int value);
             CnaException.ThrowIfFailed(result, nameof(DrawOrder));
             return value;
         }
         set
         {
-            ThrowPendingException();
             CnaResult result = Native.cna_drawable_game_component_set_draw_order(NativeHandle, value);
             CnaException.ThrowIfFailed(result, nameof(DrawOrder));
             DrawOrderChanged?.Invoke(this, EventArgs.Empty);
