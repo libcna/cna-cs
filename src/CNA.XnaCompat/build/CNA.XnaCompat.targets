@@ -1,0 +1,36 @@
+<Project>
+
+  <!--
+    XNA 4.0's build embeds the project's graphics profile in the game assembly as the manifest
+    resource "Microsoft.Xna.Framework.RuntimeProfile", one line "<platform>.v4.0.<profile>", and
+    GraphicsDeviceManager's constructor reads it to choose its default GraphicsProfile, Reach when
+    the resource is absent. This does the build half from the original project's own property:
+
+      <XnaProfile>HiDef</XnaProfile>
+
+    so a game ported with its project settings intact starts on the profile it was written for.
+    Imported automatically from the CNA.XnaCompat package (build/ and buildTransitive/); a project
+    that references CNA.XnaCompat as a project imports this file itself.
+  -->
+  <PropertyGroup>
+    <XnaPlatform Condition="'$(XnaPlatform)' == ''">Windows</XnaPlatform>
+  </PropertyGroup>
+
+  <Target Name="CnaEmbedXnaRuntimeProfile" BeforeTargets="AssignTargetPaths" Condition="'$(XnaProfile)' != ''">
+    <Error Condition="'$(XnaProfile)' != 'Reach' and '$(XnaProfile)' != 'HiDef'"
+           Text="XnaProfile must be Reach or HiDef, not '$(XnaProfile)'." />
+    <PropertyGroup>
+      <_CnaXnaRuntimeProfileFile>$(IntermediateOutputPath)Microsoft.Xna.Framework.RuntimeProfile.txt</_CnaXnaRuntimeProfileFile>
+    </PropertyGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile File="$(_CnaXnaRuntimeProfileFile)"
+                      Lines="$([System.String]::Copy('$(XnaPlatform)').Replace(' ', '')).v4.0.$(XnaProfile)"
+                      Overwrite="true"
+                      WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(_CnaXnaRuntimeProfileFile)" LogicalName="Microsoft.Xna.Framework.RuntimeProfile" />
+      <FileWrites Include="$(_CnaXnaRuntimeProfileFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

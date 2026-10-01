@@ -26,6 +26,7 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
         ArgumentNullException.ThrowIfNull(game);
         Game = game;
         _backend = new CNA.GraphicsDeviceManager(game.Backend);
+        _backend.GraphicsProfile = (CNA.Graphics.GraphicsProfile)(int)ReadDefaultGraphicsProfile(game.GetType().Assembly);
         _backend.DeviceCreated += (_, args) => OnDeviceCreated(this, args);
         _backend.DeviceDisposing += (_, args) => OnDeviceDisposing(this, args);
         _backend.DeviceReset += (_, args) => OnDeviceReset(this, args);
@@ -37,6 +38,34 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
     }
 
     internal Game Game { get; }
+
+    /// <summary>
+    /// XNA's default profile: the game assembly's <c>Microsoft.Xna.Framework.RuntimeProfile</c>
+    /// resource (written from the project's <c>XnaProfile</c>, build/CNA.XnaCompat.targets), whose
+    /// first line ends in <c>Reach</c> or <c>HiDef</c>; Reach when there is no such resource or line.
+    /// </summary>
+    internal static Graphics.GraphicsProfile ReadDefaultGraphicsProfile(System.Reflection.Assembly assembly)
+    {
+        using Stream? stream = assembly.GetManifestResourceStream("Microsoft.Xna.Framework.RuntimeProfile");
+        if (stream is null)
+        {
+            return Graphics.GraphicsProfile.Reach;
+        }
+
+        using var reader = new StreamReader(stream);
+        string? line = reader.ReadLine();
+        if (line is not null && line.EndsWith("Reach", StringComparison.Ordinal))
+        {
+            return Graphics.GraphicsProfile.Reach;
+        }
+
+        if (line is not null && line.EndsWith("HiDef", StringComparison.Ordinal))
+        {
+            return Graphics.GraphicsProfile.HiDef;
+        }
+
+        return Graphics.GraphicsProfile.Reach;
+    }
 
     public int PreferredBackBufferWidth
     {

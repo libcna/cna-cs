@@ -3,6 +3,8 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- As an XNA game project says it; RuntimeProfileTests reads the resource this embeds. -->
+    <XnaProfile>HiDef</XnaProfile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,5 +21,7 @@
     <Compile Include="..\CNA.XnaCompat.CompileProbe\MathBehaviorCorpus.cs" Link="MathBehaviorCorpus.cs" />
     <Compile Include="..\CNA.XnaCompat.CompileProbe\InputBehaviorCorpus.cs" Link="InputBehaviorCorpus.cs" />
   </ItemGroup>
+
+  <Import Project="..\..\src\CNA.XnaCompat\build\CNA.XnaCompat.targets" />
 
 </Project>

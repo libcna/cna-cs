@@ -15,4 +15,9 @@
     <ProjectReference Include="..\CNA.Framework\CNA.Framework.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- XNA's <XnaProfile> -> RuntimeProfile resource; see the file. -->
+    <None Include="build/CNA.XnaCompat.targets" Pack="true" PackagePath="build/;buildTransitive/" />
+  </ItemGroup>
+
 </Project>

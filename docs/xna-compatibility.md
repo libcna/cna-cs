@@ -181,6 +181,14 @@ New extensions require an authority, a source-portability use case, an explicit 
 (`implemented`, `unsupported`, `upstream blocker`, `not applicable`, or `planned`), and a home that
 does not alter the strict XNA contract.
 
+## The default graphics profile
+
+`GraphicsDeviceManager` chooses its default `GraphicsProfile` as XNA's does: from the game
+assembly's `Microsoft.Xna.Framework.RuntimeProfile` resource, whose first line ends in `Reach` or
+`HiDef`, and Reach when there is none. The resource comes from the project's own `<XnaProfile>`
+through `build/CNA.XnaCompat.targets` (docs/packaging.md). Until 2026-10-01 every game started on
+Reach whatever its project said (CSX-081).
+
 ## Profile boundaries
 
 The current 256-type measurement is specifically the selected Windows runtime assemblies. It is

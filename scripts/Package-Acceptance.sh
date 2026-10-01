@@ -152,6 +152,17 @@ if rg -n -F "$repo_root" "$consumer_root" -g '*.csproj' -g 'project.assets.json'
   exit 1
 fi
 
+# The package's build/ targets turn an XNA project's <XnaProfile> into the RuntimeProfile resource
+# GraphicsDeviceManager reads (CSX-081). Built a second time with the property set, into a separate
+# directory, the package consumer must carry the line XNA's own build writes.
+profile_output="$work_root/xnaprofile-hidef"
+"$dotnet_command" build "$consumer_root/IsolatedConsumer.csproj" -c Release --no-restore -m:1 \
+  -p:XnaProfile=HiDef -p:OutputPath="$profile_output/" -p:IntermediateOutputPath="$work_root/xnaprofile-obj/"
+if ! grep -a -q 'Windows.v4.0.HiDef' "$profile_output/IsolatedConsumer.dll"; then
+  echo "A package consumer with XnaProfile=HiDef has no Microsoft.Xna.Framework.RuntimeProfile resource." >&2
+  exit 1
+fi
+
 consumer_output="$consumer_root/bin/Release/net8.0"
 consumer_dll="$consumer_output/IsolatedConsumer.dll"
 packaged_native="$consumer_output/runtimes/linux-x64/native/libcna_c_api.so"
@@ -284,6 +295,7 @@ echo "PACKAGE_ACCEPTANCE_STATUS=passed"
 echo "PACKAGE_ACCEPTANCE_OUTPUT=$output_root"
 echo "PACKAGE_FILES=CNA.Interop.$package_version.nupkg,CNA.Framework.$package_version.nupkg,CNA.XnaCompat.$package_version.nupkg"
 echo "PACKAGE_NATIVE_ENV_REQUIRED=no"
+echo "PACKAGE_XNA_PROFILE_RESOURCE=passed"
 echo "PACKAGE_FRAMES_60=passed"
 echo "PACKAGE_FRAMES_600=passed"
 echo "PACKAGE_OVERRIDE_PRECEDENCE=passed"

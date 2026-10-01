@@ -100,7 +100,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | --- | --- | --- |
 | CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | todo: needs a C route naming the XNA exception type (GamerPrivilege/NetworkNotAvailable/GuideAlreadyVisible/ArgumentOutOfRange all collapse into result+category today) |
 | CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
-| CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | todo |
+| CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | done; samples' Directory.Build.targets import + per-sample XnaProfile is part of CSX-050 |
 
 ### P9 -- portability
 
@@ -110,6 +110,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-081: the default GraphicsProfile comes from the project's XnaProfile
+
+XNA's `GraphicsDeviceManager` constructor reads the game assembly's
+`Microsoft.Xna.Framework.RuntimeProfile` resource (first line ends in `Reach`/`HiDef`; Reach when
+absent), which XNA's build wrote from `<XnaProfile>` -- 93 of the upstream sample projects say
+HiDef. The facade read nothing and every C# game ran Reach. Now the facade's constructor reads the
+resource exactly as the IL does, and `src/CNA.XnaCompat/build/CNA.XnaCompat.targets` writes it
+(`<XnaPlatform>.v4.0.<XnaProfile>`, an unknown profile is a build error), packed as `build/` and
+`buildTransitive/`.
+
+Found on the way: `a07f385`'s fixture symbol list missed the last phone import (`0c18dca`), caught
+by package acceptance's ABI gate.
+
+Tests: `RuntimeProfileTests` (XnaCompat.Tests itself declares `XnaProfile=HiDef` and imports the
+targets): the resource is `Windows.v4.0.HiDef`, the reader answers HiDef for it and Reach without
+it. Package acceptance builds the isolated consumer with `-p:XnaProfile=HiDef` and checks the
+resource (`PACKAGE_XNA_PROFILE_RESOURCE=passed`). XnaCompat 272/272, integration 206/206,
+GamerServices 23/23. Not done here: cna-cs-samples importing the targets and each sample declaring
+its original profile -- with CSX-050, since it changes what those rows render.
 
 ### 2026-10-01 -- CSX-045: CNA.PhoneCompat, the opt-in Windows Phone device assembly
 

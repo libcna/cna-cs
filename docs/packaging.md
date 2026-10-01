@@ -63,6 +63,18 @@ Re-measured 2026-10-01 against CNA `402c1aaa9` (C ABI 0.36.0, OPENGLES3, compile
 consumer's packaged `libcna_c_api.so` resolves SDL from its own `runtimes/linux-x64/native`, with no
 path into the CNA tree.
 
+## The XNA graphics profile travels with the package
+
+XNA's build embedded a project's `<XnaProfile>` (Reach or HiDef) in the game assembly as the
+`Microsoft.Xna.Framework.RuntimeProfile` resource, and `GraphicsDeviceManager` reads it for its
+default `GraphicsProfile` (Reach without it). `CNA.XnaCompat` ships the build half as
+`build/CNA.XnaCompat.targets` and `buildTransitive/CNA.XnaCompat.targets`, so a package consumer
+keeps its original project property and gets the same default. A project that references
+`CNA.XnaCompat` as a project imports `src/CNA.XnaCompat/build/CNA.XnaCompat.targets` itself.
+Package acceptance builds the isolated consumer a second time with `-p:XnaProfile=HiDef` and
+refuses a package whose consumer does not carry `Windows.v4.0.HiDef`
+(`PACKAGE_XNA_PROFILE_RESOURCE`).
+
 ## Measured linux-x64 experiment
 
 The isolated generated `dotnet new cna-game` project restored from the local feed and built with no
