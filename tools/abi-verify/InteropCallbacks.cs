@@ -23,9 +23,11 @@ static class InteropCallbacks
     ///
     /// The pairing cannot be read from metadata -- a function pointer is handed to a route at a call
     /// site, not declared as implementing anything -- so it is listed, and each entry is a statement
-    /// that the call site was read. It is deliberately small: two event shapes, the three
-    /// content-reader callbacks and the CNB loader account for every callback this binding
-    /// provides.
+    /// that the call site was read. Two event shapes, the three content-reader callbacks, the CNB
+    /// loader, and the GamerServices and Net callbacks CNA.XnaCompat hands to native directly
+    /// account for every callback this binding provides. The Net session callbacks are why the
+    /// XnaCompat entries exist: they take the session first, and a two-parameter version read the
+    /// event description as the context and crashed on the first event.
     /// </summary>
     public static readonly (string Owner, string Member, string Typedef)[] Pairings =
     [
@@ -35,12 +37,52 @@ static class InteropCallbacks
         ("CnaContentTypeReaderCallbacks", "Read", "CNA_ContentTypeReaderReadCallback"),
         ("CnaContentTypeReaderCallbacks", "Destroy", "CNA_ContentTypeReaderDestroyCallback"),
         ("CNA.Content.Cnb.CnbLoaderRegistration", "OnLoad", "CNA_CnbLoaderCallback"),
+        ("Microsoft.Xna.Framework.GamerServices.GamerServicesAsyncResult", "OnNativeCompletion", "CNA_GamerAsyncCallback"),
+        ("Microsoft.Xna.Framework.GamerServices.GamerServicesDispatcher", "OnInstallingTitleUpdate", "CNA_GamerAsyncCallback"),
+        ("Microsoft.Xna.Framework.GamerServices.AvatarDescription", "OnNativeChanged", "CNA_GamerAsyncCallback"),
+        ("Microsoft.Xna.Framework.GamerServices.SignedInGamer", "OnSignedIn", "CNA_SignedInGamerEventCallback"),
+        ("Microsoft.Xna.Framework.GamerServices.SignedInGamer", "OnSignedOut", "CNA_SignedInGamerEventCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnGameStarted", "CNA_GameStartedCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnGameEnded", "CNA_GameEndedCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnGamerJoined", "CNA_GamerJoinedCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnGamerLeft", "CNA_GamerLeftCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnHostChanged", "CNA_HostChangedCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnSessionEnded", "CNA_NetworkSessionEndedCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnWriteArbitrated", "CNA_WriteLeaderboardsCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnWriteUnarbitrated", "CNA_WriteLeaderboardsCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnWriteTrueSkill", "CNA_WriteLeaderboardsCallback"),
+        ("Microsoft.Xna.Framework.Net.NetworkSession", "OnInviteAccepted", "CNA_InviteAcceptedCallback"),
     ];
+
+    /// <summary>
+    /// Callback parameters whose C spelling differs from the managed one only by <c>const</c>, which
+    /// C# cannot put on a pointer: an event description CNA lends for the duration of the call. Keyed
+    /// <c>Member#index</c>; anything else about the parameter is still compared.
+    /// </summary>
+    private static readonly Dictionary<string, string> ConstParameters = new(StringComparer.Ordinal)
+    {
+        ["OnSignedIn#1"] = "const CNA_SignedInGamerEventInfo*",
+        ["OnSignedOut#1"] = "const CNA_SignedInGamerEventInfo*",
+        ["OnGameStarted#1"] = "const CNA_GameStartedEventInfo*",
+        ["OnGameEnded#1"] = "const CNA_GameEndedEventInfo*",
+        ["OnGamerJoined#1"] = "const CNA_GamerJoinedEventInfo*",
+        ["OnGamerLeft#1"] = "const CNA_GamerLeftEventInfo*",
+        ["OnHostChanged#1"] = "const CNA_HostChangedEventInfo*",
+        ["OnSessionEnded#1"] = "const CNA_NetworkSessionEndedEventInfo*",
+        ["OnWriteArbitrated#1"] = "const CNA_WriteLeaderboardsEventInfo*",
+        ["OnWriteUnarbitrated#1"] = "const CNA_WriteLeaderboardsEventInfo*",
+        ["OnWriteTrueSkill#1"] = "const CNA_WriteLeaderboardsEventInfo*",
+        ["OnInviteAccepted#0"] = "const CNA_InviteAcceptedEventInfo*",
+    };
 
     /// <summary>The managed signature of one pairing, as C, or null when it cannot be found.</summary>
     private static (string Return, string[] Parameters)? Signature(string owner, string member)
     {
-        foreach (Assembly assembly in new[] { typeof(CNA.Interop.CnaHandle).Assembly, typeof(CNA.Game).Assembly })
+        foreach (Assembly assembly in new[]
+                 {
+                     typeof(CNA.Interop.CnaHandle).Assembly, typeof(CNA.Game).Assembly,
+                     typeof(Microsoft.Xna.Framework.Net.NetworkSession).Assembly,
+                 })
         {
             Type? type = assembly.GetTypes().FirstOrDefault(
                 t => t.FullName == owner || t.Name == owner);
@@ -102,9 +144,11 @@ static class InteropCallbacks
             // used, so each one is named and discarded. The body is irrelevant: what is under test
             // is the type the compiler gives this function, and whether it may be assigned to the
             // typedef CNA declares.
-            string parameters = signature.Parameters.Length == 0
+            string[] spelled = [.. signature.Parameters.Select((p, i) =>
+                ConstParameters.TryGetValue($"{member}#{i}", out string? constant) && constant == "const " + p ? constant : p)];
+            string parameters = spelled.Length == 0
                 ? "void"
-                : string.Join(", ", signature.Parameters.Select((p, i) => $"{p} p{i}"));
+                : string.Join(", ", spelled.Select((p, i) => $"{p} p{i}"));
 
             string function = $"mcb_{owner.Replace('.', '_')}_{member}";
             text.AppendLine($"// {owner}.{member}");

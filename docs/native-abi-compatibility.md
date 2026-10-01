@@ -58,7 +58,7 @@ only the one new route, so a policy written as "whatever exports the names we ca
 | Consumed entry points | 1384: the 1383 of 0.35.0 plus `cna_packet_reader_copy_data_ext` |
 | Consumed entry points absent / changed prototype | 0 / 0 |
 | Upstream exports | 3202 -> 3203, 0 removed; 0 struct, scalar, constant or string differences; [`eng/cna-upstream-abi-allowlist.txt`](../eng/cna-upstream-abi-allowlist.txt) holds no entries |
-| `tools/abi-verify` | 1119 native and 1119 managed layout/type values, 0 mismatches; 1384 of 1384 prototypes compiled; 6 callbacks; 596 constants; 12 of 12 negative controls rejected |
+| `tools/abi-verify` | 1119 native and 1119 managed layout/type values, 0 mismatches; 1384 of 1384 prototypes compiled; 21 callbacks (the GamerServices and Net ones CNA.XnaCompat passes as `nint` included); 596 constants; 12 of 12 negative controls rejected |
 | Native integration (Release, OPENGLES3 with compiled effects) | 203 of 203, GamerServices/Avatar 12 of 12 |
 
 ### What the 0.35.0 admission measured (retired)

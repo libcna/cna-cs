@@ -102,6 +102,37 @@ public abstract unsafe class Gamer
         }
     }
 
+    /// <summary>Forgets this gamer and releases its handle now, ahead of whatever owns the gamer
+    /// natively (a network session refuses to be destroyed while a view of its gamers is open).</summary>
+    internal void Release()
+    {
+        Forget();
+        _ownedHandle?.Dispose();
+    }
+
+    /// <summary>
+    /// The managed gamer a native handle names, found by the identity the facade stamped on it, or
+    /// null when the facade has never wrapped that gamer. The handle itself is not kept.
+    /// </summary>
+    internal static Gamer? FromHandle(CnaHandle handle)
+    {
+        if (handle.IsNull)
+        {
+            return null;
+        }
+
+        GamerServicesInterop.Check(Native.cna_gamer_get_tag(handle, out ulong tag), nameof(FromHandle));
+        if (tag == 0)
+        {
+            return null;
+        }
+
+        lock (s_identityLock)
+        {
+            return s_byIdentity.TryGetValue(tag, out Gamer? gamer) ? gamer : null;
+        }
+    }
+
     public string Gamertag => GamerServicesInterop.ReadString(
         Native.cna_gamer_get_gamertag_size, CopyGamertag, Handle, nameof(Gamertag));
 

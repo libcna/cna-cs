@@ -269,6 +269,13 @@ jobs:
           dotnet run --project tools/api-compat/CNA.ApiCompat.csproj -c Release --no-build --
           --reference-dir "$env:RUNNER_TEMP\xna-references"
           --target src/CNA.XnaCompat/bin/Release/net8.0/CNA.XnaCompat.dll --format github
+      - name: Require exact GamerServices, Avatar and Net contract (75 types)
+        shell: pwsh
+        run: >-
+          dotnet run --project tools/api-compat/CNA.ApiCompat.csproj -c Release --no-build --
+          --reference-dir "$env:RUNNER_TEMP\xna-references"
+          --profile tools/api-compat/profiles/xna40-gamerservices-net.json
+          --target src/CNA.XnaCompat/bin/Release/net8.0/CNA.XnaCompat.dll --format github
 
   strict-api-status:
     runs-on: ubuntu-latest

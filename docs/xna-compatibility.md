@@ -188,12 +188,16 @@ not the entire historical XNA product:
 
 - XACT runtime is included;
 - GamerServices, Avatar and Net are measured by their own profile,
-  `tools/api-compat/profiles/xna40-gamerservices-net.json` (75 reference types), and the runtime
-  profile excludes their namespaces. They are backed by CNA's native gamer services, Guide and
-  network session implementation. Two C ABI gaps remain and refuse explicitly rather than
-  pretend: `LeaderboardWriter.GetLeaderboard` (no session-writer route crosses the ABI yet) and
-  the contents of a non-empty `PropertyDictionary` stream value (only its presence and length
-  do);
+  `tools/api-compat/profiles/xna40-gamerservices-net.json` (75/75 types, 0 differences), and the
+  runtime profile excludes their namespaces. They are backed by CNA's native gamer services,
+  Guide, avatars and network sessions (Local, SystemLink over ENet, and the CNA service for
+  PlayerMatch/Ranked). Known boundaries: `LeaderboardWriter` throws `NotSupportedException`, as
+  Windows XNA's does (CNA's C++ writes leaderboards but no C route exposes it); a non-empty
+  `PropertyDictionary` stream value's contents do not cross the C ABI; a Local session does not
+  loop packets back to its own gamers (CNA's choice; XNA's managed IL hands packets to its native
+  kernel, so XNA's behaviour there is not measured); and the C ABI cannot tell
+  `GamerPrivilegeException` or `NetworkNotAvailableException` apart from other state failures, so
+  those arrive as `InvalidOperationException` (CSX-080);
 - Windows Phone sensor/device APIs need a separate platform profile;
 - Xbox-only APIs need a separate platform profile;
 - Content Pipeline/build-time assemblies are a separate product surface and roadmap.

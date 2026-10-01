@@ -65,7 +65,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-040 | Inventory current CNA GamerServices/Guide/Avatar/Net C API vs XNA 4.0 metadata | done (fbff5e7): 426 routes bound, abi-verify clean |
 | CSX-041 | `Microsoft.Xna.Framework.GamerServices` runtime profile (Gamer, SignedInGamer, Guide, GamerServicesComponent, profiles, achievements, leaderboards) | done: 55/75 of the GS/Net profile exact; rest is CSX-042/043 |
 | CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | done: 58/75 exact, renderer reaches Ready and draws |
-| CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | todo |
+| CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | done: GS/Net profile 75/75, SystemLink loopback measured |
 | CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | doing: packet-reader copy done (CNA 402c1aaa9, ABI 0.36.0); LeaderboardWriter session route and PropertyDictionary stream contents open (Windows XNA throws for the writer too) |
 | CSX-045 | Separate opt-in phone compatibility assembly (`Microsoft.Devices` etc.) only where samples need it | todo |
 
@@ -98,7 +98,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | todo |
+| CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | todo: needs a C route naming the XNA exception type (GamerPrivilege/NetworkNotAvailable/GuideAlreadyVisible/ArgumentOutOfRange all collapse into result+category today) |
 | CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | todo |
 
@@ -110,6 +110,37 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-043: Microsoft.Xna.Framework.Net over CNA's network sessions
+
+All 17 Net types against the XNA IL: `NetworkSession` (every Create/Find/Join/JoinInvited overload
+and its Begin/End pair, the session state machine, rosters, properties, simulated latency/loss,
+the nine instance events and the static `InviteAccepted`), `NetworkGamer`, `LocalNetworkGamer`
+(every SendData/ReceiveData overload), `NetworkMachine`, `AvailableNetworkSession(Collection)`,
+`NetworkSessionProperties`, `QualityOfService`, `PacketReader`/`PacketWriter` (managed
+`BinaryReader`/`BinaryWriter`, raw IEEE bits as XNA writes them) and the event args. XNA's own
+argument checks run first with its parameter names; join failures carry their
+`NetworkSessionJoinError`; `GamerJoined` replays existing gamers to a new handler; a handler's
+exception is rethrown from `Update`; one managed object per gamer and per machine.
+
+Found on the way and fixed: (1) `b0fbab8` -- owned signed-in gamer handles were released through
+the plain gamer route, which refuses them, so every `Gamer.SignedInGamers` lookup leaked a handle;
+(2) the session callbacks first went in with two parameters where CNA passes three
+(session, info, context), crashing on the first event. abi-verify had not caught it because the
+callbacks cross as `nint`; its callback check now covers every GamerServices and Net callback
+XnaCompat passes (6 -> 21), with `const` on a lent event description the only accepted
+difference.
+
+Tests (`NetTests`, 10): identity across rosters/host/lookup/machine, the replay, Lobby -> Playing ->
+Lobby with events from `Update`, a handler exception out of `Update`, a SystemLink packet looped
+back through native ENet into a managed `PacketReader` byte-exactly (22/22 bytes, via 0.36.0's
+copy route), the Local session's drop, properties (session-bound and standalone), XNA's argument
+checks, Dispose then a second session, Begin/End.
+
+Results: GS/Net profile 75/75 with 0 diagnostics, runtime 256/256, leak-only 0; GamerServices
+integration 23/23; integration 203/203; framework 630/630; XnaCompat 269/269; abi-verify 1384
+prototypes, 21 callbacks, 0 mismatches. Not measured: two machines (SystemLink between two
+processes, host migration, `RemoveFromSession`), PlayerMatch/Ranked against a CNA service, voice.
 
 ### 2026-10-01 -- CSX-044: ABI 0.36.0 for the managed PacketReader; CBIND-131 found on the way
 
