@@ -30,13 +30,13 @@ As of 2026-10-01, against CNA `next` `402c1aaa9` (C ABI 0.36.0), OPENGLES3 with
 
 - Debug and Release solution builds: 0 warnings, 0 errors;
 - managed tests: 630/630 framework and 269/269 XNA-compat;
-- native integration tests: 203/203, plus 23/23 GamerServices, Avatar and Net integration tests
+- native integration tests: 206/206, plus 23/23 GamerServices, Avatar and Net integration tests
   (their own process: the native dispatcher is process-wide, as XNA's is);
 - strict metadata profile: 256 reference types versus 256 target types, 0 differences, 0
   allowlisted; GamerServices/Avatar/Net profile: 75 reference versus 75 target types, 0
   differences;
-- ABI: 1384 imports, all resolving; `tools/abi-verify` measures 1119 native/managed layout values
-  with 0 mismatches, compiles all 1384 prototypes, checks 21 callback shapes and asserts 596
+- ABI: 1405 imports, all resolving; `tools/abi-verify` measures 1137 native/managed layout values
+  with 0 mismatches, compiles all 1405 prototypes, checks 23 callback shapes and asserts 604
   constants; the
   `cna-cs-native-abi/1` matrix accepts exactly 0.36.0 and 12 isolated fixtures pass (2 accepted, 10
   rejected). See [`docs/native-abi-compatibility.md`](docs/native-abi-compatibility.md).
@@ -66,7 +66,7 @@ CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so \
 The loader also accepts `CNA_NATIVE_DIR`. Explicit configuration is fail-fast and takes precedence
 over package-native lookup. Admission follows
 [`cna-cs-native-abi/1`](docs/native-abi-compatibility.md), not a same-major range: the version must
-have a reviewed matrix entry, all 1384 imports must exist, and signature/shape canaries must pass.
+have a reviewed matrix entry, all 1405 imports must exist, and signature/shape canaries must pass.
 The one accepted entry today is C ABI 0.36.0.
 Wrong ABI, missing symbols, conflicts, wrong architecture/load failure, and missing-library cases
 report the attempted configuration, consumer/detected ABI where available, RID, and remediation;

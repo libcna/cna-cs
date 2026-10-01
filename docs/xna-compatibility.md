@@ -198,7 +198,17 @@ not the entire historical XNA product:
   kernel, so XNA's behaviour there is not measured); and the C ABI cannot tell
   `GamerPrivilegeException` or `NetworkNotAvailableException` apart from other state failures, so
   those arrive as `InvalidOperationException` (CSX-080);
-- Windows Phone sensor/device APIs need a separate platform profile;
+- Windows Phone device APIs live in a separate, opt-in assembly, `CNA.PhoneCompat`, so the strict
+  facade carries none of them: `Microsoft.Devices` (`DeviceType`, `Environment`,
+  `VibrateController`) and `Microsoft.Devices.Sensors` (`Accelerometer` with both its 7.1
+  `CurrentValueChanged` and 7.0 `ReadingChanged` events, `SensorBase<T>`, the readings, event args,
+  `SensorState` and the failure exceptions), over CNA's devices module. Its scope is what the
+  gallery's phone samples use; their unchanged sources (AccelerometerSample, Bounce, CameraShake,
+  MarbleMaze, Platformer, SoundAndMusic) compile against it with `WINDOWS_PHONE` defined. No
+  Windows Phone reference assemblies are available here, so its metadata is unmeasured: its
+  authority is CNA's C++ phone headers (themselves checked against archived MSDN pages) and those
+  samples. `Microsoft.Phone.Shell`/`Notification` (Yacht) are not provided yet. A desktop reports
+  `DeviceType.Emulator` and an unsupported accelerometer, as CNA's C++ does;
 - Xbox-only APIs need a separate platform profile;
 - Content Pipeline/build-time assemblies are a separate product surface and roadmap.
 

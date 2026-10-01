@@ -119,10 +119,11 @@ public class CnaAbiTests
         // 0.30.0 and cna_graphics_ext_is_available, whose only caller described that layer (957),
         // plus the 239 routes of gamer_services.h and the 187 of net.h, net_gamers.h and
         // net_sessions.h that the XNA GamerServices/Avatar/Net surface is built on, plus 0.36.0's
-        // cna_packet_reader_copy_data_ext, which XNA's managed PacketReader receives through.
+        // cna_packet_reader_copy_data_ext, which XNA's managed PacketReader receives through (1384),
+        // plus the 21 devices.h/sensors.h routes of the opt-in phone assembly CNA.PhoneCompat.
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(1384, declared.Length);
+        Assert.Equal(1405, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 

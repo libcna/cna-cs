@@ -13,6 +13,7 @@
          part of the ABI evidence. Referenced for reflection only; nothing here calls into it. -->
     <ProjectReference Include="../../src/CNA.Framework/CNA.Framework.csproj" />
     <ProjectReference Include="../../src/CNA.XnaCompat/CNA.XnaCompat.csproj" />
+    <ProjectReference Include="../../src/CNA.PhoneCompat/CNA.PhoneCompat.csproj" />
   </ItemGroup>
 
 </Project>

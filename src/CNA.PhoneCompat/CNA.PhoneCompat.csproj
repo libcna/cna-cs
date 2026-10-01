@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>
+      Opt-in Windows Phone compatibility for XNA 4.0 game source: Microsoft.Devices
+      (VibrateController, Environment) and Microsoft.Devices.Sensors (the accelerometer), over CNA's
+      native devices module. Kept out of CNA.XnaCompat so the strict Microsoft.Xna.Framework facade
+      carries no phone API; a game that needs it references this assembly as well.
+    </Description>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsPackable Condition="'$(CnaPackageAcceptance)' != 'true'">false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CNA.XnaCompat\CNA.XnaCompat.csproj" />
+  </ItemGroup>
+
+</Project>

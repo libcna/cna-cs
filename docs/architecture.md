@@ -96,6 +96,14 @@ selected strict profile inherits a `CNA.*` type, and `tools/api-compat --leak-on
 public/protected CNA-type signatures. The full seven-assembly strict comparison also reports
 256/256 types and zero metadata diagnostics with an empty allowlist.
 
+#### `CNA.PhoneCompat`: the opt-in Windows Phone device surface
+
+`Microsoft.Devices` and `Microsoft.Devices.Sensors` are Windows Phone SDK, not XNA, so they are a
+separate assembly a phone game references beside `CNA.XnaCompat`; the strict facade and its
+metadata profiles stay free of them. Like GamerServices it calls `CNA.Interop` directly, addresses
+every device route through the running CNA game (`CNA.Game.Active`), and raises sensor events on
+the thread native delivers them on, as a phone did.
+
 #### GamerServices, Avatar and Net: straight to `CNA.Interop`
 
 `Microsoft.Xna.Framework.GamerServices` (with Guide and the Avatar types) and

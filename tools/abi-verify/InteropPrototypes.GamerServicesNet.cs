@@ -10,6 +10,11 @@ static partial class InteropPrototypes
     /// </summary>
     public static readonly Dictionary<string, string> GamerServicesNetParameterOverrides = new(StringComparer.Ordinal)
     {
+        // devices.h/sensors.h, for CNA.PhoneCompat's accelerometer: the two reading callbacks, whose
+        // shapes InteropCallbacks checks against the managed handlers.
+        ["cna_accelerometer_subscribe_current_value_changed#1"] = "void (*)(const CNA_AccelerometerReading*, void*)",   // callback, declared nint; its shape is checked from the delegate
+        ["cna_accelerometer_subscribe_reading_changed#1"] = "void (*)(const CNA_AccelerometerReadingEventInfo*, void*)",   // callback, declared nint; its shape is checked from the delegate
+
         ["cna_achievement_collection_create_ext#0"] = "const CNA_AchievementHandle*",   // const, which C# cannot put on a pointer
         ["cna_achievement_copy_description#1"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_achievement_copy_how_to_earn#1"] = "char*",   // text buffer: C char, which C# has no type for

@@ -52,6 +52,8 @@ static class InteropCallbacks
         ("Microsoft.Xna.Framework.Net.NetworkSession", "OnWriteUnarbitrated", "CNA_WriteLeaderboardsCallback"),
         ("Microsoft.Xna.Framework.Net.NetworkSession", "OnWriteTrueSkill", "CNA_WriteLeaderboardsCallback"),
         ("Microsoft.Xna.Framework.Net.NetworkSession", "OnInviteAccepted", "CNA_InviteAcceptedCallback"),
+        ("Microsoft.Devices.Sensors.Accelerometer", "OnCurrentValue", "CNA_AccelerometerReadingCallback"),
+        ("Microsoft.Devices.Sensors.Accelerometer", "OnReading", "CNA_AccelerometerReadingEventCallback"),
     ];
 
     /// <summary>
@@ -73,6 +75,8 @@ static class InteropCallbacks
         ["OnWriteUnarbitrated#1"] = "const CNA_WriteLeaderboardsEventInfo*",
         ["OnWriteTrueSkill#1"] = "const CNA_WriteLeaderboardsEventInfo*",
         ["OnInviteAccepted#0"] = "const CNA_InviteAcceptedEventInfo*",
+        ["OnCurrentValue#0"] = "const CNA_AccelerometerReading*",
+        ["OnReading#0"] = "const CNA_AccelerometerReadingEventInfo*",
     };
 
     /// <summary>The managed signature of one pairing, as C, or null when it cannot be found.</summary>
@@ -82,6 +86,7 @@ static class InteropCallbacks
                  {
                      typeof(CNA.Interop.CnaHandle).Assembly, typeof(CNA.Game).Assembly,
                      typeof(Microsoft.Xna.Framework.Net.NetworkSession).Assembly,
+                     typeof(Microsoft.Devices.Sensors.Accelerometer).Assembly,
                  })
         {
             Type? type = assembly.GetTypes().FirstOrDefault(

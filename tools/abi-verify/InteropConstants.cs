@@ -230,7 +230,13 @@ static class InteropConstants
             .Where(type => type is { IsEnum: true, IsPublic: true })
             .Where(type => type.Namespace is "Microsoft.Xna.Framework.GamerServices" or "Microsoft.Xna.Framework.Net");
 
-        return interopEnums.Concat(frameworkEnums).Concat(compatEnums).OrderBy(type => type.Name, StringComparer.Ordinal);
+        // The phone compatibility enums (DeviceType, SensorState), cast the same way.
+        IEnumerable<Type> phoneEnums = typeof(Microsoft.Devices.Sensors.Accelerometer).Assembly
+            .GetTypes()
+            .Where(type => type is { IsEnum: true, IsPublic: true });
+
+        return interopEnums.Concat(frameworkEnums).Concat(compatEnums).Concat(phoneEnums)
+            .OrderBy(type => type.Name, StringComparer.Ordinal);
     }
 
     /// <summary>

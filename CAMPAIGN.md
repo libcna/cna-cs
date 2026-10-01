@@ -67,7 +67,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | done: 58/75 exact, renderer reaches Ready and draws |
 | CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | done: GS/Net profile 75/75, SystemLink loopback measured |
 | CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | doing: packet-reader copy done (CNA 402c1aaa9, ABI 0.36.0); LeaderboardWriter session route and PropertyDictionary stream contents open (Windows XNA throws for the writer too) |
-| CSX-045 | Separate opt-in phone compatibility assembly (`Microsoft.Devices` etc.) only where samples need it | todo |
+| CSX-045 | Separate opt-in phone compatibility assembly (`Microsoft.Devices` etc.) only where samples need it | done: `CNA.PhoneCompat` (Devices + Sensors.Accelerometer); 6 of 7 gallery phone samples compile unchanged; Phone.Shell/Notification for Yacht open |
 
 ### P6 -- samples (`cna-cs-samples`)
 
@@ -110,6 +110,36 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-045: CNA.PhoneCompat, the opt-in Windows Phone device assembly
+
+Seven gallery samples reach Windows Phone SDK types (`DEC-001` in cna-cs-samples); the owner brief
+settled it as a separate opt-in assembly. `src/CNA.PhoneCompat` provides what they use:
+`Microsoft.Devices` (`DeviceType`, `Environment.DeviceType`, `VibrateController.Default`) and
+`Microsoft.Devices.Sensors` (`Accelerometer` with `IsSupported`, `State`, `Start`/`Stop`,
+`CurrentValue`, `IsDataValid`, `TimeBetweenUpdates`, `CurrentValueChanged` and the 7.0
+`ReadingChanged`; `SensorBase<T>`, `AccelerometerReading`, `ISensorReading`,
+`SensorReadingEventArgs<T>`, `AccelerometerReadingEventArgs`, `SensorState`,
+`SensorFailedException`/`AccelerometerFailedException`), over 21 devices.h/sensors.h routes.
+`System.IO.IsolatedStorage` needs nothing: .NET 8 provides `GetUserStoreForApplication` on Linux
+(measured).
+
+No Windows Phone reference assemblies exist here, so the metadata is unmeasured; the authority is
+CNA's C++ phone headers (from archived MSDN pages) and the samples. Behaviour follows native: a
+desktop is `DeviceType.Emulator` (only a mobile platform answers `Device`), and a desktop
+accelerometer is unsupported, so `Start` throws `AccelerometerFailedException` with native's error
+id -- the exception those samples catch to fall back to keys. The C++ gallery ports do not enable
+CNA's keyboard accelerometer emulation, so for parity neither does this.
+
+Evidence: unchanged sources of AccelerometerSample, Bounce, CameraShake, MarbleMaze, Platformer and
+SoundAndMusic compile with `WINDOWS_PHONE` against XnaCompat + PhoneCompat (probes in
+`build-consumer/phonecompat-probe`, not committed); Yacht also needs its WCF `YachtServices`
+sibling and `Microsoft.Phone.Shell`/`Notification` (CNA C++ has `modules/phone`; no C routes yet).
+`PhoneCompatTests` (3): environment and vibration with XNA's duration check; an unsupported
+accelerometer's state and refusal; readings through both events in native's order, in g, via
+native's test routes. abi-verify: 1405 prototypes, 23 callbacks (the two reading callbacks), 604
+constants (`DeviceType`, `SensorState`), 1137 layout values, 0 mismatches. Integration 206/206.
+Packaging of `CNA.PhoneCompat` as a NuGet package is not done.
 
 ### 2026-10-01 -- CSX-043: Microsoft.Xna.Framework.Net over CNA's network sessions
 

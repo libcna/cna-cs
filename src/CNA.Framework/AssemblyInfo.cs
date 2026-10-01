@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 // gets access to CNA.Interop directly -- that grant stops at this assembly, which is what keeps
 // "CNA.XnaCompat never references CNA.Interop directly" (plan.md invariant #5) true at compile time.
 [assembly: InternalsVisibleTo("CNA.XnaCompat")]
+[assembly: InternalsVisibleTo("CNA.PhoneCompat")]
 [assembly: InternalsVisibleTo("CNA.Framework.Tests")]
 [assembly: InternalsVisibleTo("CNA.OwnershipStress")]
 
