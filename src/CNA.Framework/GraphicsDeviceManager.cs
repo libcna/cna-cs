@@ -46,7 +46,7 @@ public class GraphicsDeviceManager : IGraphicsDeviceService, IGraphicsDeviceMana
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(GraphicsDeviceManager));
 
-        _handle = new NativeResourceHandle(manager.AsNint, ReleaseNative);
+        _handle = new NativeResourceHandle(manager.Value, ReleaseNative);
 
         // Real XNA's GraphicsDeviceManager registers itself as the game's IGraphicsDeviceService
         // from its own constructor, which is how components find the device without depending on
@@ -96,7 +96,7 @@ public class GraphicsDeviceManager : IGraphicsDeviceService, IGraphicsDeviceMana
         }
     }
 
-    private static bool ReleaseNative(nint handleValue) =>
+    private static bool ReleaseNative(ulong handleValue) =>
         Native.cna_graphics_device_manager_destroy(new CnaHandle(handleValue)).IsSuccess();
 
     public int PreferredBackBufferWidth

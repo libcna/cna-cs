@@ -36,10 +36,10 @@ public enum MouseCursorStock : uint
 public sealed class MouseCursor : IDisposable
 {
     private readonly NativeResourceHandle? _owned;
-    private readonly nint _handleValue;
+    private readonly ulong _handleValue;
     private bool _disposed;
 
-    private MouseCursor(nint handleValue, bool owned)
+    private MouseCursor(ulong handleValue, bool owned)
     {
         _handleValue = handleValue;
         _owned = owned
@@ -54,7 +54,7 @@ public sealed class MouseCursor : IDisposable
         CnaResult result = Native.cna_mouse_cursor_get_stock_ext(
             CnaAmbientGame.Current, (uint)stock, out CnaHandle cursor);
         CnaException.ThrowIfFailed(result, nameof(FromStock));
-        return new MouseCursor(cursor.AsNint, owned: false);
+        return new MouseCursor(cursor.Value, owned: false);
     }
 
     /// <summary>
@@ -78,16 +78,16 @@ public sealed class MouseCursor : IDisposable
     /// <c>CNA.Interop</c> type. Same seam as
     /// <c>CNA.Graphics.RenderTarget2D.GetRenderTargetProperties</c>.
     /// </summary>
-    internal static MouseCursor FromTextureHandle(nint textureHandleValue, int originX, int originY)
+    internal static MouseCursor FromTextureHandle(ulong textureHandleValue, int originX, int originY)
     {
         CnaResult result = Native.cna_mouse_cursor_create_from_texture2d(
             CnaAmbientGame.Current, new CnaHandle(textureHandleValue), originX, originY,
             out CnaHandle cursor);
         CnaException.ThrowIfFailed(result, nameof(FromTexture));
-        return new MouseCursor(cursor.AsNint, owned: true);
+        return new MouseCursor(cursor.Value, owned: true);
     }
 
-    internal nint NativeHandleValue => _handleValue;
+    internal ulong NativeHandleValue => _handleValue;
 
     public void Dispose()
     {

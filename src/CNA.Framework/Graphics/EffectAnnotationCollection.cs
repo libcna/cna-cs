@@ -16,7 +16,7 @@ public class EffectAnnotationCollection : IEnumerable<EffectAnnotation>, IDispos
 
     internal EffectAnnotationCollection(CnaHandle handle)
     {
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_annotation_collection_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_annotation_collection_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>

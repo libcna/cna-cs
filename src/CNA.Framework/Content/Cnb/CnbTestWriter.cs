@@ -24,7 +24,7 @@ internal sealed class CnbTestWriter : IDisposable
         CnaResult result = Native.cna_cnb_writer_create(assetTypeId, assetSchemaVersion, out CnaHandle writer);
         CnaException.ThrowIfFailed(result, nameof(CnbTestWriter));
         _handle = new NativeResourceHandle(
-            writer.AsNint,
+            writer.Value,
             h => Native.cna_cnb_writer_destroy(new CnaHandle(h)).IsSuccess());
     }
 

@@ -104,7 +104,7 @@ public class DynamicIndexBuffer : IndexBuffer
         }
     }
 
-    internal static bool QueryIsContentLost(nint nativeHandleValue, object lifetimeOwner)
+    internal static bool QueryIsContentLost(ulong nativeHandleValue, object lifetimeOwner)
     {
         var info = new CnaIndexBufferInfo();
         CnaResult result = Native.cna_index_buffer_get_info(new CnaHandle(nativeHandleValue), ref info);
@@ -114,7 +114,7 @@ public class DynamicIndexBuffer : IndexBuffer
     }
 
     internal static NativeEventBridge SubscribeContentLost(
-        nint nativeHandleValue,
+        ulong nativeHandleValue,
         object lifetimeOwner,
         Action dispatch) =>
         NativeEventBridge.SubscribeWithSender(

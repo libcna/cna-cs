@@ -37,7 +37,7 @@ public class AvatarDescription
         if (slot < 0)
         {
             _handle = new NativeResourceHandle(
-                handle.AsNint, value => Native.cna_avatar_description_destroy(new CnaHandle(value)).IsSuccess());
+                handle.Value, value => Native.cna_avatar_description_destroy(new CnaHandle(value)).IsSuccess());
             return;
         }
 
@@ -56,7 +56,7 @@ public class AvatarDescription
         }
 
         // The registration borrows the description, so it is released first.
-        _handle = new NativeResourceHandle(handle.AsNint, value =>
+        _handle = new NativeResourceHandle(handle.Value, value =>
         {
             if (!registration.IsNull && !Native.cna_gamer_unsubscribe_ext(registration).IsSuccess())
             {

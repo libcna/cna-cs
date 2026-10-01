@@ -54,7 +54,7 @@ public class VertexBuffer : GraphicsResource
             ? facade
             : null;
 
-    internal nint NativeHandleValue => _frameworkBuffer.NativeHandleValue;
+    internal ulong NativeHandleValue => _frameworkBuffer.NativeHandleValue;
 
     public VertexDeclaration VertexDeclaration => _vertexDeclaration;
 

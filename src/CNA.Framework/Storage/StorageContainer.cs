@@ -15,7 +15,7 @@ public class StorageContainer : IDisposable
     // StorageDevice must remain alive for the container's full XNA-visible lifetime.
     private readonly NativeResourceHandle _handle;
 
-    internal StorageContainer(nint nativeHandleValue, StorageDevice storageDevice)
+    internal StorageContainer(ulong nativeHandleValue, StorageDevice storageDevice)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_storage_container_destroy(new CnaHandle(h)).IsSuccess());
         StorageDevice = storageDevice;
@@ -101,7 +101,7 @@ public class StorageContainer : IDisposable
             file, view => Native.cna_storage_container_create_file(NativeHandle, view, out stream));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(CreateFile));
-        return new StorageStream(stream.AsNint);
+        return new StorageStream(stream.Value);
     }
 
     /// <summary>Takes <see cref="System.IO.FileMode"/> directly: <c>CNA_FileMode</c>'s values match
@@ -116,7 +116,7 @@ public class StorageContainer : IDisposable
             file, view => Native.cna_storage_container_open_file(NativeHandle, view, (uint)fileMode, out stream));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(OpenFile));
-        return new StorageStream(stream.AsNint);
+        return new StorageStream(stream.Value);
     }
 
     /// <summary>Matches real XNA's <c>OpenFile(string, FileMode, FileAccess)</c>. Sharing defaults
@@ -132,7 +132,7 @@ public class StorageContainer : IDisposable
                 NativeHandle, view, (uint)fileMode, (uint)fileAccess, out stream));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(OpenFile));
-        return new StorageStream(stream.AsNint);
+        return new StorageStream(stream.Value);
     }
 
     /// <summary>Matches real XNA's <c>OpenFile(string, FileMode, FileAccess, FileShare)</c>. All
@@ -150,7 +150,7 @@ public class StorageContainer : IDisposable
                 NativeHandle, view, (uint)fileMode, (uint)fileAccess, (uint)fileShare, out stream));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(OpenFile));
-        return new StorageStream(stream.AsNint);
+        return new StorageStream(stream.Value);
     }
 
     private bool _disposed;

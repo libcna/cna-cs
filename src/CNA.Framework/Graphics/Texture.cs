@@ -29,7 +29,7 @@ public abstract class Texture : GraphicsResource
 {
     private readonly NativeResourceHandle _handle;
 
-    protected Texture(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    protected Texture(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : this(graphicsDevice, nativeHandleValue, ownsHandle: true)
     {
     }
@@ -38,13 +38,13 @@ public abstract class Texture : GraphicsResource
     /// <paramref name="ownsHandle"/> is <see langword="false"/> -- see
     /// <see cref="NativeResourceHandle"/>'s own doc comment. Used by
     /// <c>VideoPlayer.GetTexture</c>, whose frame texture the *player* owns and replaces.</summary>
-    private protected Texture(GraphicsDevice graphicsDevice, nint nativeHandleValue, bool ownsHandle)
+    private protected Texture(GraphicsDevice graphicsDevice, ulong nativeHandleValue, bool ownsHandle)
         : base(graphicsDevice)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, ReleaseNative, ownsHandle);
     }
 
-    internal nint NativeHandleValue => _handle.DangerousGetHandle();
+    internal ulong NativeHandleValue => _handle.DangerousGetHandle();
 
     private int _cachedWidth = -1;
     private int _cachedHeight;
@@ -87,14 +87,14 @@ public abstract class Texture : GraphicsResource
 
     /// <summary>Hands this texture's native handle to a new owner, leaving this object inert -- see
     /// <see cref="NativeResourceHandle.Detach"/> for the one case that needs it.</summary>
-    internal nint DetachNativeHandle() => _handle.Detach();
+    internal ulong DetachNativeHandle() => _handle.Detach();
 
     /// <summary>How this specific texture kind releases its native handle. Every kind has its own
     /// destroy function (<c>cna_texture2d_destroy</c>, <c>cna_texture3d_destroy</c>,
     /// <c>cna_texturecube_destroy</c>, <c>cna_render_target_destroy</c>) -- there is no shared
     /// <c>cna_texture_destroy</c>, so this stays abstract rather than defaulting to the 2D
     /// one.</summary>
-    protected abstract bool ReleaseNative(nint handleValue);
+    protected abstract bool ReleaseNative(ulong handleValue);
 
     /// <summary>Number of mipmap levels. See this class's own doc comment for why this reads
     /// through to native on every access.</summary>

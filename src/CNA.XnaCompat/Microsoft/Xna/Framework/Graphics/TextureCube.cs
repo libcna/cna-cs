@@ -20,7 +20,7 @@ public class TextureCube : Texture
 
     /// <summary>Forwards an already-created handle, for <see cref="RenderTargetCube"/> -- see the
     /// base class's own equivalent constructor.</summary>
-    internal TextureCube(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    internal TextureCube(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : this(graphicsDevice, new CNA.Graphics.TextureCube(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
             nativeHandleValue))

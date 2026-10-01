@@ -26,7 +26,7 @@ public class EffectAnnotation : IDisposable
 
     internal EffectAnnotation(CnaHandle handle)
     {
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_annotation_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_annotation_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>

@@ -10,7 +10,7 @@ public sealed unsafe class Achievement
     internal Achievement(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_achievement_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_achievement_destroy(new CnaHandle(value)).IsSuccess());
         Key = GamerServicesInterop.ReadString(Native.cna_achievement_get_key_size, CopyKey, Handle, nameof(Key));
     }
 

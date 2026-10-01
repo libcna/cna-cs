@@ -41,7 +41,7 @@ public class RenderTargetCube : TextureCube
     /// The same shape <c>RenderTarget2D.CreateNativeHandle</c> uses, and for the same reason (a
     /// <c>base(...)</c> argument is evaluated before any instance state exists, so the native call
     /// cannot live in the constructor body).</summary>
-    internal static nint CreateNativeCubeHandle(
+    internal static ulong CreateNativeCubeHandle(
         GraphicsDevice graphicsDevice,
         int size,
         bool mipMap,
@@ -68,16 +68,16 @@ public class RenderTargetCube : TextureCube
             graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(RenderTargetCube));
 
-        return handle.AsNint;
+        return handle.Value;
     }
 
     /// <summary>Matches <c>cna_render_target_destroy</c> -- not <c>cna_texturecube_destroy</c>,
     /// which this type would otherwise inherit and which does not own this handle.</summary>
-    protected override bool ReleaseNative(nint handleValue) => RenderTarget2D.ReleaseNativeRenderTarget(handleValue);
+    protected override bool ReleaseNative(ulong handleValue) => RenderTarget2D.ReleaseNativeRenderTarget(handleValue);
 
     /// <summary>Shares <see cref="RenderTarget2D"/>'s reader -- <c>cna_render_target_get_info</c>
     /// serves both kinds and reports which through its own <c>kind</c> field.</summary>
-    private static CnaRenderTargetInfo GetInfo(nint handleValue) => RenderTarget2D.GetInfo(handleValue);
+    private static CnaRenderTargetInfo GetInfo(ulong handleValue) => RenderTarget2D.GetInfo(handleValue);
 
     /// <summary>The depth/stencil format this target was created with.</summary>
     public DepthFormat DepthStencilFormat

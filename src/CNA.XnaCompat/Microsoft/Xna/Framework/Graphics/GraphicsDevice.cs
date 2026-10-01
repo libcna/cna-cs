@@ -22,7 +22,7 @@ public class GraphicsDevice : IDisposable
     private readonly TextureCollection _vertexTextures;
     private bool _disposed;
 
-    internal GraphicsDevice(nint nativeGameHandleValue)
+    internal GraphicsDevice(ulong nativeGameHandleValue)
         : this(CNA.Graphics.GraphicsDevice.CreateFacadeBackend(nativeGameHandleValue))
     {
     }

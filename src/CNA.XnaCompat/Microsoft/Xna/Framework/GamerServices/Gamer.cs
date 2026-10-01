@@ -32,7 +32,7 @@ public abstract unsafe class Gamer
         if (ownsHandle)
         {
             _ownedHandle = new NativeResourceHandle(
-                handle.AsNint, value => destroy(new CnaHandle(value)).IsSuccess());
+                handle.Value, value => destroy(new CnaHandle(value)).IsSuccess());
         }
         else
         {

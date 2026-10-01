@@ -472,7 +472,7 @@ public sealed class CnbModel : IDisposable
 {
     private readonly NativeResourceHandle _handle;
 
-    private CnbModel(nint handleValue)
+    private CnbModel(ulong handleValue)
     {
         _handle = new NativeResourceHandle(
             handleValue,
@@ -498,7 +498,7 @@ public sealed class CnbModel : IDisposable
         CnaException.ThrowIfFailed(result, nameof(Decode));
         GC.KeepAlive(document);
 
-        var decoded = new CnbModel(model.AsNint);
+        var decoded = new CnbModel(model.Value);
         try
         {
             decoded.Read();

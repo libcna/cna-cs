@@ -16,7 +16,7 @@ internal sealed class StorageStream : Stream
 {
     private readonly NativeResourceHandle _handle;
 
-    internal StorageStream(nint nativeHandleValue)
+    internal StorageStream(ulong nativeHandleValue)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, ReleaseNative);
     }
@@ -35,7 +35,7 @@ internal sealed class StorageStream : Stream
     /// <summary>Closes the stream before destroying it: <c>cna_storage_stream_close</c> is what
     /// flushes and releases the underlying file, while <c>_destroy</c> only frees the handle.
     /// Ordering them the other way would drop buffered writes.</summary>
-    private static bool ReleaseNative(nint handleValue)
+    private static bool ReleaseNative(ulong handleValue)
     {
         var handle = new CnaHandle(handleValue);
         return Native.cna_storage_stream_close(handle).IsSuccess();

@@ -127,7 +127,7 @@ public class SpriteFont
     /// because <c>cna_sprite_font_copy_glyphs</c> is documented as the exact inverse of
     /// <c>cna_sprite_font_create</c>, and it makes the loaded and hand-built cases identical.
     /// </summary>
-    internal nint NativeFontHandleValue
+    internal ulong NativeFontHandleValue
     {
         get
         {
@@ -143,7 +143,7 @@ public class SpriteFont
 
             try
             {
-                nint created = CreateNativeFontHandle();
+                ulong created = CreateNativeFontHandle();
                 _nativeFont = new NativeResourceHandle(created, DestroyNative);
                 return created;
             }
@@ -159,7 +159,7 @@ public class SpriteFont
         }
     }
 
-    private static bool DestroyNative(nint handleValue) =>
+    private static bool DestroyNative(ulong handleValue) =>
         Native.cna_sprite_font_destroy(new CnaHandle(handleValue)).IsSuccess();
 
     /// <summary>
@@ -168,7 +168,7 @@ public class SpriteFont
     /// <see cref="NativeFontHandleValue"/> owns what this returns and is the route drawing uses;
     /// this is separated out only so the creation and the ownership read as two things.
     /// </summary>
-    internal unsafe nint CreateNativeFontHandle()
+    internal unsafe ulong CreateNativeFontHandle()
     {
         var glyphs = new CnaSpriteFontGlyph[_characters.Length];
         for (int i = 0; i < glyphs.Length; i++)
@@ -196,7 +196,7 @@ public class SpriteFont
             CnaResult result = Native.cna_sprite_font_create(in createInfo, out CnaHandle font);
             GC.KeepAlive(this);
             CnaException.ThrowIfFailed(result, nameof(CreateNativeFontHandle));
-            return font.AsNint;
+            return font.Value;
         }
     }
 

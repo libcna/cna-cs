@@ -11,7 +11,7 @@ public sealed unsafe class GamerProfile : IDisposable
     internal GamerProfile(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_gamer_profile_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_gamer_profile_destroy(new CnaHandle(value)).IsSuccess());
     }
 
     private CnaHandle Handle

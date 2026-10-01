@@ -21,7 +21,7 @@ public class AudioCategory : IEquatable<AudioCategory>, IDisposable
     private readonly NativeResourceHandle _handle;
     private readonly AudioEngine _audioEngine;
 
-    internal AudioCategory(nint nativeHandleValue, AudioEngine audioEngine)
+    internal AudioCategory(ulong nativeHandleValue, AudioEngine audioEngine)
     {
         _audioEngine = audioEngine;
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_audio_category_destroy(new CnaHandle(h)).IsSuccess());

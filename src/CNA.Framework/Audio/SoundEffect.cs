@@ -62,27 +62,27 @@ public class SoundEffect : IDisposable
                 CnaAmbientGame.Current, in createInfo, basePtr, (ulong)buffer.Length, offset, count, loopStart, loopLength,
                 out CnaHandle handle);
             CnaException.ThrowIfFailed(result, nameof(SoundEffect));
-            _handle = new NativeResourceHandle(handle.AsNint, ReleaseNative);
+            _handle = new NativeResourceHandle(handle.Value, ReleaseNative);
         }
     }
 
     /// <summary>Wraps an already-created native handle -- used by <c>ContentManager.Load&lt;T&gt;</c>,
     /// same pattern as <c>Texture2D</c>'s equivalent constructor.</summary>
-    protected internal SoundEffect(nint nativeHandleValue)
+    protected internal SoundEffect(ulong nativeHandleValue)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, ReleaseNative);
     }
 
-    private static bool ReleaseNative(nint handleValue) =>
+    private static bool ReleaseNative(ulong handleValue) =>
         Native.cna_sound_effect_destroy(new CnaHandle(handleValue)).IsSuccess();
 
-    internal nint NativeHandleValue => _handle.DangerousGetHandle();
+    internal ulong NativeHandleValue => _handle.DangerousGetHandle();
 
     /// <summary>Hands this effect's handle to a new owner, leaving this object inert. Used by
     /// CNA.XnaCompat's own <c>FromStream</c>, which cannot reuse the base factory's result because
     /// a compat <c>SoundEffect</c> is a separate class -- see
     /// <see cref="NativeResourceHandle.Detach"/> for why transferring beats sharing.</summary>
-    internal nint DetachNativeHandle() => _handle.Detach();
+    internal ulong DetachNativeHandle() => _handle.Detach();
 
     /// <summary>
     /// A caller-set label. Real XNA's <c>SoundEffect.Name</c>, and unlike
@@ -161,7 +161,7 @@ public class SoundEffect : IDisposable
             CnaException.ThrowIfFailed(result, nameof(FromStream));
         }
 
-        return new SoundEffect(soundEffect.AsNint);
+        return new SoundEffect(soundEffect.Value);
     }
 
     public SoundEffectInstance CreateInstance() => new(CreateNativeInstanceHandle());
@@ -257,12 +257,12 @@ public class SoundEffect : IDisposable
     /// re-wrapping its return value would wrap the same handle twice, double-releasing it on
     /// disposal. Same pattern as <c>RenderTarget2D.CreateNativeHandle</c>.
     /// </summary>
-    internal nint CreateNativeInstanceHandle()
+    internal ulong CreateNativeInstanceHandle()
     {
         CnaResult result = Native.cna_sound_effect_create_instance(new CnaHandle(NativeHandleValue), out CnaHandle instance);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(CreateInstance));
-        return instance.AsNint;
+        return instance.Value;
     }
 
     /// <summary>Pure arithmetic (16-bit-PCM byte size to <see cref="TimeSpan"/>), no native call --

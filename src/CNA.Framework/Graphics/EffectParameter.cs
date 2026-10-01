@@ -39,7 +39,7 @@ public class EffectParameter : IDisposable
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         _graphicsDevice = graphicsDevice;
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_parameter_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_parameter_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>
@@ -322,13 +322,13 @@ public class EffectParameter : IDisposable
     public TextureCube? GetValueTextureCube() =>
         ReadTexture(CnaEffectTextureType.TextureCube, h => TextureCube.FromNativeHandle(_graphicsDevice, h));
 
-    private T? ReadTexture<T>(CnaEffectTextureType textureType, Func<nint, T> wrap)
+    private T? ReadTexture<T>(CnaEffectTextureType textureType, Func<ulong, T> wrap)
         where T : Texture
     {
         CnaResult result = Native.cna_effect_parameter_get_value_texture(_handle, textureType, out CnaHandle texture);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, "cna_effect_parameter_get_value_texture");
-        return texture.IsNull ? null : wrap(texture.AsNint);
+        return texture.IsNull ? null : wrap(texture.Value);
     }
 
     private CnaEffectParameterInfo GetInfo()

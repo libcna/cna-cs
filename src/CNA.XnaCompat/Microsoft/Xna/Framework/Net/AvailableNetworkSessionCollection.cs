@@ -18,7 +18,7 @@ public sealed class AvailableNetworkSessionCollection : ReadOnlyCollection<Avail
         : base(sessions)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_available_network_session_collection_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_available_network_session_collection_destroy(new CnaHandle(value)).IsSuccess());
     }
 
     ~AvailableNetworkSessionCollection()

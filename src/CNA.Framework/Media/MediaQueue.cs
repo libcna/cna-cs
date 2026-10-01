@@ -23,7 +23,7 @@ public class MediaQueue : IEnumerable<Song>, IDisposable
 
     internal MediaQueue(CnaHandle handle)
     {
-        _handle = new NativeResourceHandle(handle.AsNint, h => Native.cna_media_queue_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(handle.Value, h => Native.cna_media_queue_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>See <see cref="MediaLibrary"/> for why every handle read pairs with

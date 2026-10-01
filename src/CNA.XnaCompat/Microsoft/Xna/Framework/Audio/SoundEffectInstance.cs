@@ -13,12 +13,12 @@ public class SoundEffectInstance : IDisposable
     private bool _isLooped;
     private bool _disposed;
 
-    internal SoundEffectInstance(nint nativeHandleValue)
+    internal SoundEffectInstance(ulong nativeHandleValue)
         : this(nativeHandleValue, parent: null)
     {
     }
 
-    internal SoundEffectInstance(nint nativeHandleValue, SoundEffect? parent)
+    internal SoundEffectInstance(ulong nativeHandleValue, SoundEffect? parent)
     {
         _inner = new CNA.Audio.SoundEffectInstance(nativeHandleValue);
         _parent = parent;
@@ -29,7 +29,7 @@ public class SoundEffectInstance : IDisposable
         Dispose(false);
     }
 
-    internal nint CompatibilityHandle => _inner.NativeHandleValueForCompatibility;
+    internal ulong CompatibilityHandle => _inner.NativeHandleValueForCompatibility;
 
     public bool IsDisposed => _disposed;
 

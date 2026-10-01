@@ -25,7 +25,7 @@ public class SoundBank : IDisposable
         GC.KeepAlive(audioEngine);
         CnaException.ThrowIfFailed(result, nameof(SoundBank));
 
-        _handle = new NativeResourceHandle(soundBank.AsNint, h => Native.cna_sound_bank_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(soundBank.Value, h => Native.cna_sound_bank_destroy(new CnaHandle(h)).IsSuccess());
         audioEngine.RegisterDependant(this);
     }
 
@@ -71,7 +71,7 @@ public class SoundBank : IDisposable
             name, view => Native.cna_sound_bank_get_cue(NativeHandle, view, out cue));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(GetCue));
-        return new Cue(cue.AsNint, _audioEngine);
+        return new Cue(cue.Value, _audioEngine);
     }
 
     public void PlayCue(string name)

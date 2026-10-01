@@ -20,7 +20,7 @@ public class ResourceContentManager : ContentManager
 {
     private readonly System.Resources.ResourceManager _resourceManager;
 
-    protected internal ResourceContentManager(nint nativeHandleValue, System.Resources.ResourceManager resourceManager)
+    protected internal ResourceContentManager(ulong nativeHandleValue, System.Resources.ResourceManager resourceManager)
         : base(nativeHandleValue)
     {
         ArgumentNullException.ThrowIfNull(resourceManager);

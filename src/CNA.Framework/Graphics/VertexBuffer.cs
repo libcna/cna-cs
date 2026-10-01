@@ -70,7 +70,7 @@ public class VertexBuffer : IDisposable
             CnaResult result = Native.cna_vertex_buffer_create(graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
             CnaException.ThrowIfFailed(result, nameof(VertexBuffer));
 
-            _handle = new NativeResourceHandle(handle.AsNint, h => Native.cna_vertex_buffer_destroy(new CnaHandle(h)).IsSuccess());
+            _handle = new NativeResourceHandle(handle.Value, h => Native.cna_vertex_buffer_destroy(new CnaHandle(h)).IsSuccess());
         }
         finally
         {
@@ -81,7 +81,7 @@ public class VertexBuffer : IDisposable
         }
     }
 
-    internal nint NativeHandleValue => _handle.DangerousGetHandle();
+    internal ulong NativeHandleValue => _handle.DangerousGetHandle();
 
     public VertexDeclaration VertexDeclaration { get; }
 

@@ -219,7 +219,7 @@ public sealed class CnbLoaderRegistration : IDisposable
             document.NativeHandle, out CnaHandle loader);
         GC.KeepAlive(document);
         CnaException.ThrowIfFailed(result, nameof(ResolveFor));
-        return new CnbLoader(loader.AsNint, document.AssetTypeId);
+        return new CnbLoader(loader.Value, document.AssetTypeId);
     }
 
     /// <summary>Withdraws the registration and releases every object its loader produced.</summary>
@@ -331,7 +331,7 @@ public sealed class CnbLoader : IDisposable
     private readonly NativeResourceHandle _handle;
     private readonly uint _assetTypeId;
 
-    internal CnbLoader(nint handleValue, uint assetTypeId)
+    internal CnbLoader(ulong handleValue, uint assetTypeId)
     {
         _handle = new NativeResourceHandle(
             handleValue,
@@ -358,7 +358,7 @@ public sealed class CnbLoader : IDisposable
         CnaResult result = Native.cna_cnb_loader_registry_find(
             assetTypeId, out byte found, out CnaHandle loader);
         CnaException.ThrowIfFailed(result, nameof(Find));
-        return found == 0 ? null : new CnbLoader(loader.AsNint, assetTypeId);
+        return found == 0 ? null : new CnbLoader(loader.Value, assetTypeId);
     }
 
     /// <summary>

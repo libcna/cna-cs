@@ -245,7 +245,7 @@ public sealed class ContentTypeReaderRegistration : IDisposable
             // Borrowed, not owned: the handle belongs to native for this callback's duration, and a
             // ContentReader that owned it would destroy native's reader on the way out.
             var stream = new NativeContentStream(input, slot.Reader.GetType().Name);
-            var contentReader = ContentReader.Borrowing(stream, input.AsNint);
+            var contentReader = ContentReader.Borrowing(stream, input.Value);
 
             object? existing = existingObject == 0 ? null : GCHandle.FromIntPtr(existingObject).Target;
             object produced = slot.Reader.Read(contentReader, existing);

@@ -16,7 +16,7 @@ public sealed unsafe class AvailableNetworkSession
     internal AvailableNetworkSession(CnaHandle handle, AvailableNetworkSessionCollection parent)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_available_network_session_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_available_network_session_destroy(new CnaHandle(value)).IsSuccess());
         Parent = parent;
         HostGamertag = GamerServicesInterop.ReadString(
             Native.cna_available_network_session_get_host_gamertag_size, CopyHostGamertag, Handle, nameof(HostGamertag));

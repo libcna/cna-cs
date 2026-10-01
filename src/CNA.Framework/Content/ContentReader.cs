@@ -16,7 +16,7 @@ public class ContentReader : BinaryReader
 {
     private readonly NativeResourceHandle _handle;
 
-    internal ContentReader(Stream stream, nint nativeHandleValue, ContentManager contentManager, string assetName)
+    internal ContentReader(Stream stream, ulong nativeHandleValue, ContentManager contentManager, string assetName)
         : base(stream)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_content_reader_destroy(new CnaHandle(h)).IsSuccess());
@@ -39,10 +39,10 @@ public class ContentReader : BinaryReader
     /// binding cannot map back to the managed wrapper that owns it. Both throw rather than
     /// reporting a plausible wrong answer.
     /// </summary>
-    internal static ContentReader Borrowing(Stream stream, nint nativeHandleValue) =>
+    internal static ContentReader Borrowing(Stream stream, ulong nativeHandleValue) =>
         new(stream, nativeHandleValue);
 
-    private ContentReader(Stream stream, nint nativeHandleValue)
+    private ContentReader(Stream stream, ulong nativeHandleValue)
         : base(stream)
     {
         // ownsHandle: false, so the release is never invoked -- native destroys its own reader.

@@ -1,20 +1,32 @@
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 
 namespace CNA;
 
 /// <summary>
-/// A general-purpose <see cref="SafeHandle"/> for CNA native resources, parameterized by the
-/// release callback for the specific resource type. Every native-backed CNA type
-/// (<c>Texture2D</c>, <c>SpriteBatch</c>, ...) owns one of these rather than a bare handle value,
-/// so normal disposal, forgotten disposal, and GC finalization are all handled uniformly. CNA
-/// handles are creation-thread-affine, so critical-finalizer releases are queued and drained by
-/// the owning game thread rather than attempted from the finalizer thread. See plan.md invariant
-/// #4.
+/// The owner of one CNA native resource, parameterized by the release callback for the specific
+/// resource type. Every native-backed CNA type (<c>Texture2D</c>, <c>SpriteBatch</c>, ...) owns
+/// one of these rather than a bare handle value, so normal disposal, forgotten disposal, and GC
+/// finalization are all handled uniformly. CNA handles are creation-thread-affine, so
+/// finalizer releases are queued and drained by the owning game thread rather than attempted from
+/// the finalizer thread. See plan.md invariant #4.
+///
+/// Not a <see cref="SafeHandle"/>: a <c>CNA_Handle</c> is a 64-bit value on every platform, and
+/// <see cref="SafeHandle"/> stores a pointer-width one, so on WebAssembly (and any 32-bit target)
+/// it cannot hold a CNA handle at all. This keeps <see cref="SafeHandle"/>'s contract -- release at
+/// most once, from <see cref="Dispose"/> or a critical finalizer, never for a borrowed or detached
+/// handle -- over the real 64-bit value.
 /// </summary>
-internal sealed class NativeResourceHandle : SafeHandle
+internal sealed class NativeResourceHandle : CriticalFinalizerObject, IDisposable
 {
-    private readonly Func<nint, bool> _release;
+    private const int Open = 0;
+    private const int Closed = 1;
+
+    private readonly Func<ulong, bool> _release;
     private readonly int _ownerThreadId;
+    private readonly bool _ownsHandle;
+    private ulong _handle;
+    private int _state;
 
     private static readonly object PendingLock = new();
     private static readonly Dictionary<int, Queue<PendingRelease>> PendingByOwnerThread = [];
@@ -24,7 +36,7 @@ internal sealed class NativeResourceHandle : SafeHandle
     private static long _failedReleaseAttempts;
     private static long _scheduledRetries;
 
-    public NativeResourceHandle(nint handleValue, Func<nint, bool> release)
+    public NativeResourceHandle(ulong handleValue, Func<ulong, bool> release)
         : this(handleValue, release, ownsHandle: true)
     {
     }
@@ -35,24 +47,40 @@ internal sealed class NativeResourceHandle : SafeHandle
     /// the real owner controls (<c>cna_video_player_get_texture</c>'s frame texture is the case
     /// this was added for: "valid only until the next call on this player").
     ///
-    /// Without it, a borrowed handle wrapped here would be destroyed by
-    /// <see cref="SafeHandle"/>'s critical finalizer whether or not anyone called
-    /// <c>Dispose</c> -- a use-after-free the owner could not prevent, and one a doc comment
-    /// telling callers "do not dispose this" cannot stop either.
+    /// Without it, a borrowed handle wrapped here would be destroyed by the finalizer whether or
+    /// not anyone called <c>Dispose</c> -- a use-after-free the owner could not prevent, and one a
+    /// doc comment telling callers "do not dispose this" cannot stop either.
     /// </summary>
-    public NativeResourceHandle(nint handleValue, Func<nint, bool> release, bool ownsHandle)
-        : base(IntPtr.Zero, ownsHandle)
+    public NativeResourceHandle(ulong handleValue, Func<ulong, bool> release, bool ownsHandle)
     {
         _release = release;
         _ownerThreadId = Environment.CurrentManagedThreadId;
-        SetHandle(handleValue);
+        _ownsHandle = ownsHandle;
+        _handle = handleValue;
     }
 
-    public override bool IsInvalid => handle == IntPtr.Zero;
+    ~NativeResourceHandle()
+    {
+        CloseAndRelease();
+    }
+
+    public bool IsInvalid => Volatile.Read(ref _handle) == 0;
+
+    public bool IsClosed => Volatile.Read(ref _state) == Closed;
+
+    /// <summary>The native handle value. Valid only while this object is open; keep the owner
+    /// reachable across the native call that uses it.</summary>
+    public ulong DangerousGetHandle() => Volatile.Read(ref _handle);
+
+    public void Dispose()
+    {
+        CloseAndRelease();
+        GC.SuppressFinalize(this);
+    }
 
     /// <summary>
     /// Gives up ownership: returns the handle value and marks this object closed, so neither
-    /// <c>Dispose</c> nor the critical finalizer will ever release it.
+    /// <c>Dispose</c> nor the finalizer will ever release it.
     ///
     /// For the narrow case where a managed wrapper exists only to perform one operation and the
     /// resulting handle then belongs to something else -- <c>ContentManager</c> builds a
@@ -60,16 +88,27 @@ internal sealed class NativeResourceHandle : SafeHandle
     /// <c>SpriteFont</c>'s own texture. Without this, both wrappers would own the same handle and
     /// the first one's finalizer would destroy a texture the font is still drawing from.
     /// </summary>
-    public nint Detach()
+    public ulong Detach()
     {
-        nint value = handle;
-        SetHandleAsInvalid();
+        ulong value = Volatile.Read(ref _handle);
+        Volatile.Write(ref _state, Closed);
+        GC.SuppressFinalize(this);
         return value;
     }
 
-    protected override bool ReleaseHandle()
+    private void CloseAndRelease()
     {
-        var pending = new PendingRelease(handle, _release);
+        if (Interlocked.Exchange(ref _state, Closed) == Closed || !_ownsHandle || IsInvalid)
+        {
+            return;
+        }
+
+        ReleaseHandle();
+    }
+
+    private void ReleaseHandle()
+    {
+        var pending = new PendingRelease(_handle, _release);
         if (Environment.CurrentManagedThreadId == _ownerThreadId)
         {
             if (!TryRelease(pending))
@@ -78,19 +117,18 @@ internal sealed class NativeResourceHandle : SafeHandle
                 Enqueue(_ownerThreadId, pending);
             }
 
-            return true;
+            return;
         }
 
         // CNA's registry rejects every Get/Release from a thread other than the handle's creation
-        // thread. A SafeHandle critical finalizer necessarily runs on the finalizer thread, so
-        // calling native here used to return CNA_RESULT_THREAD and permanently lose the only copy
-        // of the handle. Queue the raw value and release delegate for the owning game thread.
+        // thread. A finalizer necessarily runs on the finalizer thread, so calling native here used
+        // to return CNA_RESULT_THREAD and permanently lose the only copy of the handle. Queue the
+        // value and release delegate for the owning game thread.
         Enqueue(_ownerThreadId, pending);
-        return true;
     }
 
     /// <summary>
-    /// Releases handles whose SafeHandle finalizers ran away from their creation thread. Failed
+    /// Releases handles whose finalizers ran away from their creation thread. Failed
     /// releases are retried after successful ones in the same batch: this handles parent/child
     /// order without guessing finalizer order (for example an effect view before its effect, or a
     /// texture retained by a batch). Anything still failing is retained for the next owner-thread
@@ -169,7 +207,7 @@ internal sealed class NativeResourceHandle : SafeHandle
         }
         catch
         {
-            // ReleaseHandle cannot throw, particularly from the critical-finalizer path. Retain
+            // A release cannot throw, particularly from the finalizer path. Retain
             // the work so a later owner-thread drain can retry it.
         }
 
@@ -209,7 +247,7 @@ internal sealed class NativeResourceHandle : SafeHandle
             pending);
     }
 
-    private readonly record struct PendingRelease(nint Handle, Func<nint, bool> Release);
+    private readonly record struct PendingRelease(ulong Handle, Func<ulong, bool> Release);
 }
 
 internal readonly record struct NativeReleaseMetrics(

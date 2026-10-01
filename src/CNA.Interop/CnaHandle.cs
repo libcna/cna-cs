@@ -22,22 +22,6 @@ internal readonly struct CnaHandle : IEquatable<CnaHandle>
 
     public CnaHandle(ulong value) => Value = value;
 
-    /// <summary>Converts from the pointer-width handle storage <c>NativeResourceHandle</c>
-    /// (and every native-backed managed wrapper's own <c>NativeHandleValue</c>) still uses --
-    /// always exact and lossless on every platform this project targets (CNA is 64-bit-only), the
-    /// same reasoning this type's own constructor used to rely on for its whole representation.</summary>
-    public CnaHandle(nint value) => Value = unchecked((ulong)value);
-
-    /// <summary>The inverse of the <see cref="nint"/> constructor above -- narrows back to
-    /// pointer-width storage for the many call sites across this codebase that still store a
-    /// resource's native identity as <see cref="nint"/> (<c>NativeResourceHandle</c>'s own
-    /// storage, every native-backed managed wrapper's own <c>NativeHandleValue</c>). Checked, not
-    /// unchecked: this narrowing is only exact on the 64-bit-only platforms this project targets,
-    /// unlike the widening conversion the <see cref="nint"/> constructor performs, which is exact
-    /// on any width -- a violated assumption here should throw, not silently truncate a
-    /// handle.</summary>
-    public nint AsNint => checked((nint)Value);
-
     /// <summary>Matches the real ABI's own <c>CNA_INVALID_HANDLE</c> (<c>abi.h:107</c>, value 0).</summary>
     public static readonly CnaHandle Zero = new(0UL);
 

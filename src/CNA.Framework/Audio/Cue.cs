@@ -18,7 +18,7 @@ public class Cue : IDisposable
     private readonly NativeResourceHandle _handle;
     private readonly AudioEngine _audioEngine;
 
-    internal Cue(nint nativeHandleValue, AudioEngine audioEngine)
+    internal Cue(ulong nativeHandleValue, AudioEngine audioEngine)
     {
         _audioEngine = audioEngine;
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_cue_destroy(new CnaHandle(h)).IsSuccess());

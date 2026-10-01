@@ -59,7 +59,7 @@ public class IndexBuffer : IDisposable
         CnaResult result = Native.cna_index_buffer_create(graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(IndexBuffer));
 
-        _handle = new NativeResourceHandle(handle.AsNint, h => Native.cna_index_buffer_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(handle.Value, h => Native.cna_index_buffer_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>Matches real XNA/MonoGame's own <c>Type</c>-to-<see cref="IndexElementSize"/>
@@ -86,7 +86,7 @@ public class IndexBuffer : IDisposable
             "Index buffers can only be created for types that are sixteen or thirty two bits in length.");
     }
 
-    internal nint NativeHandleValue => _handle.DangerousGetHandle();
+    internal ulong NativeHandleValue => _handle.DangerousGetHandle();
 
     public IndexElementSize IndexElementSize { get; }
 

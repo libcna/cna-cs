@@ -25,7 +25,7 @@ public sealed class SoundEffect : IDisposable
             buffer, offset, count, sampleRate, (CNA.Audio.AudioChannels)(int)channels, loopStart, loopLength);
     }
 
-    internal SoundEffect(nint nativeHandleValue)
+    internal SoundEffect(ulong nativeHandleValue)
     {
         _soundEffect = new CNA.Audio.SoundEffect(nativeHandleValue);
     }

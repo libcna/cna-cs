@@ -34,9 +34,9 @@ public abstract class Texture : GraphicsResource
             : null;
     }
 
-    internal nint NativeHandleValue => _frameworkTexture.NativeHandleValue;
+    internal ulong NativeHandleValue => _frameworkTexture.NativeHandleValue;
 
-    internal nint DetachNativeHandle() => _frameworkTexture.DetachNativeHandle();
+    internal ulong DetachNativeHandle() => _frameworkTexture.DetachNativeHandle();
 
     public int LevelCount => _levelCount;
 

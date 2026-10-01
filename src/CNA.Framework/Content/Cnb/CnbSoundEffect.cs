@@ -30,7 +30,7 @@ public sealed class CnbSoundEffect : IDisposable
     private readonly NativeResourceHandle _handle;
     private readonly CnaCnbSoundEffectInfo _info;
 
-    private CnbSoundEffect(nint handleValue, CnaCnbSoundEffectInfo info, byte[] samples)
+    private CnbSoundEffect(ulong handleValue, CnaCnbSoundEffectInfo info, byte[] samples)
     {
         _handle = new NativeResourceHandle(
             handleValue,
@@ -78,7 +78,7 @@ public sealed class CnbSoundEffect : IDisposable
                 }
             }
 
-            return new CnbSoundEffect(sound.AsNint, info, samples);
+            return new CnbSoundEffect(sound.Value, info, samples);
         }
         catch
         {

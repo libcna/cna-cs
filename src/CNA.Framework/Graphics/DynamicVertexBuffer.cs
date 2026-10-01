@@ -119,7 +119,7 @@ public class DynamicVertexBuffer : VertexBuffer
         }
     }
 
-    internal static bool QueryIsContentLost(nint nativeHandleValue, object lifetimeOwner)
+    internal static bool QueryIsContentLost(ulong nativeHandleValue, object lifetimeOwner)
     {
         var info = new CnaVertexBufferInfo();
         CnaResult result = Native.cna_vertex_buffer_get_info(new CnaHandle(nativeHandleValue), ref info);
@@ -129,7 +129,7 @@ public class DynamicVertexBuffer : VertexBuffer
     }
 
     internal static NativeEventBridge SubscribeContentLost(
-        nint nativeHandleValue,
+        ulong nativeHandleValue,
         object lifetimeOwner,
         Action dispatch) =>
         NativeEventBridge.SubscribeWithSender(

@@ -29,7 +29,7 @@ public static class ContentTypeReaderManager
         CnaResult result = CnaStringMarshal.WithStringView(
             canonicalName, view => Native.cna_content_type_reader_manager_create_reader(view, out reader));
         CnaException.ThrowIfFailed(result, nameof(CreateReader));
-        return new ContentTypeReader(reader.AsNint);
+        return new ContentTypeReader(reader.Value);
     }
 
     /// <summary>Empties the registry. Real XNA has no equivalent; the C API does, and it exists for

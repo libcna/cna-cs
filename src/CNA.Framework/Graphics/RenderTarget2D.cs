@@ -65,7 +65,7 @@ public class RenderTarget2D : Texture2D
     /// this type, which the usual "derive from the CNA.Framework type, forward a protected internal
     /// ctor" trick would require.
     /// </summary>
-    internal static nint CreateNativeHandle(GraphicsDevice graphicsDevice, int width, int height)
+    internal static ulong CreateNativeHandle(GraphicsDevice graphicsDevice, int width, int height)
         => CreateNativeHandle(
             graphicsDevice,
             width,
@@ -76,7 +76,7 @@ public class RenderTarget2D : Texture2D
             0,
             RenderTargetUsage.DiscardContents);
 
-    internal static nint CreateNativeHandle(
+    internal static ulong CreateNativeHandle(
         GraphicsDevice graphicsDevice,
         int width,
         int height,
@@ -102,13 +102,13 @@ public class RenderTarget2D : Texture2D
         CnaResult result = Native.cna_render_target2d_create(graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(RenderTarget2D));
 
-        return handle.AsNint;
+        return handle.Value;
     }
 
     /// <summary>Wraps a render-target handle whose real owner is something else, following
     /// <see cref="Texture2D.CreateBorrowed"/>. The engine layer's target pool hands out exactly such
     /// views: the pool owns the target, and the view is released separately.</summary>
-    private RenderTarget2D(GraphicsDevice graphicsDevice, nint nativeHandleValue, bool ownsHandle)
+    private RenderTarget2D(GraphicsDevice graphicsDevice, ulong nativeHandleValue, bool ownsHandle)
         : base(graphicsDevice, nativeHandleValue, ownsHandle)
     {
     }
@@ -120,22 +120,22 @@ public class RenderTarget2D : Texture2D
     /// The two are different destroy routes for different native handle types, so this is a
     /// different operation rather than a narrowed one -- <c>new</c> rather than <c>override</c>
     /// because the base member is not virtual.</summary>
-    internal static new RenderTarget2D CreateBorrowed(GraphicsDevice graphicsDevice, nint nativeHandleValue) =>
+    internal static new RenderTarget2D CreateBorrowed(GraphicsDevice graphicsDevice, ulong nativeHandleValue) =>
         new(graphicsDevice, nativeHandleValue, ownsHandle: false);
 
     /// <summary>Matches <c>cna_render_target_destroy</c> exactly (<c>render_target.h:277</c>).
     /// <c>internal static</c>, not just this override's body -- see this class's own doc comment
     /// for why CNA.XnaCompat's parallel <c>RenderTarget2D</c> needs to call it directly too.</summary>
-    internal static bool ReleaseNativeRenderTarget(nint handleValue) =>
+    internal static bool ReleaseNativeRenderTarget(ulong handleValue) =>
         Native.cna_render_target_destroy(new CnaHandle(handleValue)).IsSuccess();
 
-    protected override bool ReleaseNative(nint handleValue) => ReleaseNativeRenderTarget(handleValue);
+    protected override bool ReleaseNative(ulong handleValue) => ReleaseNativeRenderTarget(handleValue);
 
     /// <summary>Matches <c>cna_render_target_get_info</c> exactly (<c>render_target.h:199</c>) --
     /// <c>texture.h</c>'s/<c>graphics.h</c>'s own texture-info routes don't apply to a render
     /// target's real handle type. Returns a plain tuple (not <see cref="CnaRenderTargetInfo"/>) --
     /// see this class's own doc comment.</summary>
-    internal static (int Width, int Height) GetDimensions(nint handleValue)
+    internal static (int Width, int Height) GetDimensions(ulong handleValue)
     {
         var info = new CnaRenderTargetInfo();
         CnaResult result = Native.cna_render_target_get_info(new CnaHandle(handleValue), ref info);
@@ -155,7 +155,7 @@ public class RenderTarget2D : Texture2D
     /// <summary>Reads the whole info block. Kept alongside <see cref="GetDimensions"/> rather than
     /// replacing it: most callers want only the two dimensions, and this one exists because
     /// XNA exposes five more properties off the same native call.</summary>
-    internal static CnaRenderTargetInfo GetInfo(nint handleValue)
+    internal static CnaRenderTargetInfo GetInfo(ulong handleValue)
     {
         var info = new CnaRenderTargetInfo();
         CnaResult result = Native.cna_render_target_get_info(new CnaHandle(handleValue), ref info);
@@ -170,7 +170,7 @@ public class RenderTarget2D : Texture2D
     /// <c>CNA.Interop</c> type.
     /// </summary>
     internal static (DepthFormat DepthStencilFormat, RenderTargetUsage Usage, int MultiSampleCount, bool ContentLost)
-        GetRenderTargetProperties(nint handleValue)
+        GetRenderTargetProperties(ulong handleValue)
     {
         CnaRenderTargetInfo info = GetInfo(handleValue);
         return ((DepthFormat)info.DepthStencilFormat, (RenderTargetUsage)info.Usage,
@@ -308,7 +308,7 @@ public class RenderTarget2D : Texture2D
     /// render-target handle".
     /// </summary>
     internal static NativeEventBridge SubscribeContentLost(
-        nint nativeHandleValue,
+        ulong nativeHandleValue,
         object lifetimeOwner,
         Action dispatch) =>
         NativeEventBridge.SubscribeWithSender(

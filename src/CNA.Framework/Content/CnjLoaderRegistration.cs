@@ -60,7 +60,7 @@ public sealed class CnjLoaderRegistration
     /// descriptor naming nothing registered fails its load rather than falling back, which is the
     /// same rule a compiled asset naming an unregistered reader follows.</exception>
     internal static unsafe CnjLoaderRegistration Register(
-        nint contentManagerHandle, string typeName, CnjLoader loader)
+        ulong contentManagerHandle, string typeName, CnjLoader loader)
     {
         ArgumentException.ThrowIfNullOrEmpty(typeName);
         ArgumentNullException.ThrowIfNull(loader);

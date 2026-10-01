@@ -36,7 +36,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
     {
     }
 
-    internal static nint CreateNative(int sampleRate, AudioChannels channels)
+    internal static ulong CreateNative(int sampleRate, AudioChannels channels)
     {
         if (sampleRate is < 8000 or > 48000)
         {
@@ -51,7 +51,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
         CnaResult result = Native.cna_dynamic_sound_effect_instance_create(
             CnaAmbientGame.Current, sampleRate, (uint)channels, out CnaHandle instance);
         CnaException.ThrowIfFailed(result, nameof(DynamicSoundEffectInstance));
-        return instance.AsNint;
+        return instance.Value;
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
         => QuerySampleSizeInBytes(NativeHandleValue, this, duration);
 
     internal static NativeEventBridge SubscribeBufferNeeded(
-        nint nativeHandleValue,
+        ulong nativeHandleValue,
         object lifetimeOwner,
         Action dispatch) =>
         NativeEventBridge.Subscribe(
@@ -176,7 +176,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
             },
             registration => Native.cna_audio_unsubscribe_ext(registration));
 
-    internal static int QueryPendingBufferCount(nint nativeHandleValue, object lifetimeOwner)
+    internal static int QueryPendingBufferCount(ulong nativeHandleValue, object lifetimeOwner)
     {
         CnaResult result = Native.cna_dynamic_sound_effect_instance_get_pending_buffer_count(
             new CnaHandle(nativeHandleValue), out int value);
@@ -186,7 +186,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
     }
 
     internal static unsafe void SubmitBuffer(
-        nint nativeHandleValue,
+        ulong nativeHandleValue,
         object lifetimeOwner,
         byte[] buffer,
         int offset,
@@ -206,7 +206,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
         }
     }
 
-    internal static TimeSpan QuerySampleDuration(nint nativeHandleValue, object lifetimeOwner, int sizeInBytes)
+    internal static TimeSpan QuerySampleDuration(ulong nativeHandleValue, object lifetimeOwner, int sizeInBytes)
     {
         CnaResult result = Native.cna_dynamic_sound_effect_instance_get_sample_duration_ticks(
             new CnaHandle(nativeHandleValue), sizeInBytes, out long ticks);
@@ -215,7 +215,7 @@ public class DynamicSoundEffectInstance : SoundEffectInstance
         return TimeSpan.FromTicks(ticks);
     }
 
-    internal static int QuerySampleSizeInBytes(nint nativeHandleValue, object lifetimeOwner, TimeSpan duration)
+    internal static int QuerySampleSizeInBytes(ulong nativeHandleValue, object lifetimeOwner, TimeSpan duration)
     {
         CnaResult result = Native.cna_dynamic_sound_effect_instance_get_sample_size_in_bytes(
             new CnaHandle(nativeHandleValue), duration.Ticks, out int bytes);

@@ -12,7 +12,7 @@ public sealed class LeaderboardEntry
     internal LeaderboardEntry(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_leaderboard_entry_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_leaderboard_entry_destroy(new CnaHandle(value)).IsSuccess());
     }
 
     internal CnaHandle Handle => new(_handle.DangerousGetHandle());

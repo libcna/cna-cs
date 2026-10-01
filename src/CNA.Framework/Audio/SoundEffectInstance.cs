@@ -23,7 +23,7 @@ public class SoundEffectInstance : IDisposable
     /// constructor) as closely as C#'s accessibility model allows, while still letting
     /// <c>CNA.XnaCompat</c>'s <c>SoundEffectInstance</c> subclass forward to it -- same
     /// "protected internal raw-handle constructor" pattern <c>Texture2D</c> already uses.</summary>
-    protected internal SoundEffectInstance(nint nativeHandleValue)
+    protected internal SoundEffectInstance(ulong nativeHandleValue)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_sound_effect_instance_destroy(new CnaHandle(h)).IsSuccess());
     }
@@ -31,12 +31,12 @@ public class SoundEffectInstance : IDisposable
     /// <summary><c>private protected</c> rather than <c>private</c> since Phase 8 WP11b, so
     /// <see cref="DynamicSoundEffectInstance"/> -- a real subclass in real XNA -- can reach its own
     /// handle for the dynamic-only native calls.</summary>
-    private protected nint NativeHandleValue => _handle.DangerousGetHandle();
+    private protected ulong NativeHandleValue => _handle.DangerousGetHandle();
 
     /// <summary>Internal handle-sharing seam for CNA.XnaCompat. The compat public hierarchy cannot
     /// inherit <see cref="DynamicSoundEffectInstance"/>, but its internal adapter still needs the
     /// one owned instance handle for dynamic-only C ABI calls.</summary>
-    internal nint NativeHandleValueForCompatibility => NativeHandleValue;
+    internal ulong NativeHandleValueForCompatibility => NativeHandleValue;
 
     public void Play()
     {

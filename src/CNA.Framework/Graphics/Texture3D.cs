@@ -21,7 +21,7 @@ public class Texture3D : Texture
     /// a caller has no way to obtain a bare handle, and the only producer inside this assembly is
     /// <see cref="EffectParameter"/> rewrapping a texture read back out of a shader
     /// parameter.</summary>
-    protected internal Texture3D(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    protected internal Texture3D(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : base(graphicsDevice, nativeHandleValue)
     {
     }
@@ -36,7 +36,7 @@ public class Texture3D : Texture
     {
     }
 
-    private static nint CreateNativeHandle(
+    private static ulong CreateNativeHandle(
         GraphicsDevice graphicsDevice, int width, int height, int depth, bool mipMap, SurfaceFormat format)
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
@@ -55,10 +55,10 @@ public class Texture3D : Texture
 
         CnaResult result = Native.cna_texture3d_create(graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(Texture3D));
-        return handle.AsNint;
+        return handle.Value;
     }
 
-    protected override bool ReleaseNative(nint handleValue) =>
+    protected override bool ReleaseNative(ulong handleValue) =>
         Native.cna_texture3d_destroy(new CnaHandle(handleValue)).IsSuccess();
 
     public int Width => (int)GetInfo().Width;
@@ -181,7 +181,7 @@ public class Texture3D : Texture
     /// <c>Texture</c> and cannot name a <c>CNA.Interop</c> type, can call it.
     /// </summary>
     internal static unsafe void GetBoxDataInto<T>(
-        nint handleValue, int level, int left, int top, int right, int bottom, int front, int back,
+        ulong handleValue, int level, int left, int top, int right, int bottom, int front, int back,
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
@@ -300,6 +300,6 @@ public class Texture3D : Texture
     /// <summary>Wraps a handle this assembly already owns. Exists because
     /// <see cref="EffectParameter"/> reads a retained texture handle back out of a shader parameter
     /// and has to rewrap it; the raw-handle constructor itself stays <c>protected</c>.</summary>
-    internal static Texture3D FromNativeHandle(GraphicsDevice graphicsDevice, nint nativeHandleValue) =>
+    internal static Texture3D FromNativeHandle(GraphicsDevice graphicsDevice, ulong nativeHandleValue) =>
         new(graphicsDevice, nativeHandleValue);
 }

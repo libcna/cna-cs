@@ -21,7 +21,7 @@ public sealed class CnbSpriteFont : IDisposable
     private readonly NativeResourceHandle _handle;
     private readonly CnaCnbSpriteFontInfo _info;
 
-    private CnbSpriteFont(nint handleValue, CnaCnbSpriteFontInfo info)
+    private CnbSpriteFont(ulong handleValue, CnaCnbSpriteFontInfo info)
     {
         _handle = new NativeResourceHandle(
             handleValue,
@@ -50,7 +50,7 @@ public sealed class CnbSpriteFont : IDisposable
             CnaException.ThrowIfFailed(infoResult, nameof(Decode));
         }
 
-        return new CnbSpriteFont(font.AsNint, info);
+        return new CnbSpriteFont(font.Value, info);
     }
 
     /// <summary>Opens a <c>.cnb</c> file and decodes the sprite font in it.</summary>
@@ -111,7 +111,7 @@ public sealed class CnbSpriteFont : IDisposable
         CnaResult result = Native.cna_cnb_sprite_font_data_copy_atlas(Handle, out CnaHandle atlas);
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(CopyAtlas));
-        return CnbTexture.Adopt(atlas.AsNint, nameof(CopyAtlas));
+        return CnbTexture.Adopt(atlas.Value, nameof(CopyAtlas));
     }
 
     public void Dispose() => _handle.Dispose();

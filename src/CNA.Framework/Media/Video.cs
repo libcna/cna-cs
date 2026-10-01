@@ -29,7 +29,7 @@ public class Video : IDisposable
             fileName, view => Native.cna_video_create(graphicsDevice.ResolveNativeDeviceHandle(), view, out video));
         CnaException.ThrowIfFailed(result, nameof(Video));
 
-        _handle = new NativeResourceHandle(video.AsNint, h => Native.cna_video_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(video.Value, h => Native.cna_video_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>
@@ -62,10 +62,10 @@ public class Video : IDisposable
                 framesPerSecond, (uint)soundtrackType, out video));
         CnaException.ThrowIfFailed(result, nameof(Video));
 
-        _handle = new NativeResourceHandle(video.AsNint, h => Native.cna_video_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(video.Value, h => Native.cna_video_destroy(new CnaHandle(h)).IsSuccess());
     }
 
-    internal Video(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    internal Video(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
     {
         GraphicsDevice = graphicsDevice;
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_video_destroy(new CnaHandle(h)).IsSuccess());

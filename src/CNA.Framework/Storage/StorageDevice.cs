@@ -24,7 +24,7 @@ public class StorageDevice
     // each open StorageContainer keeps this wrapper alive as its XNA-visible parent.
     private readonly NativeResourceHandle _handle;
 
-    private StorageDevice(nint nativeHandleValue)
+    private StorageDevice(ulong nativeHandleValue)
     {
         _handle = new NativeResourceHandle(nativeHandleValue, h => Native.cna_storage_device_destroy(new CnaHandle(h)).IsSuccess());
     }
@@ -120,7 +120,7 @@ public class StorageDevice
     {
         CnaResult result = Native.cna_storage_device_show_selector(0, 0, out CnaHandle device);
         CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.AsNint);
+        return new StorageDevice(device.Value);
     }
 
     /// <summary>Shows the selector for one player. Real XNA's per-player overload -- the ABI takes
@@ -131,7 +131,7 @@ public class StorageDevice
         CnaResult result = Native.cna_storage_device_show_selector_for_player(
             (uint)player, 0, 0, out CnaHandle device);
         CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.AsNint);
+        return new StorageDevice(device.Value);
     }
 
     /// <summary>Shows the selector, requiring the device to have room for
@@ -144,7 +144,7 @@ public class StorageDevice
         CnaResult result = Native.cna_storage_device_show_selector_with_space(
             sizeInBytes, directoryCount, 0, 0, out CnaHandle device);
         CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.AsNint);
+        return new StorageDevice(device.Value);
     }
 
     /// <summary>Both of the above at once.</summary>
@@ -156,7 +156,7 @@ public class StorageDevice
         CnaResult result = Native.cna_storage_device_show_selector_for_player_with_space(
             (uint)player, sizeInBytes, directoryCount, 0, 0, out CnaHandle device);
         CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.AsNint);
+        return new StorageDevice(device.Value);
     }
 
     /// <summary>Matches real XNA's <c>BeginShowSelector(PlayerIndex, AsyncCallback, object)</c>.
@@ -221,7 +221,7 @@ public class StorageDevice
             displayName, view => Native.cna_storage_container_open(NativeHandle, view, 0, 0, out container));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(OpenContainer));
-        return new StorageContainer(container.AsNint, this);
+        return new StorageContainer(container.Value, this);
     }
 
     public IAsyncResult BeginOpenContainer(string displayName, AsyncCallback? callback, object? state)

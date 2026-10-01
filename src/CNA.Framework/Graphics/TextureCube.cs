@@ -29,12 +29,12 @@ public class TextureCube : Texture
     /// does <c>ContentManager.Load&lt;TextureCube&gt;</c>, which is in this assembly rather than in
     /// a subclass. The same shape <see cref="Texture2D"/>'s raw-handle constructor already
     /// has.</summary>
-    protected internal TextureCube(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    protected internal TextureCube(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : base(graphicsDevice, nativeHandleValue)
     {
     }
 
-    private static nint CreateNativeHandle(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat format)
+    private static ulong CreateNativeHandle(GraphicsDevice graphicsDevice, int size, bool mipMap, SurfaceFormat format)
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(size);
@@ -48,10 +48,10 @@ public class TextureCube : Texture
 
         CnaResult result = Native.cna_texturecube_create(graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(TextureCube));
-        return handle.AsNint;
+        return handle.Value;
     }
 
-    protected override bool ReleaseNative(nint handleValue) =>
+    protected override bool ReleaseNative(ulong handleValue) =>
         Native.cna_texturecube_destroy(new CnaHandle(handleValue)).IsSuccess();
 
     /// <summary>Width and height of each square face. Real XNA spells this <c>Size</c> on
@@ -156,7 +156,7 @@ public class TextureCube : Texture
     /// name a <c>CNA.Interop</c> type.
     /// </summary>
     internal static unsafe void SetFaceDataFrom<T>(
-        nint handleValue, CubeMapFace face, int level, Rectangle? rectangle,
+        ulong handleValue, CubeMapFace face, int level, Rectangle? rectangle,
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
@@ -182,7 +182,7 @@ public class TextureCube : Texture
 
     /// <summary>See <see cref="SetFaceDataFrom{T}"/>.</summary>
     internal static unsafe void GetFaceDataInto<T>(
-        nint handleValue, CubeMapFace face, int level, Rectangle? rectangle,
+        ulong handleValue, CubeMapFace face, int level, Rectangle? rectangle,
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
@@ -236,6 +236,6 @@ public class TextureCube : Texture
     /// <summary>Wraps a handle this assembly already owns. Exists because
     /// <see cref="EffectParameter"/> reads a retained texture handle back out of a shader parameter
     /// and has to rewrap it; the raw-handle constructor itself stays <c>protected</c>.</summary>
-    internal static TextureCube FromNativeHandle(GraphicsDevice graphicsDevice, nint nativeHandleValue) =>
+    internal static TextureCube FromNativeHandle(GraphicsDevice graphicsDevice, ulong nativeHandleValue) =>
         new(graphicsDevice, nativeHandleValue);
 }

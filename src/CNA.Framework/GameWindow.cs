@@ -17,9 +17,9 @@ namespace CNA;
 /// </summary>
 public class GameWindow
 {
-    private readonly nint _nativeGameHandleValue;
+    private readonly ulong _nativeGameHandleValue;
 
-    internal GameWindow(nint nativeGameHandleValue)
+    internal GameWindow(ulong nativeGameHandleValue)
     {
         _nativeGameHandleValue = nativeGameHandleValue;
     }

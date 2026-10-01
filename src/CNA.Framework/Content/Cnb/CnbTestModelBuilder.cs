@@ -25,7 +25,7 @@ internal sealed class CnbTestModelBuilder : IDisposable
         CnaResult result = Native.cna_cnb_model_create(out CnaHandle model);
         CnaException.ThrowIfFailed(result, nameof(CnbTestModelBuilder));
         _handle = new NativeResourceHandle(
-            model.AsNint,
+            model.Value,
             h => Native.cna_cnb_model_destroy(new CnaHandle(h)).IsSuccess());
     }
 
@@ -333,7 +333,7 @@ internal sealed class CnbTestSpriteFontBuilder : IDisposable
         CnaResult result = Native.cna_cnb_sprite_font_data_create(out CnaHandle font);
         CnaException.ThrowIfFailed(result, nameof(CnbTestSpriteFontBuilder));
         _handle = new NativeResourceHandle(
-            font.AsNint,
+            font.Value,
             h => Native.cna_cnb_sprite_font_data_destroy(new CnaHandle(h)).IsSuccess());
     }
 

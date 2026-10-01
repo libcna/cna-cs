@@ -15,7 +15,7 @@ public sealed unsafe class LeaderboardReader : IDisposable
     private LeaderboardReader(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_leaderboard_reader_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_leaderboard_reader_destroy(new CnaHandle(value)).IsSuccess());
         LoadEntries();
     }
 

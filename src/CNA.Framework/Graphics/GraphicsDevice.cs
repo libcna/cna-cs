@@ -42,7 +42,7 @@ public class GraphicsDevice : IDisposable
     /// <see cref="ResolveNativeDeviceHandle"/> rather than a cached field of their own, for the same
     /// reason.
     /// </summary>
-    protected internal nint NativeGameHandleValue { get; }
+    protected internal ulong NativeGameHandleValue { get; }
 
     /// <summary>
     /// Set only for a device this object created and owns. Null for the ordinary case, where the
@@ -55,7 +55,7 @@ public class GraphicsDevice : IDisposable
     /// </summary>
     private readonly NativeResourceHandle? _ownedDevice;
 
-    protected internal GraphicsDevice(nint nativeGameHandleValue)
+    protected internal GraphicsDevice(ulong nativeGameHandleValue)
     {
         NativeGameHandleValue = nativeGameHandleValue;
     }
@@ -99,7 +99,7 @@ public class GraphicsDevice : IDisposable
         CnaException.ThrowIfFailed(result, nameof(GraphicsDevice));
 
         _ownedDevice = new NativeResourceHandle(
-            device.AsNint, handle => Native.cna_graphics_device_destroy(new CnaHandle(handle)).IsSuccess());
+            device.Value, handle => Native.cna_graphics_device_destroy(new CnaHandle(handle)).IsSuccess());
     }
 
     /// <summary>Whether this device was created by <see cref="GraphicsDevice(GraphicsAdapter,
@@ -163,7 +163,7 @@ public class GraphicsDevice : IDisposable
     /// internal lets the facade compose the device without widening this implementation's public
     /// constructor surface or exposing an interop handle.
     /// </summary>
-    internal static GraphicsDevice CreateFacadeBackend(nint nativeGameHandleValue) =>
+    internal static GraphicsDevice CreateFacadeBackend(ulong nativeGameHandleValue) =>
         new(nativeGameHandleValue);
 
     /// <summary>Resolves a fresh, currently-valid native device handle for this call only -- see

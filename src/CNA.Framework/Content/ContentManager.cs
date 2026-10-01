@@ -37,19 +37,19 @@ namespace CNA.Content;
 /// </summary>
 public class ContentManager : IDisposable
 {
-    private nint _nativeHandleValue;
+    private ulong _nativeHandleValue;
     private readonly NativeResourceHandle? _ownedHandle;
 
     /// <summary>
     /// <c>protected internal</c> so CNA.XnaCompat's <c>ContentManager</c> subclass constructor
     /// can forward to it without naming <see cref="CnaHandle"/> -- see docs/architecture.md.
     /// </summary>
-    protected internal ContentManager(nint nativeHandleValue)
+    protected internal ContentManager(ulong nativeHandleValue)
         : this(nativeHandleValue, ownsNativeHandle: false)
     {
     }
 
-    internal ContentManager(nint nativeHandleValue, bool ownsNativeHandle)
+    internal ContentManager(ulong nativeHandleValue, bool ownsNativeHandle)
     {
         _nativeHandleValue = nativeHandleValue;
         if (ownsNativeHandle)
@@ -60,7 +60,7 @@ public class ContentManager : IDisposable
         }
     }
 
-    internal nint NativeHandleValue =>
+    internal ulong NativeHandleValue =>
         _ownedHandle is null ? _nativeHandleValue : _ownedHandle.DangerousGetHandle();
 
     /// <summary>Creates an independently owned native manager. This is used by the strict XNA
@@ -82,7 +82,7 @@ public class ContentManager : IDisposable
             });
         CnaException.ThrowIfFailed(result, nameof(CreateOwned));
 
-        return new ContentManager(contentManager.AsNint, ownsNativeHandle: true)
+        return new ContentManager(contentManager.Value, ownsNativeHandle: true)
         {
             GraphicsDevice = graphicsDevice,
         };
@@ -550,37 +550,37 @@ public class ContentManager : IDisposable
         return path;
     }
 
-    internal nint LoadNativeTexture2DHandle(string assetName)
+    internal ulong LoadNativeTexture2DHandle(string assetName)
     {
         CnaHandle texture = CnaHandle.Zero;
         CnaResult result = CnaStringMarshal.WithStringView(
             assetName, view => Native.cna_content_manager_load_texture2d(new CnaHandle(NativeHandleValue), view, out texture));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(Load));
-        return texture.AsNint;
+        return texture.Value;
     }
 
     /// <summary>The texture-cube loader. <c>cna_content_manager_load_texture_cube</c> was unbound
     /// until a sweep of unbound header functions found it, so <c>Load&lt;TextureCube&gt;</c> threw
     /// "unsupported content type" for an asset the C API could load all along.</summary>
-    internal nint LoadNativeTextureCubeHandle(string assetName)
+    internal ulong LoadNativeTextureCubeHandle(string assetName)
     {
         CnaHandle texture = CnaHandle.Zero;
         CnaResult result = CnaStringMarshal.WithStringView(
             assetName, view => Native.cna_content_manager_load_texture_cube(new CnaHandle(NativeHandleValue), view, out texture));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(Load));
-        return texture.AsNint;
+        return texture.Value;
     }
 
-    internal nint LoadNativeSoundEffectHandle(string assetName)
+    internal ulong LoadNativeSoundEffectHandle(string assetName)
     {
         CnaHandle soundEffect = CnaHandle.Zero;
         CnaResult result = CnaStringMarshal.WithStringView(
             assetName, view => Native.cna_content_manager_load_sound_effect(new CnaHandle(NativeHandleValue), view, out soundEffect));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(Load));
-        return soundEffect.AsNint;
+        return soundEffect.Value;
     }
 
     private readonly List<CnjLoaderRegistration> _cnjLoaders = [];
@@ -692,14 +692,14 @@ public class ContentManager : IDisposable
     /// <c>CnaHandle</c> compiles here and is unusable from compat, which is how the first draft of
     /// this method failed.
     /// </summary>
-    internal nint LoadNativeEffectHandle(string assetName)
+    internal ulong LoadNativeEffectHandle(string assetName)
     {
         CnaHandle effect = CnaHandle.Zero;
         CnaResult result = CnaStringMarshal.WithStringView(
             assetName, view => Native.cna_content_manager_load_effect(new CnaHandle(NativeHandleValue), view, out effect));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(Load));
-        return effect.AsNint;
+        return effect.Value;
     }
 
     /// <summary>
@@ -711,7 +711,7 @@ public class ContentManager : IDisposable
     /// <see cref="LoadNativeTexture2DHandle"/> already uses for <c>Texture2D</c>.
     /// </summary>
     internal readonly record struct SpriteFontData(
-        nint TextureHandle,
+        ulong TextureHandle,
         IReadOnlyList<Rectangle> GlyphBounds,
         IReadOnlyList<Rectangle> Cropping,
         IReadOnlyList<char> Characters,
@@ -852,7 +852,7 @@ public class ContentManager : IDisposable
             }
 
             data = new SpriteFontData(
-                texture.AsNint,
+                texture.Value,
                 bounds,
                 cropping,
                 characters,

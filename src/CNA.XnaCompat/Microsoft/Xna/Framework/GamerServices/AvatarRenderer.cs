@@ -41,7 +41,7 @@ public class AvatarRenderer : IDisposable
             Native.cna_avatar_renderer_create(avatarDescription.Handle, GamerServicesInterop.Bool(useLoadingEffect), out CnaHandle handle),
             nameof(AvatarRenderer));
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_avatar_renderer_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_avatar_renderer_destroy(new CnaHandle(value)).IsSuccess());
 
         int[] parents = new int[BoneCount];
         for (int index = 0; index < BoneCount; index++)

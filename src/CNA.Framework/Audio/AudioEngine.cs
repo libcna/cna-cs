@@ -34,7 +34,7 @@ public class AudioEngine : IDisposable
 
     private AudioEngine(CnaHandle engine)
     {
-        _handle = new NativeResourceHandle(engine.AsNint, h => Native.cna_audio_engine_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(engine.Value, h => Native.cna_audio_engine_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     private static CnaHandle Create(string settingsFile)
@@ -166,7 +166,7 @@ public class AudioEngine : IDisposable
             name, view => Native.cna_audio_engine_get_category(NativeHandle, view, out category));
         GC.KeepAlive(this);
         CnaException.ThrowIfFailed(result, nameof(GetCategory));
-        return new AudioCategory(category.AsNint, this);
+        return new AudioCategory(category.Value, this);
     }
 
     public void Dispose()

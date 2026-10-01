@@ -25,7 +25,7 @@ public class EffectParameterCollection : IEnumerable<EffectParameter>, IDisposab
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         _graphicsDevice = graphicsDevice;
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_parameter_collection_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_parameter_collection_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>

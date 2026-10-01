@@ -24,7 +24,7 @@ public class VideoPlayer : IDisposable
         CnaResult result = Native.cna_video_player_create(CnaAmbientGame.Current, out CnaHandle player);
         CnaException.ThrowIfFailed(result, nameof(VideoPlayer));
 
-        _handle = new NativeResourceHandle(player.AsNint, h => Native.cna_video_player_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(player.Value, h => Native.cna_video_player_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ public class VideoPlayer : IDisposable
         // The device comes from the Video the caller handed to Play() -- deliberately not a fresh
         // wrapper around the ambient game's device, which would give the frame texture a second
         // GraphicsDevice object with its own cached state (see Video.GraphicsDevice).
-        return CreateFrameTexture(_video!.GraphicsDevice, texture.AsNint);
+        return CreateFrameTexture(_video!.GraphicsDevice, texture.Value);
     }
 
     /// <summary>
@@ -203,7 +203,7 @@ public class VideoPlayer : IDisposable
     {
         CnaVideoFrameExt frame = ReadNativeFrame();
         Texture? texture = frame.Available != 0 && _video is not null
-            ? CreateFrameTexture(_video.GraphicsDevice, frame.Texture.AsNint)
+            ? CreateFrameTexture(_video.GraphicsDevice, frame.Texture.Value)
             : null;
 
         return new CnaVideoFrame(texture, frame.Generation, frame.PresentationTime, frame.Available != 0);
@@ -220,7 +220,7 @@ public class VideoPlayer : IDisposable
 
     /// <summary>Covariant-return factory hook so CNA.XnaCompat can hand back its own
     /// <c>Texture2D</c> -- same pattern as <c>GraphicsDevice.QueryBlendState</c>.</summary>
-    protected virtual Texture CreateFrameTexture(GraphicsDevice graphicsDevice, nint nativeHandleValue) =>
+    protected virtual Texture CreateFrameTexture(GraphicsDevice graphicsDevice, ulong nativeHandleValue) =>
         Texture2D.CreateBorrowed(graphicsDevice, nativeHandleValue);
 
     /// <summary>Whether this player has been disposed. Read from native rather than tracked here,

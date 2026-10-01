@@ -15,7 +15,7 @@ public class EffectTechniqueCollection : IEnumerable<EffectTechnique>, IDisposab
 
     internal EffectTechniqueCollection(CnaHandle handle)
     {
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_technique_collection_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_technique_collection_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>

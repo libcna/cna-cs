@@ -12,7 +12,7 @@ public class Texture3D : Texture
     /// <summary>Wraps an already-created native handle -- the landing point for a texture read back
     /// out of a shader parameter. <c>protected internal</c> so <see cref="EffectParameter"/> can
     /// reach it, matching <see cref="Texture2D"/>'s own raw-handle constructor.</summary>
-    internal Texture3D(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    internal Texture3D(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : this(graphicsDevice, new CNA.Graphics.Texture3D(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
             nativeHandleValue))

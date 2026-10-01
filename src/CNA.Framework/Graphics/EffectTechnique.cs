@@ -26,7 +26,7 @@ public class EffectTechnique : IDisposable
 
     internal EffectTechnique(CnaHandle handle)
     {
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_technique_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_technique_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>

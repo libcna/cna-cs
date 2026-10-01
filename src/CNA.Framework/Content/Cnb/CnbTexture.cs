@@ -107,7 +107,7 @@ public sealed class CnbTexture : IDisposable
     private readonly NativeResourceHandle _handle;
     private readonly CnaCnbTextureInfo _info;
 
-    private CnbTexture(nint handleValue, CnaCnbTextureInfo info)
+    private CnbTexture(ulong handleValue, CnaCnbTextureInfo info)
     {
         _handle = new NativeResourceHandle(
             handleValue,
@@ -130,7 +130,7 @@ public sealed class CnbTexture : IDisposable
         CnaException.ThrowIfFailed(result, nameof(DecodeTexture2D));
         GC.KeepAlive(document);
 
-        return Adopt(texture.AsNint, nameof(DecodeTexture2D));
+        return Adopt(texture.Value, nameof(DecodeTexture2D));
     }
 
     /// <summary>Wraps a handle CNA has just produced, reading its shape once.
@@ -138,7 +138,7 @@ public sealed class CnbTexture : IDisposable
     /// The shape is read here rather than on each property because it cannot change: a decoded
     /// description is immutable, and six properties each making a native call would be six chances
     /// for a disposed handle to be used.</summary>
-    internal static CnbTexture Adopt(nint handleValue, string operation)
+    internal static CnbTexture Adopt(ulong handleValue, string operation)
     {
         var info = CnaCnbTextureInfo.Versioned();
         CnaResult result = Native.cna_cnb_texture_data_get_info(new CnaHandle(handleValue), ref info);

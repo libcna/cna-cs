@@ -34,7 +34,7 @@ public class Texture2D : Texture
     }
 
     /// <summary>Wraps an already-loaded native handle -- used by <c>ContentManager</c>.</summary>
-    internal Texture2D(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    internal Texture2D(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : this(graphicsDevice, new CNA.Graphics.Texture2D(
             (graphicsDevice ?? throw new ArgumentNullException(nameof(graphicsDevice))).Framework,
             nativeHandleValue))

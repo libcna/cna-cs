@@ -31,7 +31,7 @@ public abstract class MediaLibraryObject : IDisposable
     {
         _dispose = dispose;
         _isDisposed = isDisposed;
-        _handle = new NativeResourceHandle(handle.AsNint, h => destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(handle.Value, h => destroy(new CnaHandle(h)).IsSuccess());
     }
 
     private protected delegate CnaResult DisposeFunc(CnaHandle handle);

@@ -12,7 +12,7 @@ public sealed class FriendCollection : GamerCollection<FriendGamer>, IDisposable
         : base(Load(handle))
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_gamer_collection_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_gamer_collection_destroy(new CnaHandle(value)).IsSuccess());
     }
 
     ~FriendCollection()

@@ -68,7 +68,7 @@ public class Effect : IDisposable
             CnaException.ThrowIfFailed(result, nameof(Effect));
         }
 
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>
@@ -115,7 +115,7 @@ public class Effect : IDisposable
                     graphicsDevice.ResolveNativeDeviceHandle(), vertexView, fragmentView, out handle)));
 
         CnaException.ThrowIfFailed(result, nameof(Effect));
-        _ownedHandle = new NativeResourceHandle(handle.AsNint, h => Native.cna_effect_destroy(new CnaHandle(h)).IsSuccess());
+        _ownedHandle = new NativeResourceHandle(handle.Value, h => Native.cna_effect_destroy(new CnaHandle(h)).IsSuccess());
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public class Effect : IDisposable
         }
     }
 
-    protected internal Effect(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    protected internal Effect(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
     {
         ArgumentNullException.ThrowIfNull(graphicsDevice);
         GraphicsDevice = graphicsDevice;
@@ -178,7 +178,7 @@ public class Effect : IDisposable
     /// lets them override it. Same "raw <see cref="nint"/> across the assembly boundary" rule
     /// <c>GraphicsDevice.NativeGameHandleValue</c> and <c>Texture2D</c>'s handle constructor
     /// already follow -- see docs/architecture.md.</summary>
-    protected internal virtual nint NativeEffectHandleValue =>
+    protected internal virtual ulong NativeEffectHandleValue =>
         _ownedHandle is not null
         ? _ownedHandle.DangerousGetHandle()
         : throw new NotSupportedException(
@@ -275,7 +275,7 @@ public class Effect : IDisposable
     /// </summary>
     public virtual Effect Clone() =>
         _ownedHandle is not null
-        ? new Effect(GraphicsDevice, CloneNativeHandle().AsNint)
+        ? new Effect(GraphicsDevice, CloneNativeHandle().Value)
         : throw new NotSupportedException(
             $"{GetType().Name} does not implement Clone. The native clone route exists " +
             "(cna_effect_clone), but rewrapping its result requires the concrete effect type to " +

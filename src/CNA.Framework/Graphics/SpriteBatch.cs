@@ -98,10 +98,10 @@ public class SpriteBatch : IDisposable
         CnaResult result = Native.cna_sprite_batch_create(graphicsDevice.ResolveNativeDeviceHandle(), out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(SpriteBatch));
 
-        _handle = new NativeResourceHandle(handle.AsNint, h => Native.cna_sprite_batch_destroy(new CnaHandle(h)).IsSuccess());
+        _handle = new NativeResourceHandle(handle.Value, h => Native.cna_sprite_batch_destroy(new CnaHandle(h)).IsSuccess());
     }
 
-    private nint NativeHandleValue => _handle.DangerousGetHandle();
+    private ulong NativeHandleValue => _handle.DangerousGetHandle();
 
     public void Begin()
     {
@@ -643,7 +643,7 @@ public class SpriteBatch : IDisposable
     private readonly record struct PendingText(
         int SpriteCountBefore,
         SpriteFont Font,
-        nint FontHandleValue,
+        ulong FontHandleValue,
         string Text,
         Vector2 Position,
         Color Color,

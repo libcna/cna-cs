@@ -27,7 +27,7 @@ public sealed class PropertyDictionary : IDictionary<string, object>
     internal PropertyDictionary(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_property_dictionary_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_property_dictionary_destroy(new CnaHandle(value)).IsSuccess());
     }
 
     private CnaHandle Handle => new(_handle.DangerousGetHandle());

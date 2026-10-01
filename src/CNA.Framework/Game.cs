@@ -184,7 +184,7 @@ public class Game : IDisposable
     /// <c>CNA_Handle</c> exactly), so this narrows with an explicit, checked-at-the-boundary cast
     /// rather than an implicit one -- see <see cref="CnaHandle"/>'s own doc comment.
     /// </summary>
-    internal nint NativeHandle => _nativeHandle.AsNint;
+    internal ulong NativeHandle => _nativeHandle.Value;
 
     /// <summary>
     /// The game native CNA is running, if any. Native admits one C-owned game at a time, so this
@@ -693,11 +693,11 @@ public class Game : IDisposable
     /// instead, which touches that whole class's native surface together with the rest of its own
     /// signature corrections (see <c>NEXT.md</c>'s native-ABI-migration entry, step 3).
     /// </summary>
-    protected nint GetNativeGraphicsDeviceHandle()
+    protected ulong GetNativeGraphicsDeviceHandle()
     {
         CnaResult result = Native.cna_game_get_graphics_device(_nativeHandle, out CnaHandle device);
         CnaException.ThrowIfFailed(result, "cna_game_get_graphics_device");
-        return device.AsNint;
+        return device.Value;
     }
 
     /// <summary>Same rationale as <see cref="GetNativeGraphicsDeviceHandle"/>'s first paragraph, for
@@ -705,11 +705,11 @@ public class Game : IDisposable
     /// resolve once and keep: <c>content.h</c>'s own doc comment says a borrowed manager "answers
     /// the same handle every time it is asked" with no per-callback validity caveat, confirmed by
     /// reading <c>RuntimeGameSmoke.c</c>'s <c>validate_content_manager</c> directly.</summary>
-    protected nint GetNativeContentHandle()
+    protected ulong GetNativeContentHandle()
     {
         CnaResult result = Native.cna_game_get_content_manager_ext(_nativeHandle, out CnaHandle contentManager);
         CnaException.ThrowIfFailed(result, "cna_game_get_content_manager_ext");
-        return contentManager.AsNint;
+        return contentManager.Value;
     }
 
     /// <summary>

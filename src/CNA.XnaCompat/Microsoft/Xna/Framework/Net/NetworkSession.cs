@@ -56,7 +56,7 @@ public sealed unsafe class NetworkSession : IDisposable
     private NetworkSession(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_network_session_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_network_session_destroy(new CnaHandle(value)).IsSuccess());
         _self = GCHandle.Alloc(this, GCHandleType.Weak);
         AllGamers = new GamerCollection<NetworkGamer>(_allGamers);
         LocalGamers = new GamerCollection<LocalNetworkGamer>(_localGamers);

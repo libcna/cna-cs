@@ -25,7 +25,7 @@ public class WaveBank : IDisposable
         GC.KeepAlive(audioEngine);
         CnaException.ThrowIfFailed(result, nameof(WaveBank));
 
-        _handle = new NativeResourceHandle(waveBank.AsNint, Release);
+        _handle = new NativeResourceHandle(waveBank.Value, Release);
         audioEngine.RegisterDependant(this);
     }
 
@@ -44,11 +44,11 @@ public class WaveBank : IDisposable
         GC.KeepAlive(audioEngine);
         CnaException.ThrowIfFailed(result, nameof(WaveBank));
 
-        _handle = new NativeResourceHandle(waveBank.AsNint, Release);
+        _handle = new NativeResourceHandle(waveBank.Value, Release);
         audioEngine.RegisterDependant(this);
     }
 
-    private static bool Release(nint handleValue) =>
+    private static bool Release(ulong handleValue) =>
         Native.cna_wave_bank_destroy(new CnaHandle(handleValue)).IsSuccess();
 
     /// <summary>

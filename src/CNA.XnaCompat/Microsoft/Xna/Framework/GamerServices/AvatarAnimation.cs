@@ -26,7 +26,7 @@ public class AvatarAnimation : IAvatarAnimation, IDisposable
         GamerServicesInterop.Check(
             Native.cna_avatar_animation_create((uint)animationPreset, out CnaHandle handle), nameof(AvatarAnimation));
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_avatar_animation_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_avatar_animation_destroy(new CnaHandle(value)).IsSuccess());
         _boneTransforms = new ReadOnlyCollection<Matrix>(_avatarBones);
         Refresh();
     }

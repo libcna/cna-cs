@@ -24,7 +24,7 @@ public sealed unsafe class Accelerometer : SensorBase<AccelerometerReading>
     {
         CnaHandle game = Microsoft.Devices.DevicesInterop.RequireGame(nameof(Accelerometer));
         Microsoft.Devices.DevicesInterop.Check(Native.cna_accelerometer_create(game, out CnaHandle sensor), nameof(Accelerometer));
-        _handle = new NativeResourceHandle(sensor.AsNint, value => Native.cna_accelerometer_destroy(new CnaHandle(value)).IsSuccess());
+        _handle = new NativeResourceHandle(sensor.Value, value => Native.cna_accelerometer_destroy(new CnaHandle(value)).IsSuccess());
         _self = GCHandle.Alloc(this, GCHandleType.Weak);
         nint context = GCHandle.ToIntPtr(_self);
         Microsoft.Devices.DevicesInterop.Check(

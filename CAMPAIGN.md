@@ -103,6 +103,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | done; samples' Directory.Build.targets import + per-sample XnaProfile is part of CSX-050 |
 | CSX-083 | Device state cache coherent with what native SpriteBatch applies; BlendFactor/MultiSampleMask/ReferenceStencil dirty the state as XNA's setters do | done |
 | CSX-084 | SIGTERM/SIGINT during `Run` end the game through its own exit instead of the runtime's `exit()` racing the game thread | done |
+| CSX-085 | A `CNA_Handle` is held as the 64-bit value it is, not narrowed to pointer width (WebAssembly, any 32-bit target) | done |
 
 ### P9 -- portability
 
@@ -112,6 +113,25 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-085: handles are 64-bit everywhere
+
+The first C# game in a browser (CSX-060) died creating its content manager:
+`OverflowException` in `CnaHandle.AsNint`. A `CNA_Handle` is `uint64_t` on every platform, and the
+binding narrowed it into `nint` -- `NativeResourceHandle` was a `SafeHandle`, which stores a
+pointer-width value -- so on wasm32 (and any 32-bit Android ABI) every real handle overflowed.
+
+Fix: `NativeResourceHandle` is a `CriticalFinalizerObject` over the `ulong`, keeping what
+`SafeHandle` gave it -- release at most once from `Dispose` or the finalizer, none for a borrowed
+(`ownsHandle: false`) or detached handle, `IsClosed`/`IsInvalid`, the owner-thread release queue.
+`CnaHandle` lost its `nint` constructor and `AsNint`; the compiler then named every narrowing site
+(about 250 across 90 files: `NativeHandleValue` properties, wrap constructors, release callbacks,
+handle-returning helpers). OS window handles stay `nint`, as XNA's `IntPtr`.
+
+Tests: `Handle_HoldsTheFull64BitValue` (a value above 2^32 round-trips to the release callback;
+the type is not a `SafeHandle` and hands out `ulong`), `Handle_ReleasesAtMostOnceAndNeverABorrowedOrDetachedOne`.
+Framework 633/633, XnaCompat 272/272, integration 211/211, GamerServices 24/24 on the desktop; the
+browser probe gets past the content manager.
 
 ### 2026-10-01 -- CSX-050: the checked-in samples, requalified
 

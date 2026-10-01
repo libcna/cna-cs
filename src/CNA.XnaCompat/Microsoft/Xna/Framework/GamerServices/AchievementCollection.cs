@@ -13,7 +13,7 @@ public sealed class AchievementCollection : IList<Achievement>, IDisposable
     internal AchievementCollection(CnaHandle handle)
     {
         _handle = new NativeResourceHandle(
-            handle.AsNint, value => Native.cna_achievement_collection_destroy(new CnaHandle(value)).IsSuccess());
+            handle.Value, value => Native.cna_achievement_collection_destroy(new CnaHandle(value)).IsSuccess());
         GamerServicesInterop.Check(Native.cna_achievement_collection_get_count(handle, out int count), nameof(AchievementCollection));
         _items = new List<Achievement>(count);
         for (int index = 0; index < count; index++)

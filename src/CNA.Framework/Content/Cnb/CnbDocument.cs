@@ -62,14 +62,14 @@ public sealed class CnbDocument : IDisposable
 {
     private readonly NativeResourceHandle _handle;
 
-    private CnbDocument(nint handleValue)
+    private CnbDocument(ulong handleValue)
     {
         _handle = new NativeResourceHandle(
             handleValue,
             h => Native.cna_cnb_document_destroy(new CnaHandle(h)).IsSuccess());
     }
 
-    private CnbDocument(nint handleValue, bool owned)
+    private CnbDocument(ulong handleValue, bool owned)
     {
         _handle = owned
             ? new NativeResourceHandle(
@@ -85,7 +85,7 @@ public sealed class CnbDocument : IDisposable
     /// caller's document mid-load. The release delegate is a no-op rather than absent so that
     /// <c>using</c> reads normally at the call site and does the right thing.
     /// </summary>
-    internal static CnbDocument Borrowing(CnaHandle document) => new(document.AsNint, owned: false);
+    internal static CnbDocument Borrowing(CnaHandle document) => new(document.Value, owned: false);
 
     /// <summary>
     /// Parses a <c>.cnb</c> file with CNA's own default reader ceilings.
@@ -108,7 +108,7 @@ public sealed class CnbDocument : IDisposable
             path, view => Native.cna_cnb_document_parse_file(view, in limits, out document));
         CnaException.ThrowIfFailed(result, nameof(Open));
 
-        return new CnbDocument(document.AsNint);
+        return new CnbDocument(document.Value);
     }
 
     /// <summary>The container format's major version, which is the file's own, not CNA's.</summary>

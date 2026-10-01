@@ -48,10 +48,10 @@ public class Texture2D : Texture
     /// <c>Texture t = someTexture2D;</c> compiles in game code, as it does in real XNA -- and
     /// therefore cannot inherit this type's implementation, but must still make the identical
     /// native call.</summary>
-    internal static nint CreateNativeTexture2DHandle(GraphicsDevice graphicsDevice, int width, int height)
+    internal static ulong CreateNativeTexture2DHandle(GraphicsDevice graphicsDevice, int width, int height)
         => CreateNativeTexture2DHandle(graphicsDevice, width, height, mipMap: false, SurfaceFormat.Color);
 
-    internal static nint CreateNativeTexture2DHandle(
+    internal static ulong CreateNativeTexture2DHandle(
         GraphicsDevice graphicsDevice,
         int width,
         int height,
@@ -71,7 +71,7 @@ public class Texture2D : Texture
         CnaResult result = Native.cna_texture2d_create(graphicsDevice.ResolveNativeDeviceHandle(), in createInfo, out CnaHandle handle);
         CnaException.ThrowIfFailed(result, nameof(Texture2D));
 
-        return handle.AsNint;
+        return handle.Value;
     }
 
     /// <summary>
@@ -86,14 +86,14 @@ public class Texture2D : Texture
     /// now requires a device to have been assigned, the same way its <c>Load&lt;Model&gt;</c> path
     /// already did.
     /// </summary>
-    protected internal Texture2D(GraphicsDevice graphicsDevice, nint nativeHandleValue)
+    protected internal Texture2D(GraphicsDevice graphicsDevice, ulong nativeHandleValue)
         : base(graphicsDevice, nativeHandleValue)
     {
     }
 
     /// <summary>Wraps a borrowed handle -- see <see cref="Texture"/>'s equivalent
     /// constructor.</summary>
-    private protected Texture2D(GraphicsDevice graphicsDevice, nint nativeHandleValue, bool ownsHandle)
+    private protected Texture2D(GraphicsDevice graphicsDevice, ulong nativeHandleValue, bool ownsHandle)
         : base(graphicsDevice, nativeHandleValue, ownsHandle)
     {
     }
@@ -101,7 +101,7 @@ public class Texture2D : Texture
     /// <summary>Builds a non-owning wrapper over a texture handle whose real owner is something
     /// else. <c>internal</c> because only this assembly knows which native calls hand out borrowed
     /// handles -- see <c>VideoPlayer.GetTexture</c>.</summary>
-    internal static Texture2D CreateBorrowed(GraphicsDevice graphicsDevice, nint nativeHandleValue) =>
+    internal static Texture2D CreateBorrowed(GraphicsDevice graphicsDevice, ulong nativeHandleValue) =>
         new(graphicsDevice, nativeHandleValue, ownsHandle: false);
 
     /// <summary>Matches <c>cna_texture2d_destroy</c> exactly (<c>graphics.h:702</c>) -- confirmed
@@ -111,7 +111,7 @@ public class Texture2D : Texture
     /// Overrides <see cref="Texture.ReleaseNative"/> (abstract there -- there is no shared
     /// <c>cna_texture_destroy</c>) and stays overridable itself so <see cref="RenderTarget2D"/> can
     /// release through <c>cna_render_target_destroy</c> instead.</summary>
-    protected override bool ReleaseNative(nint handleValue) => ReleaseNativeTexture2D(handleValue);
+    protected override bool ReleaseNative(ulong handleValue) => ReleaseNativeTexture2D(handleValue);
 
     /// <summary>Sourced from <c>cna_texture2d_get_info</c> (<c>graphics.h</c>'s own
     /// <c>CNA_Texture2DInfo</c>, which reports real width/height) -- not <c>texture.h</c>'s
@@ -127,7 +127,7 @@ public class Texture2D : Texture
     /// <see cref="RenderTarget2D.GetDimensions"/>. Named for the concrete type (not just
     /// <c>GetDimensions</c>) so it does not collide with <see cref="RenderTarget2D"/>'s own
     /// same-purpose helper, which reads a different native info struct.</summary>
-    internal static (int Width, int Height) GetTexture2DDimensions(nint handleValue)
+    internal static (int Width, int Height) GetTexture2DDimensions(ulong handleValue)
     {
         var info = new CnaTexture2DInfo();
         CnaResult result = Native.cna_texture2d_get_info(new CnaHandle(handleValue), ref info);
@@ -135,12 +135,12 @@ public class Texture2D : Texture
         return ((int)info.Width, (int)info.Height);
     }
 
-    internal static bool ReleaseNativeTexture2D(nint handleValue) =>
+    internal static bool ReleaseNativeTexture2D(ulong handleValue) =>
         Native.cna_texture2d_destroy(new CnaHandle(handleValue)).IsSuccess();
 
     /// <summary>The shared body of both <c>SetData</c> overloads' native call, reusable by
     /// CNA.XnaCompat's parallel <c>Texture2D</c> -- see <c>CreateNativeTexture2DHandle</c>.</summary>
-    internal static unsafe void SetDataRgba8(nint handleValue, ReadOnlySpan<byte> data)
+    internal static unsafe void SetDataRgba8(ulong handleValue, ReadOnlySpan<byte> data)
     {
         if (data.Length % 4 != 0)
         {
@@ -220,7 +220,7 @@ public class Texture2D : Texture
     /// <c>T</c>, is what XNA does.
     /// </summary>
     internal static unsafe void GetDataInto<T>(
-        nint handleValue, SurfaceFormat format, int level, Rectangle? rect,
+        ulong handleValue, SurfaceFormat format, int level, Rectangle? rect,
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
@@ -270,7 +270,7 @@ public class Texture2D : Texture
     /// <summary>See <see cref="GetDataInto{T}(nint, SurfaceFormat, int, Rectangle?, T[], int,
     /// int)"/>.</summary>
     internal static unsafe void SetDataFrom<T>(
-        nint handleValue, SurfaceFormat format, int level, Rectangle? rect,
+        ulong handleValue, SurfaceFormat format, int level, Rectangle? rect,
         T[] data, int startIndex, int elementCount)
         where T : struct
     {
@@ -380,7 +380,7 @@ public class Texture2D : Texture
             CnaException.ThrowIfFailed(result, nameof(FromStream));
         }
 
-        return new Texture2D(graphicsDevice, texture.AsNint);
+        return new Texture2D(graphicsDevice, texture.Value);
     }
 
     /// <summary>Matches real XNA's <c>SaveAsPng</c>. <paramref name="width"/>/
