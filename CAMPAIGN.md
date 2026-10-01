@@ -77,6 +77,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
+| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, and NePlus play (content their repositories ship or built from their own content projects by XNA's BuildContent under Wine; seven prebuilt XNA libraries run through CSX-099); HeliumBiker waits at its Wii Remote connect screen as it does on Windows without one; five recorded with the reason outside XNA (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Browser and Android for these: not yet |
 
 ### P7 -- browser
 
