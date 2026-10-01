@@ -108,6 +108,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-087 | Managed content paths resolve against the title directory, as XNA's `ContentManager.OpenStream` does through `TitleContainer`, not the working directory | done for the managed loaders; CNA's native `ContentManager` still resolves a relative root against the working directory (open) |
 | CSX-088 | Components initialized, content included, inside `base.Initialize()` in XNA's order, once | done |
 | CSX-089 | A `Model` whose tag is of the game's own type loads through the game's reader | done |
+| CSX-090 | `base.Update`/`base.Draw` update and draw the components at the call, once per frame | done |
 
 ### P9 -- portability
 
@@ -147,6 +148,20 @@ What the corpus needed, each fixed where it lives:
 
 Not covered: audio (the emulator runs `-no-audio`), arm64-v8a, a physical device, and a GL context
 actually lost while paused (SDL kept it here).
+
+### 2026-10-01 -- CSX-090: components update and draw at base.Update and base.Draw
+
+Found with cna-cs-samples DistortionSample (CSSAMPLE-032): its `Draw` sets the scene target, draws
+the background, calls `base.Draw` -- where its distortion component composites the scene -- and then
+draws its HUD. Here the HUD was missing and the scene smeared: the facade's `base.Update` and
+`base.Draw` were empty, and CNA's own `Game::Update`/`Game::Draw` ran the components after the
+game's override returned, so they drew over the HUD out of order. XNA's `Game.Update`/`Game.Draw`
+run the enabled/visible components in `UpdateOrder`/`DrawOrder` at the call (XNA IL). The facade now
+does that over a stable-sorted copy (reused lists; no per-frame allocation) and marks the frame, so
+CNA's pass through the adapters is a no-op; a game that never calls `base.Update` keeps CNA's pass,
+as before. `CompatComponentPassTests`: a component's count rises inside `base.Update`/`base.Draw`
+and exactly once per frame (fails without the change); skipping `base.Update` still updates it.
+Integration 217/217.
 
 ### 2026-10-01 -- CSX-089: a Model tagged with the game's own type
 

@@ -160,8 +160,13 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
 
         public override void Initialize() => _game.InitializeComponentOnce(_component);
 
-        public override void Update(CNA.GameTime gameTime) =>
-            _updateable?.Update(GameTime.FromFramework(gameTime));
+        public override void Update(CNA.GameTime gameTime)
+        {
+            if (!_game.ComponentsUpdatedThisFrame)
+            {
+                _updateable?.Update(GameTime.FromFramework(gameTime));
+            }
+        }
 
         protected override void Dispose(bool disposing)
         {
@@ -209,11 +214,21 @@ public sealed class GameComponentCollection : Collection<IGameComponent>
 
         public override void Initialize() => _game.InitializeComponentOnce(_component);
 
-        public override void Update(CNA.GameTime gameTime) =>
-            _updateable?.Update(GameTime.FromFramework(gameTime));
+        public override void Update(CNA.GameTime gameTime)
+        {
+            if (!_game.ComponentsUpdatedThisFrame)
+            {
+                _updateable?.Update(GameTime.FromFramework(gameTime));
+            }
+        }
 
-        public override void Draw(CNA.GameTime gameTime) =>
-            _drawable.Draw(GameTime.FromFramework(gameTime));
+        public override void Draw(CNA.GameTime gameTime)
+        {
+            if (!_game.ComponentsDrawnThisFrame)
+            {
+                _drawable.Draw(GameTime.FromFramework(gameTime));
+            }
+        }
 
         protected override void Dispose(bool disposing)
         {

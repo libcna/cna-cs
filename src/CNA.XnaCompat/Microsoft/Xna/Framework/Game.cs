@@ -198,16 +198,83 @@ public class Game : IDisposable
         }
     }
 
+    /// <summary>
+    /// XNA's <c>Game.Update</c>: the enabled components, in <c>UpdateOrder</c>, at the call (XNA
+    /// IL), so a game's work after <c>base.Update</c> sees them updated. CNA's own pass follows the
+    /// game's override; <see cref="ComponentsUpdatedThisFrame"/> makes it a no-op. The backend
+    /// pumps the framework dispatcher once after this callback; pumping here would do it twice.
+    /// </summary>
     protected virtual void Update(GameTime gameTime)
     {
-        // Backend CGame performs the one framework-dispatcher pump after this managed callback
-        // returns successfully. Calling it here would double-pump every ordinary XNA override
-        // that follows the documented base.Update(gameTime) pattern.
+        ComponentsUpdatedThisFrame = true;
+        _updating.Clear();
+        foreach (IGameComponent component in Components)
+        {
+            if (component is IUpdateable updateable)
+            {
+                InsertInOrder(_updating, updateable, static item => item.UpdateOrder);
+            }
+        }
+
+        foreach (IUpdateable updateable in _updating)
+        {
+            if (updateable.Enabled)
+            {
+                updateable.Update(gameTime);
+            }
+        }
     }
 
+    /// <summary>
+    /// XNA's <c>Game.Draw</c>: the visible components, in <c>DrawOrder</c>, at the call (XNA IL) --
+    /// a game that draws its HUD after <c>base.Draw</c> draws it over them. CNA's own pass follows
+    /// the game's override; <see cref="ComponentsDrawnThisFrame"/> makes it a no-op.
+    /// </summary>
     protected virtual void Draw(GameTime gameTime)
     {
+        ComponentsDrawnThisFrame = true;
+        _drawing.Clear();
+        foreach (IGameComponent component in Components)
+        {
+            if (component is IDrawable drawable)
+            {
+                InsertInOrder(_drawing, drawable, static item => item.DrawOrder);
+            }
+        }
+
+        foreach (IDrawable drawable in _drawing)
+        {
+            if (drawable.Visible)
+            {
+                drawable.Draw(gameTime);
+            }
+        }
     }
+
+    // Copies, as XNA iterates: a component that adds or removes another while updating or drawing
+    // does not disturb this frame's pass. Reused, so a frame allocates nothing.
+    private readonly List<IUpdateable> _updating = [];
+    private readonly List<IDrawable> _drawing = [];
+
+    /// <summary>Inserts after every item whose order is not greater: stable, so equal orders keep
+    /// the collection's order.</summary>
+    private static void InsertInOrder<T>(List<T> list, T item, Func<T, int> order)
+    {
+        int key = order(item);
+        int index = list.Count;
+        while (index > 0 && order(list[index - 1]) > key)
+        {
+            index--;
+        }
+
+        list.Insert(index, item);
+    }
+
+    /// <summary>Whether this frame's <c>base.Update</c> has already updated the components.</summary>
+    internal bool ComponentsUpdatedThisFrame { get; private set; }
+
+    /// <summary>Whether this frame's <c>base.Draw</c> has already drawn the components.</summary>
+    internal bool ComponentsDrawnThisFrame { get; private set; }
 
     protected virtual void EndDraw()
     {
@@ -336,6 +403,7 @@ public class Game : IDisposable
 
         try
         {
+            ComponentsDrawnThisFrame = false;
             Draw(gameTime);
         }
         finally
@@ -375,8 +443,11 @@ public class Game : IDisposable
         // base.Initialize() has already loaded, and XNA loads content once.
         protected override void LoadContent() => _owner.EnsureContentLoaded();
 
-        protected override void Update(CNA.GameTime gameTime) =>
+        protected override void Update(CNA.GameTime gameTime)
+        {
+            _owner.ComponentsUpdatedThisFrame = false;
             _owner.Update(GameTime.FromFramework(gameTime));
+        }
 
         protected override void Draw(CNA.GameTime gameTime) =>
             _owner.OnDrawFromBackend(GameTime.FromFramework(gameTime));

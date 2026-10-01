@@ -99,8 +99,13 @@ public class GameComponent : IGameComponent, IUpdateable, IDisposable
 
         public override void Initialize() => _owner.Game.InitializeComponentOnce(_owner);
 
-        public override void Update(CNA.GameTime gameTime) =>
-            _owner.Update(GameTime.FromFramework(gameTime));
+        public override void Update(CNA.GameTime gameTime)
+        {
+            if (!_owner.Game.ComponentsUpdatedThisFrame)
+            {
+                _owner.Update(GameTime.FromFramework(gameTime));
+            }
+        }
     }
 
     private sealed class DrawableAdapter : CNA.DrawableGameComponent
@@ -115,11 +120,21 @@ public class GameComponent : IGameComponent, IUpdateable, IDisposable
 
         public override void Initialize() => _owner.Game.InitializeComponentOnce(_owner);
 
-        public override void Update(CNA.GameTime gameTime) =>
-            _owner.Update(GameTime.FromFramework(gameTime));
+        public override void Update(CNA.GameTime gameTime)
+        {
+            if (!_owner.Game.ComponentsUpdatedThisFrame)
+            {
+                _owner.Update(GameTime.FromFramework(gameTime));
+            }
+        }
 
-        public override void Draw(CNA.GameTime gameTime) =>
-            ((DrawableGameComponent)_owner).Draw(GameTime.FromFramework(gameTime));
+        public override void Draw(CNA.GameTime gameTime)
+        {
+            if (!_owner.Game.ComponentsDrawnThisFrame)
+            {
+                ((DrawableGameComponent)_owner).Draw(GameTime.FromFramework(gameTime));
+            }
+        }
 
         protected internal override void LoadContent() =>
             ((DrawableGameComponent)_owner).InvokeLoadContent();
