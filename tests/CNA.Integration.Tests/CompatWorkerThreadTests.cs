@@ -9,8 +9,9 @@ namespace CnaCs.Integration.Tests.Compat;
 /// <summary>
 /// XNA 4.0 let a game create graphics resources, move their data and load content on a thread of
 /// its own while the game thread kept drawing -- the loading-screen pattern resonance-game's
-/// level load uses. CNA's handles belong to the game thread, so the facade runs those calls there
-/// (cna-cs CSX-100); before, each one failed with CNA_RESULT_THREAD.
+/// level load uses. CNA's handles belong to the game thread, so the facade runs whole operations
+/// there (cna-cs CSX-100) and CNA runs the remaining calls there (C ABI 0.39.0, CSX-101); before,
+/// each one failed with CNA_RESULT_THREAD.
 /// </summary>
 [Collection(global::CNA.Integration.Tests.OwnGameCollection.Name)]
 public class CompatWorkerThreadTests
@@ -131,6 +132,24 @@ public class CompatWorkerThreadTests
         using var basic = new BasicEffect(device) { TextureEnabled = true, Texture = texture };
         using Effect clone = basic.Clone();
         Assert.IsType<BasicEffect>(clone);
+
+        // What a loading thread configures next, through calls the facade does not move itself:
+        // CNA runs them on the game thread (C ABI 0.39.0, CSX-101) -- and the device queries, one
+        // hop each because the device CNA lends lasts one callback scope.
+        Viewport viewport = device.Viewport;
+        Assert.True(viewport.Width > 0);
+        Assert.Equal(viewport.Width, device.PresentationParameters.BackBufferWidth);
+        Matrix world = Matrix.CreateTranslation(1f, 2f, 3f);
+        Matrix projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, viewport.AspectRatio, 0.1f, 100f);
+        basic.World = world;
+        basic.View = Matrix.CreateLookAt(new Vector3(0f, 0f, 5f), Vector3.Zero, Vector3.Up);
+        basic.Projection = projection;
+        Assert.Equal(world, basic.World);
+        Assert.Equal(projection, basic.Projection);
+        basic.EnableDefaultLighting();
+        basic.DirectionalLight0.Direction = Vector3.Down;
+        Assert.True(basic.LightingEnabled);
+        Assert.Equal(Vector3.Down, basic.DirectionalLight0.Direction);
         using var alphaTest = new AlphaTestEffect(device);
         using var dualTexture = new DualTextureEffect(device);
         using var environmentMap = new EnvironmentMapEffect(device);

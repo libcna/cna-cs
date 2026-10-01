@@ -502,6 +502,16 @@ public class Game : IDisposable
         return ticks;
     }
 
+    /// <summary>
+    /// XNA's loading threads: a call another thread makes on this game's handles runs on the game
+    /// thread at the start of its next update or draw instead of being refused
+    /// (<c>cna_game_set_foreign_thread_calls_ext</c>, CNA C ABI 0.39.0). Whole operations already go
+    /// there through <see cref="GameThread"/>; this covers the rest -- an effect's matrices, its
+    /// lights and parameters. CNA's own API keeps the native default; the XNA facade turns it on.
+    /// </summary>
+    internal void ServeForeignThreadCalls() =>
+        ThrowIfDrivingFailed(Native.cna_game_set_foreign_thread_calls_ext(_nativeHandle, 1), "cna_game_set_foreign_thread_calls_ext");
+
     private void Invoke(VoidCall call, string context)
     {
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();

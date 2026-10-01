@@ -19,6 +19,8 @@ public class Game : IDisposable
         PhoneTitle.Active = PhoneTitle.IsOffAPhone(GraphicsDeviceManager.ReadRuntimeProfileLine(GetType().Assembly));
         Services = new GameServiceContainer();
         _backend = new BackendGame(this);
+        // XNA let a game load on a thread of its own; its calls run on the game thread (CSX-101).
+        _backend.ServeForeignThreadCalls();
         _content = new Content.ContentManager(_backend.Content, Services);
 
         _backend.Activated += (_, args) => OnActivated(this, args);

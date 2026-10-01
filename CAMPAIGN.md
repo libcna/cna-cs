@@ -118,6 +118,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-097 | `Microsoft.Phone.Shell.PhoneApplicationService` in CNA.PhoneCompat: Launching after LoadContent, Closing at exit | done |
 | CSX-098 | A Windows Phone title off a phone gets the mouse as a finger, as in the emulator | done |
 | CSX-100 | A game's own worker thread loads content, creates resources and moves their data, as XNA allowed | done |
+| CSX-101 | ABI 0.39.0: the rest of a loading thread's calls run on the game thread (CNA CBIND-141) | done |
 
 ### P9 -- portability
 
@@ -127,6 +128,25 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-101: the rest of a loading thread, through CNA
+
+CSX-100 moved whole operations to the game thread; resonance-game's loading thread then read
+`GraphicsDevice.Viewport`, and after that sets effect matrices and lights -- a long tail of
+hundreds of routes. CNA CBIND-141 (C ABI 0.39.0, `0a57ccad2`) adds
+`cna_game_set_foreign_thread_calls_ext`: a call that a handle refused only because another thread
+created it is queued and run on the game thread inside its next Update/Draw callback scope. The
+XNA facade turns it on for every game; CNA.Framework's own API keeps the native default. Device
+queries (`Viewport`, `PresentationParameters`, `Adapter`, `DisplayMode`, ...) still take one managed
+hop each, because the device CNA lends lasts one callback scope and resolving it and reading through
+it must not be two queued calls. Admission as for 0.38.0: baselinediff 0.38.0 -> 0.39.0 1412
+consumed, 0 absent/changed, 1 added, 0 breaking; abi-verify 1413/1413 prototypes, 1137 values, 23
+callbacks, 604 constants, 0 mismatches; fixtures 2 accepted / 10 rejected (`retired-0.38.0`,
+`unreviewed-0.40.0`). `CompatWorkerThreadTests` now also reads the viewport and presentation
+parameters and sets matrices, default lighting and a light from the worker. Framework 644,
+XnaCompat 285, Integration 224, GamerServices 24. Found on the way and fixed in their own commits:
+CSX-098 had moved neither the import tripwire nor the ABI fixture inventory. resonance-game's
+loading thread now runs to its first shader, which CNA's MojoShader path refuses (next).
 
 ### 2026-10-01 -- CSX-100: loading on a worker thread
 

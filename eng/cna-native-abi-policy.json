@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": "cna-cs-native-abi/1",
-  "consumerAbi": "0.38.0",
+  "consumerAbi": "0.39.0",
   "versionSemantics": {
     "major": "For ABI 1.x and later, a change permits breaks only at a new major. ABI 0 is experimental and does not provide this guarantee between minors.",
     "minorBefore1": "A reviewed ABI generation that may be additive or incompatible; never accepted as a same-major range.",
@@ -25,10 +25,10 @@
   },
   "acceptedVersions": [
     {
-      "libraryAbi": "0.38.0",
+      "libraryAbi": "0.39.0",
       "classification": "exact",
       "accepted": true,
-      "evidence": "Consumer baseline at CNA next f445fef8c (0.38.0, CBIND-134: cna_game_run_frame_ext, the run a host drives one frame at a time, which Game.Run needs in a browser). tools/coverage/baselinediff.py 0.37.0 (e9dd5d879) -> 0.38.0 (f445fef8c): 1410 consumed exports, 0 absent, 0 changed prototype; 3207 -> 3208 exports, 1 added, 0 removed; 0 struct, scalar, integer-constant or string-constant differences; 0 breaking differences. No consumed route's header documentation changed."
+      "evidence": "Consumer baseline at CNA next 0a57ccad2 (0.39.0, CBIND-141: cna_game_set_foreign_thread_calls_ext, another thread's calls on the game thread's handles run on the game thread, which XNA's loading threads need). tools/coverage/baselinediff.py 0.38.0 (f445fef8c) -> 0.39.0 (0a57ccad2): 1412 consumed exports, 0 absent, 0 changed prototype; 3208 -> 3209 exports, 1 added, 0 removed; 0 struct, scalar, integer-constant or string-constant differences; 0 breaking differences. No consumed route's header documentation changed."
     }
   ],
   "retiredVersions": [
@@ -76,16 +76,21 @@
       "libraryAbi": "0.37.0",
       "retiredBecause": "Superseded by 0.38.0. The binding now imports cna_game_run_frame_ext, which no 0.37.0 library exports; everything else this consumer imports is unchanged between them. The retired-0.37.0 fixture exports every imported route and is refused on the version rule alone.",
       "previousClassification": "exact"
+    },
+    {
+      "libraryAbi": "0.38.0",
+      "retiredBecause": "Superseded by 0.39.0. The binding now imports cna_game_set_foreign_thread_calls_ext, which no 0.38.0 library exports; everything else this consumer imports is unchanged between them. The retired-0.38.0 fixture exports every imported route and is refused on the version rule alone.",
+      "previousClassification": "exact"
     }
   ],
   "default": "reject",
   "fixtures": [
     {
-      "name": "exact-0.38.0",
+      "name": "exact-0.39.0",
       "expected": "accept"
     },
     {
-      "name": "exact-0.38.0-extra-symbol",
+      "name": "exact-0.39.0-extra-symbol",
       "expected": "accept"
     },
     {
@@ -97,11 +102,11 @@
       "expected": "reject"
     },
     {
-      "name": "retired-0.37.0",
+      "name": "retired-0.38.0",
       "expected": "reject"
     },
     {
-      "name": "unreviewed-0.39.0",
+      "name": "unreviewed-0.40.0",
       "expected": "reject"
     },
     {
@@ -117,7 +122,7 @@
       "expected": "reject"
     },
     {
-      "name": "structurally-incompatible-0.38.0",
+      "name": "structurally-incompatible-0.39.0",
       "expected": "reject"
     },
     {

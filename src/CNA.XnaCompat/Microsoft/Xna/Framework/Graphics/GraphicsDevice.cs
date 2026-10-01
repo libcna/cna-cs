@@ -178,19 +178,26 @@ public class GraphicsDevice : IDisposable
 
     public Viewport Viewport
     {
-        get => Viewport.FromNative(_framework.Viewport);
+        get => Query(static device => Viewport.FromNative(device._framework.Viewport));
         set => _framework.Viewport = value.ToNative();
     }
 
-    public GraphicsProfile GraphicsProfile => (GraphicsProfile)_framework.GraphicsProfile;
+    public GraphicsProfile GraphicsProfile => Query(static device => (GraphicsProfile)device._framework.GraphicsProfile);
 
     public bool IsDisposed => _disposed || _framework.IsDisposed;
+
+    /// <summary>A device query from another thread -- XNA's loading threads read the viewport and
+    /// the presentation parameters -- runs on the game thread as one call: the device CNA lends
+    /// lasts one callback scope, so resolving it and reading through it cannot be two queued calls
+    /// that a frame boundary might fall between (CSX-101).</summary>
+    private T Query<T>(Func<GraphicsDevice, T> read) =>
+        CNA.GameThread.IsCurrent ? read(this) : CNA.GameThread.Invoke(read, this);
 
     /// <summary>Overrides one field of the active blend state, so -- as in XNA -- assigning that
     /// same <see cref="BlendState"/> object again applies it again instead of being skipped.</summary>
     public int MultiSampleMask
     {
-        get => _framework.MultiSampleMask;
+        get => Query(static device => device._framework.MultiSampleMask);
         set
         {
             _framework.MultiSampleMask = value;
@@ -201,7 +208,7 @@ public class GraphicsDevice : IDisposable
     /// <summary>The depth-stencil counterpart of <see cref="MultiSampleMask"/>.</summary>
     public int ReferenceStencil
     {
-        get => _framework.ReferenceStencil;
+        get => Query(static device => device._framework.ReferenceStencil);
         set
         {
             _framework.ReferenceStencil = value;
@@ -441,14 +448,14 @@ public class GraphicsDevice : IDisposable
         return converted;
     }
 
-    public GraphicsAdapter Adapter => GraphicsAdapter.FromFramework(_framework.Adapter);
+    public GraphicsAdapter Adapter => Query(static device => GraphicsAdapter.FromFramework(device._framework.Adapter));
 
     public PresentationParameters PresentationParameters
     {
-        get => new(_framework.PresentationParameters);
+        get => Query(static device => new PresentationParameters(device._framework.PresentationParameters));
     }
 
-    public DisplayMode DisplayMode => DisplayMode.FromFramework(_framework.DisplayMode);
+    public DisplayMode DisplayMode => Query(static device => DisplayMode.FromFramework(device._framework.DisplayMode));
 
     public BlendState BlendState
     {
@@ -538,14 +545,14 @@ public class GraphicsDevice : IDisposable
     /// <summary>Re-typed because <c>Rectangle</c> is a separate struct per namespace.</summary>
     public Rectangle ScissorRectangle
     {
-        get => _framework.ScissorRectangle.ToCompat();
+        get => Query(static device => device._framework.ScissorRectangle.ToCompat());
         set => _framework.ScissorRectangle = value.ToFramework();
     }
 
     /// <summary>Re-typed: <c>Color</c> is a separate struct per namespace.</summary>
     public Color BlendFactor
     {
-        get => _framework.BlendFactor.ToCompat();
+        get => Query(static device => device._framework.BlendFactor.ToCompat());
         set
         {
             _framework.BlendFactor = value.ToFramework();
@@ -589,7 +596,7 @@ public class GraphicsDevice : IDisposable
     }
 
     /// <summary>Re-typed: <c>GraphicsDeviceStatus</c> is a separate enum per namespace.</summary>
-    public GraphicsDeviceStatus GraphicsDeviceStatus => (GraphicsDeviceStatus)(int)_framework.GraphicsDeviceStatus;
+    public GraphicsDeviceStatus GraphicsDeviceStatus => Query(static device => (GraphicsDeviceStatus)(int)device._framework.GraphicsDeviceStatus);
 
     /// <summary>Re-typed: takes this namespace's own <see cref="PresentationParameters"/>.</summary>
     public void Reset(PresentationParameters presentationParameters)

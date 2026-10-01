@@ -12,14 +12,14 @@ permissions:
 env:
   DOTNET_NOLOGO: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  # The CNA generation this binding is written against: ABI 0.38.0 on the `next` branch, at the
-  # commit that adds the host-driven run (CBIND-134); it also carries CBIND-128..133.
+  # The CNA generation this binding is written against: ABI 0.39.0 on the `next` branch, at the
+  # commit that adds the foreign-thread calls (CBIND-141); it also carries CBIND-128..140.
   # Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails the ABI gates
   # by design -- which is the gates working, and not something to fix by tracking the branch.
-  CNA_UPSTREAM_COMMIT: f445fef8c0aa6ae8cdf8efb7cad469c94d0b8667
-  # The generation the reviewed matrix accepted immediately before this one (0.37.0). The upstream
+  CNA_UPSTREAM_COMMIT: 0a57ccad207cfda9d260ccca7a10f7a2c00e27d1
+  # The generation the reviewed matrix accepted immediately before this one (0.38.0). The upstream
   # diff gate measures forward from here, which is what the ABI policy asks for.
-  CNA_PREVIOUS_ACCEPTED_COMMIT: e9dd5d87910fb5a6e4efdda6318083b6749676b1
+  CNA_PREVIOUS_ACCEPTED_COMMIT: f445fef8c0aa6ae8cdf8efb7cad469c94d0b8667
   CNA_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_number }}
 
 jobs:

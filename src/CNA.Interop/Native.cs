@@ -100,6 +100,12 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_run_frame_ext(CnaHandle game, out byte running);
 
+    /// <summary>Matches <c>cna_game_set_foreign_thread_calls_ext</c> (ABI 0.39.0): a call another
+    /// thread makes on the game thread's handles runs on the game thread instead of being refused,
+    /// which XNA's loading threads need.</summary>
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_game_set_foreign_thread_calls_ext(CnaHandle game, byte enabled);
+
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_request_exit(CnaHandle game);
 
