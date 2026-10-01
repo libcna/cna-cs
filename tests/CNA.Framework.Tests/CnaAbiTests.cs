@@ -154,4 +154,28 @@ public class CnaAbiTests
         (int major, int minor, int patch) = CnaAbi.Decode(version);
         return $"{major}.{minor}.{patch}";
     }
+
+    /// <summary>
+    /// No import takes a function-pointer parameter. Mono's WebAssembly interpreter builds its
+    /// native-call trampolines from each parameter's C shape and has none for a function-pointer
+    /// type, so such a call aborts the browser runtime -- which is what creating a
+    /// <c>GraphicsDeviceManager</c> did. Callbacks cross as <see cref="nint"/>; their shape is
+    /// checked by the ABI verifier's callback pairing.
+    /// </summary>
+    [Fact]
+    public void Imports_TakeNoFunctionPointerParameter()
+    {
+        const BindingFlags all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
+        string[] offenders = typeof(CnaHandle).Assembly.GetTypes()
+            .SelectMany(type => type.GetMethods(all | BindingFlags.DeclaredOnly))
+            .Where(method => method.Attributes.HasFlag(MethodAttributes.PinvokeImpl))
+            .Where(method => method.GetParameters().Any(parameter => parameter.ParameterType.IsFunctionPointer))
+            .Select(method => method.Name)
+            .ToArray();
+
+        Assert.NotEmpty(typeof(CnaHandle).Assembly.GetTypes()
+            .SelectMany(type => type.GetMethods(all | BindingFlags.DeclaredOnly))
+            .Where(method => method.Attributes.HasFlag(MethodAttributes.PinvokeImpl)));
+        Assert.Empty(offenders);
+    }
 }

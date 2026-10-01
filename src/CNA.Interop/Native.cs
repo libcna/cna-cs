@@ -978,11 +978,15 @@ internal static partial class Native
     /// with it, so the registration's lifetime is the manager's -- which means the context must
     /// outlive the manager, not merely the call.
     /// </summary>
+    /// <remarks><paramref name="callback"/> is a
+    /// <c>delegate* unmanaged[Cdecl]&lt;nint, CnaStringView, nint*, CnaResult&gt;</c> passed as
+    /// <see cref="nint"/>: Mono's WebAssembly interpreter has no trampoline for a function-pointer
+    /// parameter type and aborts the call, so no import here takes one.</remarks>
     [LibraryImport(LibraryName)]
-    internal static unsafe partial CnaResult cna_content_manager_register_cnj_loader_ext(
+    internal static partial CnaResult cna_content_manager_register_cnj_loader_ext(
         CnaHandle contentManager,
         CnaStringView typeName,
-        delegate* unmanaged[Cdecl]<nint, CnaStringView, nint*, CnaResult> callback,
+        nint callback,
         nint context);
 
     [LibraryImport(LibraryName)]
@@ -2113,10 +2117,14 @@ internal static partial class Native
     /// The callback returns <c>void</c> deliberately: a handler that cannot decide what to change
     /// changes nothing, and there is no failure device preparation could act on.
     /// </summary>
+    /// <remarks><paramref name="callback"/> is a
+    /// <c>delegate* unmanaged[Cdecl]&lt;CnaGraphicsDeviceInformation*, nint, void&gt;</c> passed as
+    /// <see cref="nint"/>, for the reason <see cref="cna_content_manager_register_cnj_loader_ext"/>
+    /// gives.</remarks>
     [LibraryImport(LibraryName)]
-    internal static unsafe partial CnaResult cna_graphics_device_manager_subscribe_preparing_device_settings_ext(
+    internal static partial CnaResult cna_graphics_device_manager_subscribe_preparing_device_settings_ext(
         CnaHandle manager,
-        delegate* unmanaged[Cdecl]<CnaGraphicsDeviceInformation*, nint, void> callback,
+        nint callback,
         nint context,
         out CnaHandle registration);
 

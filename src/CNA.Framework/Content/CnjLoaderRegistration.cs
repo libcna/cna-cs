@@ -78,7 +78,10 @@ public sealed class CnjLoaderRegistration
             CnaResult result = CnaStringMarshal.WithStringView(
                 typeName,
                 view => Native.cna_content_manager_register_cnj_loader_ext(
-                    new CnaHandle(contentManagerHandle), view, &OnLoad, GCHandle.ToIntPtr(root)));
+                    new CnaHandle(contentManagerHandle),
+                    view,
+                    (nint)(delegate* unmanaged[Cdecl]<nint, CnaStringView, nint*, CnaResult>)&OnLoad,
+                    GCHandle.ToIntPtr(root)));
 
             CnaException.ThrowIfFailed(result, nameof(Register));
             return registration;

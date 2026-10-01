@@ -82,7 +82,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-060 | Experiment: .NET 8 wasm + `wasm-tools` workload + static CNA (`cna_c_api_wasm`) via `NativeFileReference`/`__Internal` vs installed emsdk | todo |
+| CSX-060 | Experiment: .NET wasm + `wasm-tools` workload + static CNA via `NativeFileReference` | done: .NET 11 (emscripten 6.0.3, libc++ 21) links CNA's WebGL2 archives; a C# XNA game draws in headless Chromium. .NET 10/8 pin emscripten 3.1.56/3.1.34, whose libc++ 17 has no `std::jthread` |
 | CSX-061 | Frame-stepped game loop on browser event loop | todo |
 | CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | todo |
 | CSX-063 | Browser sample corpus | todo |
@@ -113,6 +113,41 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-060: a C# XNA game draws in a browser
+
+A browser app links its native code into `dotnet.native.wasm` with the Emscripten its `wasm-tools`
+workload pins, so the toolchain is .NET's, not CNA's. .NET 8 pins Emscripten 3.1.34 and .NET 10
+3.1.56; both ship libc++ 17, which has no `std::jthread` (CNA's Net and GamerServices workers).
+.NET 11 (RC1, go-live; GA next month) pins 6.0.3 with libc++ 21 and compiles CNA unmodified, so the
+browser host targets `net11.0` while the binding stays `net8.0`. Toolchain: user-local SDK in
+`~/deps/dotnet11` plus `dotnet workload install wasm-tools`.
+
+CNA: `cmake-build-webgl2` configured with the workload's `emcmake` (WEBGL2, SDL3, compiled
+effects; its own `CNA_SDL_PREBUILT_ROOT`). Building it found CNA CBIND-133 (`e77ae09ed`):
+`GraphicsResource.hpp` held a `unique_ptr` to a forward-declared lease, which libc++ rejects.
+`generate_static_archive.py` partial-links with the host `ld`, which cannot read wasm objects, so
+the probe links the 39 archives of `cna_c_api_wasm`'s closure directly (wasm-ld is order-blind).
+
+The probe (`build-consumer/browser-probe`, gitignored): `Microsoft.NET.Sdk.WebAssembly`,
+`WasmBuildNative`, `WasmEnableExceptionHandling=false` (CNA's Emscripten exception ABI is the
+JS-lowered `-fexceptions`), `EmccInitialHeapSize` 64 MB (CNA's static data is 37 MB),
+`NativeFileReference` `cna-native.a` (the name the `DllImport` resolves to) plus the closure, a
+`[JSExport]` frame pumped by `requestAnimationFrame`. Three binding defects stood between it and a
+frame: the resolver threw for want of a library file (it now defers on the browser, and the module
+initializer admits the linked library's ABI by the same policy); handles narrowed to 32 bits
+(CSX-085); and two imports took a `delegate* unmanaged` parameter, for which Mono's wasm
+interpreter has no trampoline -- `GraphicsDeviceManager`'s constructor aborted the runtime. Those
+now take `nint`, abi-verify pairs their C callback types, and `Imports_TakeNoFunctionPointerParameter`
+fails if one returns (checked by reintroducing one).
+
+Result in headless Chromium 1234 (SwiftShader WebGL2): `EasyGLRenderer initialized with ... WebGL
+2.0`, ABI 0x2500 admitted, `LoadContent` at 800x480, 121 frames at 60 Hz, CornflowerBlue clear and a
+SpriteBatch quad where the game puts it. Chromium only gets WebGL with `DISPLAY` unset.
+
+Not yet: `Game.Run` in a browser (CSX-061; frame stepping skips `BeginRun`/`EndRun`/`Exiting`, so
+native needs a host-driven run route); packaging the archive and host glue; a real sample, input,
+audio, content and reload in Chrome (CSX-062).
 
 ### 2026-10-01 -- CSX-085: handles are 64-bit everywhere
 

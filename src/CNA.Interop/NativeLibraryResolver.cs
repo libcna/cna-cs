@@ -40,7 +40,35 @@ public static class NativeLibraryResolver
 #pragma warning disable CA2255
     [ModuleInitializer]
 #pragma warning restore CA2255
-    internal static void Initialize() => Register();
+    internal static void Initialize()
+    {
+        Register();
+        if (OperatingSystem.IsBrowser())
+        {
+            AdmitStaticallyLinkedLibrary();
+        }
+    }
+
+    /// <summary>
+    /// The browser's admission. There CNA is linked into the WebAssembly module rather than loaded
+    /// from a file, so <see cref="Resolve"/> never runs its checks and a symbol missing from the
+    /// archive fails the link instead; what is left is the version, read from the library that was
+    /// linked and judged by the same policy as a loaded one.
+    /// </summary>
+    private static void AdmitStaticallyLinkedLibrary()
+    {
+        const string path = "(linked into the WebAssembly module)";
+        const string source = "static linking";
+        uint abi = Native.cna_get_abi_version();
+        _detectedAbiVersion = abi;
+        if (!CnaNativeAbiPolicy.TryGetProfile(abi, out _))
+        {
+            throw IncompatibleAbi(path, source, abi);
+        }
+
+        Volatile.Write(ref _loadedLibraryPath, path);
+        Volatile.Write(ref _resolutionSource, source);
+    }
 
     /// <summary>Registers the assembly-local resolver exactly once.</summary>
     public static void Register()
@@ -66,7 +94,9 @@ public static class NativeLibraryResolver
     {
         _ = assembly;
         _ = searchPath;
-        if (!string.Equals(libraryName, "cna-native", StringComparison.Ordinal))
+        // In a browser CNA is linked statically into the WebAssembly module, and the runtime binds
+        // these imports through its own P/Invoke table; there is no library file to select.
+        if (!string.Equals(libraryName, "cna-native", StringComparison.Ordinal) || OperatingSystem.IsBrowser())
         {
             return nint.Zero;
         }

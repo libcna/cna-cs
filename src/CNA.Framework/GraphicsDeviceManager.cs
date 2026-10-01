@@ -332,7 +332,10 @@ public class GraphicsDeviceManager : IGraphicsDeviceService, IGraphicsDeviceMana
         _preparingSelf = GCHandle.Alloc(this);
 
         CnaResult result = Native.cna_graphics_device_manager_subscribe_preparing_device_settings_ext(
-            NativeHandle, &OnPreparingDeviceSettings, GCHandle.ToIntPtr(_preparingSelf), out _preparingRegistration);
+            NativeHandle,
+            (nint)(delegate* unmanaged[Cdecl]<CnaGraphicsDeviceInformation*, nint, void>)&OnPreparingDeviceSettings,
+            GCHandle.ToIntPtr(_preparingSelf),
+            out _preparingRegistration);
 
         if (result.IsFailure())
         {

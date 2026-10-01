@@ -102,6 +102,7 @@ static partial class InteropPrototypes
         ["cna_effect_parameter_set_values#2"] = "const void*",   // const, which C# cannot express on a pointer
         ["cna_effect_pass_copy_name#1"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_effect_technique_copy_name#1"] = "char*",   // text buffer: C char, which C# has no type for
+        ["cna_content_manager_register_cnj_loader_ext#2"] = "CNA_Result (*)(void*, CNA_StringView, void**)",   // callback, declared nint: Mono's wasm interpreter cannot call an import with a function-pointer parameter
         ["cna_error_copy_last_message#0"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_error_copy_last_exception_type_ext#0"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_error_copy_last_exception_param_name_ext#0"] = "char*",   // text buffer: C char, which C# has no type for
@@ -116,6 +117,7 @@ static partial class InteropPrototypes
         ["cna_graphics_adapter_copy_device_name#2"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_graphics_device_copy_renderer_name#1"] = "char*",   // text buffer: C char, which C# has no type for
         ["cna_graphics_device_manager_subscribe#2"] = "void (*)(void*)",   // callback
+        ["cna_graphics_device_manager_subscribe_preparing_device_settings_ext#1"] = "void (*)(CNA_GraphicsDeviceInformation*, void*)",   // callback, declared nint (see cna_content_manager_register_cnj_loader_ext)
         ["cna_graphics_device_reset_with_parameters#2"] = "const uint32_t*",   // const, which C# cannot express on a pointer
         ["cna_graphics_device_set_render_targets#1"] = "const CNA_RenderTargetBinding*",   // const, which C# cannot express on a pointer
         ["cna_graphics_device_set_vertex_buffers#1"] = "const CNA_VertexBufferBinding*",   // const, which C# cannot express on a pointer
