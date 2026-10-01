@@ -107,6 +107,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-086 | `Game` lifecycle in XNA's order: `BeginRun` after Initialize/LoadContent, `EndRun` after `Exiting`, `Disposed` raised | done |
 | CSX-087 | Managed content paths resolve against the title directory, as XNA's `ContentManager.OpenStream` does through `TitleContainer`, not the working directory | done for the managed loaders; CNA's native `ContentManager` still resolves a relative root against the working directory (open) |
 | CSX-088 | Components initialized, content included, inside `base.Initialize()` in XNA's order, once | done |
+| CSX-089 | A `Model` whose tag is of the game's own type loads through the game's reader | done |
 
 ### P9 -- portability
 
@@ -116,6 +117,21 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-01 -- CSX-089: a Model tagged with the game's own type
+
+Found with cna-cs-samples HeightmapCollision (CSSAMPLE-049): `terrain.xnb` is a `Model` whose `Tag`
+is the game's `HeightMapInfo`, written with the game's `HeightmapCollision.HeightMapInfoReader`. A
+root `Model` is read by CNA.Framework's XNB parser, which knows XNA's readers only, and it refused
+the file. The facade's managed `ContentReader` resolves a game's readers as XNA does and already
+has a `ModelContentReader` (for models nested in managed content). The parser now refuses an
+unknown reader with `XnbUnsupportedReaderException` -- before anything is created -- and the
+facade's root-`Model` path reads exactly that case through the managed reader. A check of the type
+table up front was tried first and was wrong: the parser reads `VertexDeclarationReader` structurally
+inside the vertex buffer, so a table check sent ordinary models down the managed path (two
+integration tests failed on it). `CompatModelTagTests`: a one-bone model whose tag uses a reader the
+test defines loads with that tag; fails without the change. HeightmapCollision is 0 px from its C++
+port.
 
 ### 2026-10-01 -- CSX-088: components initialize inside base.Initialize(), once
 

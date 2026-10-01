@@ -265,7 +265,21 @@ public class ContentManager : IDisposable
 
         if (typeof(T) == typeof(Graphics.Model))
         {
-            Graphics.Model model = LoadCompatModel(backend, assetName);
+            Graphics.Model model;
+            try
+            {
+                model = LoadCompatModel(backend, assetName);
+            }
+            catch (CNA.Content.Xnb.XnbUnsupportedReaderException)
+            {
+                // CNA.Framework's parser knows XNA's readers only, and refuses before it creates
+                // anything. A model naming one of the game's own -- a Tag of the game's type, as
+                // HeightmapCollision's HeightMapInfo -- is read through the managed ContentReader,
+                // which resolves it as XNA does.
+                using Stream stream = OpenStream(assetName);
+                return ManagedXnbContentLoader.Load<T>(this, stream, assetName, recordDisposableObject);
+            }
+
             recordDisposableObject?.Invoke(model.OwnedResources);
             return (T)(object)model;
         }

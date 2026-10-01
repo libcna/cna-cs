@@ -217,9 +217,7 @@ internal sealed class XnbContentReader
             return generic;
         }
 
-        throw new ContentLoadException(
-            $"This .xnb file uses content type reader '{name}', which this project's .xnb reader " +
-            "does not (yet) support.");
+        throw new XnbUnsupportedReaderException(name);
     }
 
     /// <summary>
@@ -608,4 +606,17 @@ internal sealed class XnbContentReader
     /// dropped would draw correctly and then fail wherever the game reached for it.
     /// </summary>
     internal object? ReadTag() => ReadObject();
+}
+
+/// <summary>
+/// The refusal of a type reader this parser does not have -- one of the game's own, as a model
+/// <c>Tag</c> of the game's type. A layer with a managed <c>ContentReader</c>, which resolves the
+/// game's readers as XNA does, reads such a file itself.
+/// </summary>
+internal sealed class XnbUnsupportedReaderException(string readerName)
+    : ContentLoadException(
+        $"This .xnb file uses content type reader '{readerName}', which this project's .xnb reader " +
+        "does not (yet) support.")
+{
+    internal string ReaderName { get; } = readerName;
 }
