@@ -16,9 +16,22 @@
     <!-- CNA's static data alone is about 37 MB. -->
     <EmccInitialHeapSize Condition="'$(EmccInitialHeapSize)' == ''">67108864</EmccInitialHeapSize>
     <EmccExtraLDFlags>$(EmccExtraLDFlags) -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2</EmccExtraLDFlags>
+    <!-- Threaded .NET runs Main on a worker (its deputy thread), where there is no DOM canvas: the
+         WebGL context is created on the page's thread and the GL calls proxied to it, as CNA's own
+         threaded Emscripten builds do. -->
+    <EmccExtraLDFlags Condition="'$(WasmEnableThreads)' == 'true'">$(EmccExtraLDFlags) -sOFFSCREEN_FRAMEBUFFER=1</EmccExtraLDFlags>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <!-- A game that starts threads is built with WasmEnableThreads: it links CNA's shared-memory build
+         (scripts/Build-BrowserNative.sh with its threads option), and its page must be cross-origin
+         isolated. -->
+    <CnaBrowserNativeArchive Condition="'$(CnaBrowserNativeArchive)' == '' and '$(WasmEnableThreads)' == 'true'">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-browser-wasm-threads/cna-native.a</CnaBrowserNativeArchive>
     <CnaBrowserNativeArchive Condition="'$(CnaBrowserNativeArchive)' == ''">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-browser-wasm/cna-native.a</CnaBrowserNativeArchive>
   </PropertyGroup>
+
+  <!-- Tells CNA.NET's browser loop that C# runs on a worker in this bundle (see BrowserGameLoop). -->
+  <ItemGroup Condition="'$(WasmEnableThreads)' == 'true'">
+    <RuntimeHostConfigurationOption Include="CNA.Browser.Threads" Value="true" />
+  </ItemGroup>
 
   <!-- XNA StorageDevice's backing store in a browser: CNA mounts IDBFS at /cna-storage before Main
        from a pre-js staged beside the archive; without it every OpenContainer refuses with

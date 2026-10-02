@@ -28,8 +28,13 @@ const server = createServer(async (request, response) => {
     try {
         const file = join(root, path === '/' ? '/index.html' : path);
         const body = await readFile(file);
+        // Cross-origin isolation: a multithreaded .NET bundle needs SharedArrayBuffer, which a
+        // browser grants only to an isolated page. Everything here is same-origin, so the headers
+        // cost a single-threaded bundle nothing.
         response.writeHead(200, { 'Content-Type': MIME[extname(file)] ?? 'application/octet-stream',
-                                  'Cache-Control': 'no-store' });
+                                  'Cache-Control': 'no-store',
+                                  'Cross-Origin-Opener-Policy': 'same-origin',
+                                  'Cross-Origin-Embedder-Policy': 'require-corp' });
         response.end(body);
     } catch {
         response.writeHead(404);
