@@ -56,7 +56,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-030 | Template builds/runs against migrated binding; fresh `dotnet new` generation verified (dev + package) without hidden absolute paths | done: template ae6b906, cna-cs packaging (installed native dir); dev + package acceptance pass |
-| CSX-031 | Platform layout decision (desktop/browser/android projects) | todo |
+| CSX-031 | Platform layout decision (desktop/browser/android projects) | done: one game source set, one project per platform head -- the desktop project plus opt-in `Platforms/Browser` (Microsoft.NET.Sdk.WebAssembly, `eng/browser/CNA.Browser.targets`) and `Platforms/Android` (`eng/android/CNA.Android.targets`); the template ships them (development consumers), and the samples' generators produce the same shape from a desktop project |
 
 ### P5 -- XNA surface expansion
 
@@ -136,6 +136,19 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-031: the template in a browser and on Android
+
+cna-cs-template `2a76388`: `Platforms/Browser` and `Platforms/Android` compile the template's own
+`.cs` files and `Content/`. To serve a hand-written project rather than only the generated ones,
+`CNA.Browser.targets` (`3c8e556`) now references CNA.BrowserCompat as a project, supplies the page
+and start-up script when a project has none, and stages a game's Content (`CnaGameContentDirectory`)
+under the project's own wwwroot: a file linked in from elsewhere conflicts with itself in .NET 11's
+ComputeWasmVfs. Evidence: the repository's heads and a `dotnet new cna-game` game's heads both run --
+the cube with its logo in headless Chromium and on the emulator (Content extracted); the generated
+desktop project still builds; `verify-template.sh` passes in both modes; package acceptance passes
+on CNA `ffb82bc0d` (three packages, 60/600 frames, no native environment); a Package-mode game is
+generated without `Platforms/`.
 
 ### 2026-10-02 -- Browser and Android corpora on CNA ffb82bc0d
 
