@@ -18,6 +18,9 @@
     <EmccExtraLDFlags>$(EmccExtraLDFlags) -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2</EmccExtraLDFlags>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     <CnaBrowserNativeArchive Condition="'$(CnaBrowserNativeArchive)' == ''">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-browser-wasm/cna-native.a</CnaBrowserNativeArchive>
+    <!-- The .NET APIs the browser runtime leaves unimplemented (System.IO.IsolatedStorage), from
+         CNA.BrowserCompat's Release build. -->
+    <CnaBrowserCompatAssembly Condition="'$(CnaBrowserCompatAssembly)' == ''">$(MSBuildThisFileDirectory)../../src/CNA.BrowserCompat/bin/Release/net8.0/CNA.BrowserCompat.dll</CnaBrowserCompatAssembly>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,11 +30,16 @@
          trimming off altogether leaves .NET 11's relinked runtime out of step with its CoreLib.)
          A game whose content names its own readers roots its own assembly the same way. -->
     <TrimmerRootAssembly Include="CNA.Interop;CNA.Framework;CNA.XnaCompat" />
+    <Reference Include="CNA.BrowserCompat" HintPath="$(CnaBrowserCompatAssembly)" />
     <StaticWebAssetFingerprintPattern Include="CnaBrowserScripts" Pattern="*.js" Expression="#[.{fingerprint}]!" />
   </ItemGroup>
 
   <Target Name="CnaBrowserRequireNativeArchive" BeforeTargets="Build">
     <Error Condition="!Exists('$(CnaBrowserNativeArchive)')"
            Text="No CNA browser archive at $(CnaBrowserNativeArchive). Build it with scripts/Build-BrowserNative.sh." />
+    <Error Condition="!Exists('$(CnaBrowserCompatAssembly)')"
+           Text="No CNA.BrowserCompat at $(CnaBrowserCompatAssembly). Build src/CNA.BrowserCompat in Release." />
   </Target>
+  <!-- A game's System.IO.IsolatedStorage binds to CNA.BrowserCompat, not to the runtime's stub. -->
+  <Import Project="$(MSBuildThisFileDirectory)../../src/CNA.BrowserCompat/build/CNA.BrowserCompat.targets" />
 </Project>

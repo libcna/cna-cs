@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>
+      The .NET APIs XNA 4.0 game source uses that .NET's browser runtime does not implement:
+      System.IO.IsolatedStorage, which the browser runtime pack ships as a PlatformNotSupported stub
+      and Windows Phone games save through. A browser build references this assembly in place of the
+      framework's (eng/browser/CNA.Browser.targets); it is never referenced on a platform whose
+      runtime implements the API, where its types would collide with the framework's.
+    </Description>
+    <IsPackable Condition="'$(CnaPackageAcceptance)' != 'true'">false</IsPackable>
+  </PropertyGroup>
+
+  <!-- Its own System.IO.IsolatedStorage types stand where the framework's would: the framework
+       reference is dropped here exactly as a browser build drops it. -->
+  <Import Project="build/CNA.BrowserCompat.targets" />
+
+</Project>

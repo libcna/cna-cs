@@ -126,6 +126,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-105 | A song whose `.wma` was converted plays from the `.ogg`/`.oga`/`.qoa` beside it, as in CNA and FNA | done |
 | CSX-106 | `ActivatedEventArgs.IsApplicationInstancePreserved` (Windows Phone 7.5): a desktop process always is | done |
 | CSX-107 | A stock effect in `SpriteBatch.Begin` places the sprites in 3D, as XNA does (CNA Task 1120) | done |
+| CSX-108 | `System.IO.IsolatedStorage` in a browser build (CNA.BrowserCompat), where .NET ships only a PlatformNotSupported stub | done |
 
 ### P9 -- portability
 
@@ -135,6 +136,22 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-108: isolated storage in a browser
+
+The browser corpus (84 rows, CNA `1c2923efd`, CNA.NET `11e5bd3`+) passed 77; UISample, MarbleMaze,
+HoneycombRush and NinjAcademy failed `IsolatedStorage_PlatformNotSupported`: .NET 11's browser-wasm
+runtime pack ships System.IO.IsolatedStorage as a stub that throws from every store, and Windows Phone
+games save through it (UISample's ScreenManager reads its saved screens at startup). New assembly
+`src/CNA.BrowserCompat` implements System.IO.IsolatedStorage (IsolatedStorageFile, IsolatedStorageFileStream,
+IsolatedStorageException, IsolatedStorageScope, IsolatedStorage) over the browser's file system, under its
+own name; `eng/browser/CNA.Browser.targets` drops the framework's reference and references it
+(`build/CNA.BrowserCompat.targets`), so nothing takes the framework's identity. Its behaviour is .NET's as
+measured on the desktop (a probe: unlimited quota, no used size, a silent delete of a missing file,
+IsolatedStorageException wrapping the IO failure, a closed store refused) except that a backslash
+separates directories, as on Windows Phone (.NET on Unix makes `Dir\a.dat` one file name).
+`tests/CNA.BrowserCompat.Tests` 5/5. The four rows then pass in headless Chromium: three
+pixel-identical to their desktop captures, NinjAcademy 45 px. The store lasts as long as the page.
 
 ### 2026-10-02 -- CSX-107: sprites in a 3D world
 

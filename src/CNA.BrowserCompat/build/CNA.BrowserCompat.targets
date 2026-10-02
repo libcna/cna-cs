@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Compiles against CNA.BrowserCompat's System.IO.IsolatedStorage instead of the framework's. The
+    browser runtime pack's System.IO.IsolatedStorage throws PlatformNotSupportedException from every
+    store, so a browser build drops that reference and binds the same type names to this assembly,
+    which keeps its own name: nothing here takes the framework's identity.
+  -->
+  <Target Name="CnaUseBrowserIsolatedStorage" AfterTargets="ResolveTargetingPackAssets">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'System.IO.IsolatedStorage'" />
+    </ItemGroup>
+  </Target>
+</Project>
