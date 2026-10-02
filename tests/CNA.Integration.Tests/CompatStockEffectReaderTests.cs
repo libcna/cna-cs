@@ -147,7 +147,12 @@ public class CompatStockEffectReaderTests(ITestOutputHelper output)
     private sealed class MemoryContentManager(IServiceProvider services, byte[] asset)
         : ContentManager(services)
     {
-        protected override Stream OpenStream(string assetName) => new MemoryStream(asset, writable: false);
+        // Only its own asset, as a manager reading files would: XNA reads an asset's external
+        // references through OpenStream too, and one answering every name with the referring asset
+        // would load it inside itself without end.
+        protected override Stream OpenStream(string assetName) => assetName == "effects"
+            ? new MemoryStream(asset, writable: false)
+            : throw new ContentLoadException($"No asset '{assetName}'.");
     }
 
     private static byte[] BuildAsset()

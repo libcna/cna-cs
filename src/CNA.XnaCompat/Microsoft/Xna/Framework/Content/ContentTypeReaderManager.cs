@@ -213,11 +213,13 @@ internal static class BuiltinReaders
             "Microsoft.Xna.Framework.Content.CurveReader" => new CurveReader(),
             "Microsoft.Xna.Framework.Content.ExternalReferenceReader" => new ExternalReferenceReader(),
 
-            // The texture readers, for a texture nested inside another asset. A top-level
-            // Load<Texture2D> never reaches here -- it goes to CNA's own content loader.
+            // The texture and font readers, for one nested inside another asset. A top-level
+            // Load<Texture2D> or Load<SpriteFont> goes to CNA's own content loader, unless the
+            // manager opens its own streams (CSX-129).
             "Microsoft.Xna.Framework.Content.Texture2DReader" => new Texture2DContentReader(),
             "Microsoft.Xna.Framework.Content.TextureCubeReader" => new TextureCubeContentReader(),
             "Microsoft.Xna.Framework.Content.Texture3DReader" => new Texture3DContentReader(),
+            "Microsoft.Xna.Framework.Content.SpriteFontReader" => new SpriteFontContentReader(),
 
             // A compiled song or video is a path plus the metadata the pipeline measured, not the
             // media itself. SongReader is the root reader of every Load<Song>, so a game with
@@ -227,7 +229,7 @@ internal static class BuiltinReaders
             "Microsoft.Xna.Framework.Content.SoundEffectReader" => new SoundEffectContentReader(),
 
             // The model pipeline, for a model nested inside another asset. A top-level
-            // Load<Model> goes to CNA's own loader and never reaches these.
+            // Load<Model> goes to CNA's own loader, unless the manager opens its own streams.
             "Microsoft.Xna.Framework.Content.ModelReader" => new ModelContentReader(),
             "Microsoft.Xna.Framework.Content.VertexDeclarationReader" => new VertexDeclarationContentReader(),
             "Microsoft.Xna.Framework.Content.VertexBufferReader" => new VertexBufferContentReader(),

@@ -206,7 +206,7 @@ public class ContentManager : IDisposable
 
         try
         {
-            bool managedXnb = !IsNativeBackedBuiltIn(typeof(T));
+            bool managedXnb = !IsNativeBackedBuiltIn(typeof(T)) || OpensItsOwnStreams;
             T result = LoadCore<T>(assetName, recordDisposableObject);
             if (!managedXnb && result is IDisposable disposable)
             {
@@ -231,7 +231,12 @@ public class ContentManager : IDisposable
         // native-backed built-ins below, but a user-defined T has no CNA type identity to dispatch
         // on. Read those XNB files here through the real public ContentReader/ContentTypeReader
         // contract instead of requiring a non-XNA LoadForeign<T>() escape hatch.
-        if (!IsNativeBackedBuiltIn(typeof(T)))
+        //
+        // XNA reads every asset through OpenStream, so a manager overriding it -- ResourceContentManager,
+        // or a game's own reading packed or encrypted content -- decides where a font or a texture
+        // comes from as well (CSX-129). CNA's loader takes a path, so those read through the
+        // managed readers too.
+        if (!IsNativeBackedBuiltIn(typeof(T)) || OpensItsOwnStreams)
         {
             using Stream stream = OpenStream(assetName);
             return ManagedXnbContentLoader.Load<T>(this, stream, assetName, recordDisposableObject);
@@ -326,6 +331,9 @@ public class ContentManager : IDisposable
             "Microsoft.Xna.Framework.Content.EffectReader" => IsNativeBackedBuiltIn(typeof(Graphics.Effect)),
             _ => false,
         };
+
+    private bool OpensItsOwnStreams =>
+        ((Func<string, Stream>)OpenStream).Method.DeclaringType != typeof(ContentManager);
 
     private static bool IsNativeBackedBuiltIn(Type type) =>
         type == typeof(Graphics.Texture2D) ||
