@@ -8,7 +8,8 @@
 // CNA_ACTIONS scripts input, separated by ';', each at a time in ms after the page loads:
 //   move:X,Y@T   press@T   release@T   key:NAME@T   down:NAME@T   up:NAME@T   reload@T   shot:LABEL@T
 // (press/release are the left mouse button)
-// A shot writes <screenshot>-LABEL.png beside the main screenshot.
+// A shot writes <screenshot>-LABEL.png beside the main screenshot. eval:EXPRESSION@T logs the
+// expression's value in the page as JSON (canvas sizes, say).
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
@@ -42,7 +43,10 @@ const require = createRequire(import.meta.url);
 const { chromium } = require(join(process.env.NODE_PATH, 'playwright'));
 const browser = await chromium.launch({ headless: true,
     args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--no-sandbox'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+// Large enough for every back buffer the corpus asks for: a WebGL canvas larger than the viewport
+// was captured as tiles of an 800x600 image when its game had asked for fullscreen (Resonance at
+// 1920x1080), although the canvas itself held the right picture.
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 // The canvas, not the viewport: it is the game's back buffer, the same size a desktop capture has.
 const capture = path => page.locator('#canvas').screenshot({ path });
 let shotTaken = false;
@@ -79,6 +83,7 @@ try {
             else if (verb === 'up') await page.keyboard.up(argument);
             else if (verb === 'reload') await page.reload();
             else if (verb === 'shot') await capture(shot.replace(/\.png$/, `-${argument}.png`));
+            else if (verb === 'eval') console.log(`[eval] ${JSON.stringify(await page.evaluate(argument))}`);
         }
     })();
     const limit = marker ? 120000 : seconds * 1000;
