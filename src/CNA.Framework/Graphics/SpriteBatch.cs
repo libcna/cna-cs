@@ -459,6 +459,7 @@ public class SpriteBatch : IDisposable
         // does not compute and buffer a quad per glyph. See plan.md A1c.
         if (!_nativeTextRefused && spriteFont.NativeFontHandleValue is var fontHandle and not 0)
         {
+            spriteFont.ThrowIfAnyCharacterMissing(text);
             _referencedFonts.Add(spriteFont);
             _pendingText.Add(new PendingText(
                 _commandBuffer.Count, spriteFont, fontHandle, text,

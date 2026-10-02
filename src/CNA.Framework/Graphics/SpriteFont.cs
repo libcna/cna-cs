@@ -213,9 +213,37 @@ public class SpriteFont
             return fallbackIndex;
         }
 
-        throw new ArgumentException(
-            $"Character '{c}' is not in this SpriteFont, and no {nameof(DefaultCharacter)} is set.");
+        throw CharacterNotInFont(c);
     }
+
+    /// <summary>XNA draws a string glyph by glyph inside <c>DrawString</c>, so a character the font
+    /// cannot draw throws there, before anything of the string is batched. The native text route
+    /// resolves glyphs later, at <c>End</c>; this is the check that keeps the throw where XNA had
+    /// it.</summary>
+    internal void ThrowIfAnyCharacterMissing(string text)
+    {
+        if (DefaultCharacter is char fallback && _characterIndex.ContainsKey(fallback))
+        {
+            return;
+        }
+
+        foreach (char c in text)
+        {
+            if (c != '\r' && c != '\n' && !_characterIndex.ContainsKey(c))
+            {
+                throw CharacterNotInFont(c);
+            }
+        }
+    }
+
+    // XNA's own exception: FrameworkResources.CharacterNotInFont, parameter "character".
+    private static ArgumentException CharacterNotInFont(char c) => new(
+        string.Format(
+            System.Globalization.CultureInfo.CurrentCulture,
+            "The character '{0}' (0x{1:x4}) is not available in this SpriteFont. If applicable, adjust the font's start and end CharacterRegions to include this character.",
+            c,
+            (int)c),
+        "character");
 
     /// <summary>
     /// The single walk both <see cref="MeasureString(string)"/> and

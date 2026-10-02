@@ -170,6 +170,55 @@ public class NativeDrawStringMeasurementTests(ITestOutputHelper output, NativeGa
         });
     }
 
+    /// <summary>
+    /// CSX-127: XNA lays a string out glyph by glyph inside <c>DrawString</c>, so a character its font
+    /// lacks throws there -- ArgumentException, parameter "character" -- and the batch goes on. The
+    /// native route resolves glyphs at <c>End</c>, where the same string used to fail the whole
+    /// batch: Project Mercury's frame-rate line printed .NET's "∞" and ended the game from <c>End</c>.
+    /// </summary>
+    [NativeFact]
+    public void NativeDrawString_RefusesACharacterItsFontLacks_AtTheCall()
+    {
+        fixture.InsideAFrame(game =>
+        {
+            GraphicsDevice device = game.GraphicsDevice;
+            if (!CnaNativeProbe.RequireRenderTargetReadback(device, output))
+            {
+                return;
+            }
+
+            using var atlas = new Texture2D(device, 2, 1);
+            atlas.SetData([new Color(255, 0, 0, 255), new Color(0, 255, 0, 255)]);
+            var font = new SpriteFont(
+                atlas,
+                glyphBounds: [new Rectangle(0, 0, 1, 1), new Rectangle(1, 0, 1, 1)],
+                cropping: [new Rectangle(0, 0, 1, 1), new Rectangle(0, 0, 1, 1)],
+                characters: ['A', 'B'],
+                lineSpacing: 2,
+                spacing: 0f,
+                kerning: [new Vector3(0f, 1f, 0f), new Vector3(0f, 1f, 0f)],
+                defaultCharacter: null);
+            Assert.NotEqual(0UL, font.NativeFontHandleValue);
+
+            ArgumentException? refused = null;
+            Color[] pixels = RenderWith(device, batch =>
+            {
+                refused = Assert.Throws<ArgumentException>(() => batch.DrawString(
+                    font, "A\u221eB", new Vector2(8f, 20f), new Color(255, 255, 255, 255),
+                    0f, Vector2.Zero, new Vector2(Scale, Scale), SpriteEffects.None, 0f));
+                batch.DrawString(
+                    font, "AB", new Vector2(8f, 8f), new Color(255, 255, 255, 255),
+                    0f, Vector2.Zero, new Vector2(Scale, Scale), SpriteEffects.None, 0f);
+            });
+
+            Assert.Equal("character", refused!.ParamName);
+            Assert.Contains("'\u221e' (0x221e) is not available in this SpriteFont", refused.Message);
+            AssertGlyphsLandedWhereExpected(pixels);
+            Color unrefused = pixels[(21 * Size) + 9];
+            Assert.True(unrefused.R < 128 && unrefused.G < 128, "the refused string drew its 'A'.");
+        });
+    }
+
     private static double TimeFrames(
         GraphicsDevice device, RenderTarget2D target, int frames, Action<SpriteBatch> draw)
     {

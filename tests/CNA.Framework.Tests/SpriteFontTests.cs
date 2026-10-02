@@ -96,7 +96,13 @@ public class SpriteFontTests
     {
         SpriteFont font = CreateTestFont();
 
-        Assert.Throws<ArgumentException>(() => font.MeasureString("Z"));
+        ArgumentException refused = Assert.Throws<ArgumentException>(() => font.MeasureString("Z"));
+
+        // XNA's own exception (FrameworkResources.CharacterNotInFont), CSX-127.
+        Assert.Equal("character", refused.ParamName);
+        Assert.StartsWith(
+            "The character 'Z' (0x005a) is not available in this SpriteFont. If applicable, adjust the font's start and end CharacterRegions to include this character.",
+            refused.Message);
     }
 
     [Fact]
