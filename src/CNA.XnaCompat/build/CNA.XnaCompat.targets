@@ -231,13 +231,18 @@ public sealed class CnaRetargetXnaReferences : Task
     its source is not touched and nothing outside its assembly changes. A project that wants .NET's
     behaviour sets <CnaNetFx40ListForEach>false</CnaNetFx40ListForEach>. The package carries the
     generator under analyzers/; a project that references CNA.XnaCompat as a project gets it here.
+
+    Likewise Assembly.LoadFile (NetFxAssemblyLoadFileGenerator): .NET Framework loaded a file once,
+    so LoadFile of the game's own library is the assembly its references bind to; .NET loads a
+    second copy. <CnaNetFxAssemblyLoadFile>false</CnaNetFxAssemblyLoadFile> turns it off.
   -->
-  <PropertyGroup Condition="'$(CnaNetFx40ListForEach)' != 'false'">
+  <PropertyGroup Condition="'$(CnaNetFx40ListForEach)' != 'false' or '$(CnaNetFxAssemblyLoadFile)' != 'false'">
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);CNA.XnaCompat.NetFx40</InterceptorsPreviewNamespaces>
     <InterceptorsNamespaces>$(InterceptorsNamespaces);CNA.XnaCompat.NetFx40</InterceptorsNamespaces>
   </PropertyGroup>
   <ItemGroup>
     <CompilerVisibleProperty Include="CnaNetFx40ListForEach" />
+    <CompilerVisibleProperty Include="CnaNetFxAssemblyLoadFile" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../CNA.XnaCompat.Generators/CNA.XnaCompat.Generators.csproj"
                       Condition="Exists('$(MSBuildThisFileDirectory)../../CNA.XnaCompat.Generators/CNA.XnaCompat.Generators.csproj')"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
