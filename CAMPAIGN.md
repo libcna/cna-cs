@@ -77,7 +77,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
-| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 22 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone and Bubble Bound play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video) |
+| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 24 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) and Jomata's Mahjong (which found CNA CBIND-147/148) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video) |
 
 ### P7 -- browser
 
@@ -140,6 +140,34 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- Spineless and Mahjong; CNA CBIND-146/147/148
+
+cna-cs-samples `games/Spineless` (gnomicstudios/GGJ13 @ `ae0934b`) and `games/Mahjong` (Jomata/Mahjong
+@ `bc81398`), both unchanged. Spineless's `ContentManager.Load<SoundEffect>` threw
+`ArgumentOutOfRangeException("sampleRate")`: XNA's ADPCM processor wrote three of its sounds above
+48000 Hz (up to 48084), XNA's reader hands that format to XAudio2 (1000-200000 Hz), and CNA's reader
+had inherited `FromBuffer`'s 8000-48000 check -- CNA CBIND-146 (`51d9c84cc`), reader test fails
+without it. Mahjong's menu came up on its second entry with no input; a probe game logging
+`Mouse.GetState` and `Window.ClientBounds` showed two divergences, both settled by XNA's IL:
+`ClientBounds` is `PointToScreen(Point.Empty)` plus `ClientSize`, and CNA zeroed the position
+(CBIND-147, `e6f9d5384`); `Mouse.GetState` is `GetCursorPos` made client-relative, and CNA's SDL3
+backend reported SDL's last pointer-event position, clamped at the window edge (CBIND-148,
+`6e273cd89`, now SDL's global state minus the window position on X11/Windows/macOS, as FNA). Each
+has a native test that fails without it. The menu's own selection still follows the pointer the
+game saw before the capture harness moved its window -- the game hit-tests the previous frame's
+position, which XNA would report the same. The harness's move could be undone by the game's
+resize (cna-cs-samples `eb005a4` repeats it until it holds). Mahjong then deals on a click on Play.
+
+Results on CNA `6e273cd89`: CNA.NET integration 231/231, Framework 645/645, XnaCompat 290/290;
+CNA runtime 206 + 2 platform-refusal skips, platform/mouse/window/`^CApi` groups 417 + 476
+(`EasyGL_RealWindowResize` was a stale 2026-09-30 binary; rebuilt, passes). Under `-j8`, three
+`^CApi` runs each lost one to three different timing-sensitive smokes that pass alone
+(`RuntimeComponentsSmoke` stage 8 asserts one update per fixed-timestep frame).
+
+Desktop gallery requalification on CNA `22b30b30e` / CNA.NET `1326161` (`/rv/tmp/cs-samples/
+requal-20261002b`, clean rerun `-c`): 84 rows, statuses as the baseline, every static row
+pixel-identical to the baseline C# capture.
 
 ### 2026-10-02 -- CSX-112: no device yet is null, not an exception
 
