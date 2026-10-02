@@ -18,9 +18,6 @@
     <EmccExtraLDFlags>$(EmccExtraLDFlags) -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2</EmccExtraLDFlags>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     <CnaBrowserNativeArchive Condition="'$(CnaBrowserNativeArchive)' == ''">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-browser-wasm/cna-native.a</CnaBrowserNativeArchive>
-    <!-- The .NET APIs the browser runtime leaves unimplemented (System.IO.IsolatedStorage), from
-         CNA.BrowserCompat's Release build. -->
-    <CnaBrowserCompatAssembly Condition="'$(CnaBrowserCompatAssembly)' == ''">$(MSBuildThisFileDirectory)../../src/CNA.BrowserCompat/bin/Release/net8.0/CNA.BrowserCompat.dll</CnaBrowserCompatAssembly>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,16 +27,41 @@
          trimming off altogether leaves .NET 11's relinked runtime out of step with its CoreLib.)
          A game whose content names its own readers roots its own assembly the same way. -->
     <TrimmerRootAssembly Include="CNA.Interop;CNA.Framework;CNA.XnaCompat" />
-    <Reference Include="CNA.BrowserCompat" HintPath="$(CnaBrowserCompatAssembly)" />
+    <!-- The .NET APIs the browser runtime leaves unimplemented (System.IO.IsolatedStorage). -->
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../src/CNA.BrowserCompat/CNA.BrowserCompat.csproj" />
     <StaticWebAssetFingerprintPattern Include="CnaBrowserScripts" Pattern="*.js" Expression="#[.{fingerprint}]!" />
   </ItemGroup>
 
   <Target Name="CnaBrowserRequireNativeArchive" BeforeTargets="Build">
     <Error Condition="!Exists('$(CnaBrowserNativeArchive)')"
            Text="No CNA browser archive at $(CnaBrowserNativeArchive). Build it with scripts/Build-BrowserNative.sh." />
-    <Error Condition="!Exists('$(CnaBrowserCompatAssembly)')"
-           Text="No CNA.BrowserCompat at $(CnaBrowserCompatAssembly). Build src/CNA.BrowserCompat in Release." />
   </Target>
+  <!-- The page and its start-up script, for a project that brings none of its own. -->
+  <ItemGroup Condition="!Exists('$(MSBuildProjectDirectory)/wwwroot/index.html')">
+    <Content Include="$(MSBuildThisFileDirectory)wwwroot/*" Link="wwwroot/%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!--
+    A game's Content in the page's file system, at Content/... beside the game: set
+    CnaGameContentDirectory to the game's Content folder. The SDK puts only static web assets there,
+    and a file linked in from outside the project conflicts with itself in .NET 11's ComputeWasmVfs
+    (it removes the original by its relative item spec, the asset's identity being the full path), so
+    the files are copied under the project's own wwwroot/Content as the build starts.
+  -->
+  <Target Name="CnaStageGameContent" BeforeTargets="ResolveProjectStaticWebAssets"
+          Condition="'$(CnaGameContentDirectory)' != ''">
+    <ItemGroup>
+      <_CnaGameContent Include="$(CnaGameContentDirectory)/**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_CnaGameContent)" SkipUnchangedFiles="true"
+          DestinationFiles="@(_CnaGameContent->'$(MSBuildProjectDirectory)/wwwroot/Content/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <ItemGroup>
+      <Content Remove="wwwroot/Content/**" />
+      <Content Include="@(_CnaGameContent->'wwwroot/Content/%(RecursiveDir)%(Filename)%(Extension)')" />
+      <WasmFilesToIncludeInFileSystem Include="@(_CnaGameContent->'Content/%(RecursiveDir)%(Filename)%(Extension)')" />
+    </ItemGroup>
+  </Target>
+
   <!-- A game's System.IO.IsolatedStorage binds to CNA.BrowserCompat, not to the runtime's stub. -->
   <Import Project="$(MSBuildThisFileDirectory)../../src/CNA.BrowserCompat/build/CNA.BrowserCompat.targets" />
 </Project>
