@@ -77,7 +77,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
-| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 25 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) Jomata's Mahjong (which found CNA CBIND-147/148) and the XNA 4.0 Racing Game Kit (menu and a race; CSX-113, CSX-114, CNA FX-142) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video) |
+| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 25 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) Jomata's Mahjong (which found CNA CBIND-147/148) and the XNA 4.0 Racing Game Kit (menu and a race; CSX-113, CSX-114, CNA FX-142) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video). The nine added 2026-10-02 (CNA `3c72165e6`): browser 7 of 9 (Enceladus and the Racing Game Kit start threads), Android 9 of 9 -- 21 of 25 in a browser, 24 of 25 on the emulator |
 
 ### P7 -- browser
 
@@ -142,6 +142,24 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- the nine newest games in a browser and on Android; CNA CBIND-149/150
+
+Browser (headless Chromium, CNA `3c72165e6` archive): Missile Command, __Defense, Super Mario World,
+the Zelda clone, Spineless reach their titles at once. Mahjong's generated project lacked its
+ConfigurationManager package and the Racing Game Kit's its CNA.WindowsFormsCompat: the browser and
+Android generators now carry `<CnaWindowsFormsCompat>` and the game project's `PackageReference`
+items (cna-cs-samples `4994508`); Mahjong then shows its menu. Bubble Bound stopped on "Cannot present
+while render targets are bound" after "native GL errors were pending before MRT setup: InvalidEnum".
+Two WebGL 2 gaps, each reproduced and fixed in CNA EasyGL with a test: `glEnable(GL_SAMPLE_MASK)`
+issued because a `glSampleMaski` entry point resolved (CBIND-149 `d459f42aa`, reproduced natively
+with `MESA_GLES_VERSION_OVERRIDE=3.0`; `EasyGL_Es30SampleMask`), and `GL_TEXTURE_SWIZZLE_*` on a
+Single/Vector2 render target, which Chromium named as "texParameter: invalid parameter name"
+(CBIND-150 `3c72165e6`; `EasyGLProfile.OnlyDesktopGlAndGles3SwizzleTextures`). Bubble Bound then
+reaches its title. Escape From Enceladus and the Racing Game Kit start threads (`new Thread(...).Start()`)
+and stop with `PlatformNotSupportedException` -- single-threaded WebAssembly, like HeliumBiker.
+Android (x86_64 emulator, CNA `3c72165e6`): all nine run, including both threaded games. A headless
+emulator left from 2026-10-01 was found using ~12 cores and stopped; the runs now end by stopping it.
 
 ### 2026-10-02 -- CNA FX-143: volume samplers on GLSL ES 3
 
