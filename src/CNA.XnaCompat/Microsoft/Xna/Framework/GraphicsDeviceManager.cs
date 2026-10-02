@@ -180,7 +180,14 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
 
     public event EventHandler<EventArgs>? Disposed;
 
-    public void ApplyChanges() => _backend.ApplyChanges();
+    /// <summary>Applies the preferences. XNA's with no device yet creates it (IL: ChangeDevice(false)
+    /// -> CreateDevice), so a game's constructor that calls it can read the device after: Kermit's
+    /// SKraft sizes its menu from <c>GraphicsDevice.Viewport</c> there (CSX-121).</summary>
+    public void ApplyChanges()
+    {
+        _backend.ApplyChanges();
+        Game.Backend.EnsureGraphicsDevice();
+    }
 
     public void ToggleFullScreen()
     {

@@ -12,14 +12,13 @@ permissions:
 env:
   DOTNET_NOLOGO: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  # The CNA generation this binding is written against: ABI 0.41.0 on the `next` branch, at the
-  # commit that runs other threads' queued calls while the game thread waits (CBIND-152); it also
-  # carries CBIND-128..151. Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails
+  # The CNA generation this binding is written against: ABI 0.42.0 on the `next` branch, at the
+  # commit that lends a game's device before its run (CBIND-153); it also carries CBIND-128..152. Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails
   # the ABI gates by design -- which is the gates working, and not something to fix by tracking the branch.
-  CNA_UPSTREAM_COMMIT: c77f983b1ab9afe1786129b10dc0bd4ee6d21e6b
-  # The generation the reviewed matrix accepted immediately before this one (0.40.0). The upstream
+  CNA_UPSTREAM_COMMIT: 938a2206967eec5644ba9d8b327689061d7edbd7
+  # The generation the reviewed matrix accepted immediately before this one (0.41.0). The upstream
   # diff gate measures forward from here, which is what the ABI policy asks for.
-  CNA_PREVIOUS_ACCEPTED_COMMIT: 22b30b30e59726d6f3b777bf1722d14dd94e2093
+  CNA_PREVIOUS_ACCEPTED_COMMIT: c77f983b1ab9afe1786129b10dc0bd4ee6d21e6b
   CNA_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_number }}
 
 jobs:

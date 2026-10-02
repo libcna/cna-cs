@@ -1221,4 +1221,57 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         Assert.Equal(game.ModeInConstructor.Width, game.ModeInUpdate.Width);
         Assert.Equal(game.ModeInConstructor.Height, game.ModeInUpdate.Height);
     }
+
+    /// <summary>
+    /// Kermit/SKraft calls <c>ApplyChanges</c> in its constructor and sizes its menu from
+    /// <c>GraphicsDevice.Viewport</c> there (cna-cs CSX-121). XNA's ApplyChanges with no device
+    /// creates one (IL: ChangeDevice(false) -> CreateDevice); native CNA lends it before the run
+    /// since C ABI 0.42.0. The run then goes on with that device: CNA's game owns one device, where
+    /// XNA's Run replaced the constructor's with a new one.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_ApplyChangesInItsConstructorCreatesTheDeviceItReads()
+    {
+        using var game = new ApplyChangesInConstructorGame();
+        Assert.NotNull(game.DeviceInConstructor);
+        Assert.Same(game.DeviceInConstructor, game.ManagerDeviceInConstructor);
+        Assert.Equal(320, game.ViewportInConstructor.Width);
+        Assert.Equal(240, game.ViewportInConstructor.Height);
+
+        game.RunOneFrame();
+
+        Assert.Same(game.DeviceInConstructor, game.DeviceInUpdate);
+        Assert.Equal(240, game.ViewportInUpdate.Height);
+    }
+
+    private sealed class ApplyChangesInConstructorGame : XnaGame
+    {
+        public ApplyChangesInConstructorGame()
+        {
+            var graphics = new GraphicsDeviceManager(this);
+            graphics.PreferredBackBufferWidth = 320;
+            graphics.PreferredBackBufferHeight = 240;
+            graphics.ApplyChanges();
+            DeviceInConstructor = GraphicsDevice;
+            ManagerDeviceInConstructor = graphics.GraphicsDevice;
+            ViewportInConstructor = GraphicsDevice.Viewport;
+        }
+
+        public GraphicsDevice? DeviceInConstructor { get; }
+
+        public GraphicsDevice? ManagerDeviceInConstructor { get; }
+
+        public Viewport ViewportInConstructor { get; }
+
+        public GraphicsDevice? DeviceInUpdate { get; private set; }
+
+        public Viewport ViewportInUpdate { get; private set; }
+
+        protected override void Update(GameTime gameTime)
+        {
+            DeviceInUpdate = GraphicsDevice;
+            ViewportInUpdate = GraphicsDevice.Viewport;
+            base.Update(gameTime);
+        }
+    }
 }

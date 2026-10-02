@@ -11,15 +11,16 @@ namespace CNA.Interop;
 internal static class CnaNativeAbiPolicy
 {
     internal const string PolicyVersion = "cna-cs-native-abi/1";
-    internal const uint ConsumerVersion = (0u << 16) | (41u << 8) | 0u;
+    internal const uint ConsumerVersion = (0u << 16) | (42u << 8) | 0u;
 
     /// <summary>
     /// The reviewed matrix. It is a point list, never a range: CNA documents that an experimental
     /// 0.x minor may be incompatible, so being newer than an accepted entry proves nothing.
     ///
     /// Every entry it has ever held was retired when a newer reviewed generation replaced it; the
-    /// last was 0.40.0, retired when this consumer moved to 0.41.0 to run other threads' queued calls
-    /// while the game thread waits for them (before it, 0.39.0 gave way to 0.40.0's adapter routes). A point matrix that kept every generation it had ever accepted would stop being a
+    /// last was 0.41.0, retired when this consumer moved to 0.42.0 to read a game's device in its
+    /// constructor once XNA's ApplyChanges has created it (before it, 0.40.0 gave way to 0.41.0's
+    /// queued calls). A point matrix that kept every generation it had ever accepted would stop being a
     /// review and start being a range. See docs/native-abi-compatibility.md for the retired matrix
     /// and the evidence behind each entry.
     /// </summary>

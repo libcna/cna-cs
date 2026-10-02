@@ -764,8 +764,8 @@ public class Game : IDisposable
     /// CNA.Interop type (see plan.md invariant #5).
     ///
     /// Real <c>cna_game_get_graphics_device</c> only succeeds from inside an active lifecycle
-    /// callback, and the handle it returns is documented as valid only until that callback
-    /// returns -- confirmed directly against <c>LifecycleSmoke.c</c>, not just inferred from the
+    /// callback (or, since C ABI 0.42.0, before the run begins), and the handle it returns is
+    /// documented as valid only until that callback returns -- confirmed directly against <c>LifecycleSmoke.c</c>, not just inferred from the
     /// header doc comment: calling it outside a callback returns <c>CNA_RESULT_INVALID_STATE</c>,
     /// and a handle captured during one callback becomes <c>CNA_RESULT_INVALID_HANDLE</c> once a
     /// later, separate callback invocation begins. This method is still safe to call here, since
@@ -815,7 +815,10 @@ public class Game : IDisposable
     /// <summary>Same rationale as <see cref="CreateGraphicsDevice"/>, for <see cref="Content"/>.</summary>
     protected virtual ContentManager CreateContentManager() => new(GetNativeContentHandle());
 
-    private void EnsureGraphicsDevice()
+    /// <summary>Wraps the game's device, once. The run does so as it initializes; CNA.XnaCompat's
+    /// <c>GraphicsDeviceManager.ApplyChanges</c> does so before the run, where XNA's created the
+    /// device a game's constructor then reads -- native lends it then too (C ABI 0.42.0).</summary>
+    internal void EnsureGraphicsDevice()
     {
         if (_graphicsDeviceInitialized)
         {
