@@ -128,6 +128,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-107 | A stock effect in `SpriteBatch.Begin` places the sprites in 3D, as XNA does (CNA Task 1120) | done |
 | CSX-108 | `System.IO.IsolatedStorage` in a browser build (CNA.BrowserCompat), where .NET ships only a PlatformNotSupported stub | done |
 | CSX-109 | A storage device several worker threads share works from each of them, as XNA's did | done |
+| CSX-110 | `List<T>.ForEach` as the .NET Framework 4.0 that XNA games target ran it, by compile-time interception | done |
 
 ### P9 -- portability
 
@@ -137,6 +138,23 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-110: List<T>.ForEach as .NET Framework 4.0 ran it
+
+escape-from-enceladus died the moment its first room started: `InvalidOperationException: Collection
+was modified` from `_activeEvents.ForEach(e => e.Update(gameTime))`, whose events activate the next
+event. .NET Framework 4.0's `List<T>.ForEach` re-reads the count at each step and never throws; 4.5
+added the throw only for applications that target 4.5 or later (`BinaryCompatibility`), and .NET Core
+throws for every one. XNA 4.0 games target 4.0, so the game ran on Windows. New
+`src/CNA.XnaCompat.Generators` (netstandard2.0, Roslyn 4.11) intercepts each of the game's own
+`List<T>.ForEach` calls (C# interceptors, namespace `CNA.XnaCompat.NetFx40`, generic so calls inside
+generic code are covered) with the 4.0 loop -- `ArgumentNullException("match")` included. Nothing
+outside the game's assembly changes and its source is not touched. CNA.XnaCompat.targets enables it
+(both compilers' properties) and references the generator for project consumers; the CNA.XnaCompat
+package carries it under `analyzers/dotnet/cs`. `<CnaNetFx40ListForEach>false</CnaNetFx40ListForEach>`
+opts out. `NetFx40ListForEachTests` (append, remove, null, generic method) pass, and fail with the
+opt-out; XnaCompat 290/290; package acceptance passed on CNA `46231e857` (and a package consumer printed
+`1,2,3,4`); the .NET 11 SDK's compiler runs it too. The game then plays its first room.
 
 ### 2026-10-02 -- CSX-109: one storage device, several worker threads
 

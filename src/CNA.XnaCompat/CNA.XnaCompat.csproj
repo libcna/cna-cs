@@ -20,4 +20,13 @@
     <None Include="build/CNA.XnaCompat.targets" Pack="true" PackagePath="build/;buildTransitive/" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- The generators a game's compilation runs (see build/CNA.XnaCompat.targets); this assembly
+         does not run them, it carries them. -->
+    <ProjectReference Include="..\CNA.XnaCompat.Generators\CNA.XnaCompat.Generators.csproj"
+                      ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\CNA.XnaCompat.Generators\bin\$(Configuration)\netstandard2.0\CNA.XnaCompat.Generators.dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
 </Project>

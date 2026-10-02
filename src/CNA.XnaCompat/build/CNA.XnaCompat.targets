@@ -224,4 +224,23 @@ public sealed class CnaRetargetXnaReferences : Task
     </ItemGroup>
   </Target>
 
+  <!--
+    XNA 4.0 games target .NET Framework 4.0, whose List<T>.ForEach walks the list's count afresh at
+    each step and never throws when the action changes the list; .NET Core throws. The game's own
+    calls are intercepted at compile time (CNA.XnaCompat.Generators, NetFx40ListForEachGenerator):
+    its source is not touched and nothing outside its assembly changes. A project that wants .NET's
+    behaviour sets <CnaNetFx40ListForEach>false</CnaNetFx40ListForEach>. The package carries the
+    generator under analyzers/; a project that references CNA.XnaCompat as a project gets it here.
+  -->
+  <PropertyGroup Condition="'$(CnaNetFx40ListForEach)' != 'false'">
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);CNA.XnaCompat.NetFx40</InterceptorsPreviewNamespaces>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);CNA.XnaCompat.NetFx40</InterceptorsNamespaces>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CnaNetFx40ListForEach" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)../../CNA.XnaCompat.Generators/CNA.XnaCompat.Generators.csproj"
+                      Condition="Exists('$(MSBuildThisFileDirectory)../../CNA.XnaCompat.Generators/CNA.XnaCompat.Generators.csproj')"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
 </Project>

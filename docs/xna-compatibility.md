@@ -129,6 +129,11 @@ What stops them is Windows Forms, Silverlight, a library their repositories do n
 change in .NET itself: since .NET 7, `BitConverter.GetBytes(sbyte)` is ambiguous, because `sbyte`
 converts implicitly to `Half` (`CAMPAIGN.md`, 2026-10-02).
 
+The runtime differs from the one XNA games were written for in one way CNA.NET repairs at compile
+time: .NET Framework 4.0's `List<T>.ForEach` keeps walking when the action changes the list, where
+.NET throws. CNA.XnaCompat.targets intercepts a game's own `ForEach` calls with the 4.0 loop
+(CSX-110; `<CnaNetFx40ListForEach>false</CnaNetFx40ListForEach>` opts out).
+
 ## Behavior and content
 
 The managed suites currently pass 560 framework and 199 compat tests. The selected ABI 0.8.0 CNA

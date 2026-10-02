@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Compile-time help for unchanged XNA 4.0 source on .NET 8+: Roslyn source generators that the
+    game's own compilation runs (CNA.XnaCompat.targets adds them; the package ships them under
+    analyzers/). A generator must load into every compiler that builds a game, hence netstandard2.0
+    and the oldest Roslyn a supported SDK carries (4.11, .NET SDK 8.0.4xx).
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
