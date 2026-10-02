@@ -77,7 +77,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
-| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 16 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, and Swf2XNA's My Big Head and Playing in Traffic play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Fifteen recorded with the reason outside XNA (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. Browser and Android for these: not yet |
+| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 16 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, and Swf2XNA's My Big Head and Playing in Traffic play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Fifteen recorded with the reason outside XNA (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). Android for these: not yet |
 
 ### P7 -- browser
 
@@ -86,14 +86,14 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-060 | Experiment: .NET wasm + `wasm-tools` workload + static CNA via `NativeFileReference` | done: .NET 11 (emscripten 6.0.3, libc++ 21) links CNA's WebGL2 archives; a C# XNA game draws in headless Chromium. .NET 10/8 pin emscripten 3.1.56/3.1.34, whose libc++ 17 has no `std::jthread` |
 | CSX-061 | Frame-stepped game loop on browser event loop | done: `Game.Run` on the browser runs CNA's host-driven run (ABI 0.38.0) from `requestAnimationFrame`; an unchanged XNA `Main` (`using (game) game.Run();`) runs to `Disposed` in Chromium |
 | CSX-062 | Real Chrome run of an unchanged XNA-style game: rendering, input, lifecycle, reload | done in headless Chromium: AimingSample unchanged, 0 px from its C++ port; keys, mouse, its Escape exit and a reload driven. Desktop Chrome with a GPU not run here |
-| CSX-063 | Browser sample corpus | done: all 30 checked-in rows build and run in headless Chromium (cna-cs-samples `scripts/browser-requalify.sh`); 12 pixel-identical to their desktop capture, the rest differ by animation or seeded randomness |
+| CSX-063 | Browser sample corpus | done: all 84 checked-in rows build and run in headless Chromium (cna-cs-samples `scripts/browser-requalify.sh`, CNA `ffb82bc0d`, 2026-10-02); 77 on the first pass, the other seven after CSX-108 (isolated storage), CNA CBIND-143 (avatar loader thread) and two generator fixes (files copied beside the game, Windows-spelled paths). Most pixel-identical to their desktop capture; the rest differ by animation or seeded randomness |
 
 ### P8 -- Android
 
 | ID | Task | Status |
 | --- | --- | --- |
 | CSX-070 | Toolchain check (`~/Android/Sdk`, NDK, .NET android workload), per-ABI CNA build | done: NDK 29 builds CNA's C API for x86_64 (CBIND-136); `eng/android` runs an unchanged XNA `Main` on SDL's thread; AimingSample draws, takes touch and Back, survives pause/resume and relaunch on the emulator |
-| CSX-071 | Android host + sample, emulator run: lifecycle, graphics recreation, touch, content, audio | done on the emulator: all 34 rows build, run and end on one Back tap (cna-cs-samples `scripts/android-requalify.sh`); pause/resume, relaunch, touch; audio not heard (`-no-audio`), no physical device |
+| CSX-071 | Android host + sample, emulator run: lifecycle, graphics recreation, touch, content, audio | done on the emulator: all 84 rows build, run and draw (cna-cs-samples `scripts/android-requalify.sh`, CNA `ffb82bc0d`, 2026-10-02); 78 end on one Back tap, six do not end on one key on the desktop either (their menus take more); pause/resume, relaunch, touch; audio not heard (`-no-audio`), no physical device |
 
 ### P5b -- behavioural gaps found on the way
 
@@ -136,6 +136,27 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- Browser and Android corpora on CNA ffb82bc0d
+
+Browser (`scripts/browser-requalify.sh`, CNA.NET from `11e5bd3` to `7ae5f08`, headless Chromium,
+SwiftShader WebGL2): 84 rows, two runs of 42 (`/rv/tmp/cs-samples/browser-requal-csx102-{a,b}`), 77
+passed. The seven others, each fixed where it lived and rerun (`browser-requal-csx108`,
+`browser-requal-winpath`): four Windows Phone rows needed isolated storage (CSX-108);
+InverseKinematics's avatar loader started a thread (CNA CBIND-143); Spacewar's settings.xml was not in
+the page's file system and NetRumble's Windows-spelled directory had no link there (cna-cs-samples
+generator). 84/84. A capture artifact was found on the way: a canvas larger than the 1280x800 viewport
+came out tiled once its game asked for fullscreen; the runner's viewport is 1920x1080 (`bb48a05`).
+
+Android (`scripts/android-requalify.sh`, emulator x86_64, CNA C API staged at `ffb82bc0d`): 84 rows,
+77 passed; Spacewar (settings.xml) and NetRumble (entry point in a private nested class) fixed in the
+generator and rerun. All 84 build, run and draw; 78 end on one Back tap, and the six that do not
+(ReachGraphicsDemo, GameStateManagement, ClientServerSample, ShipGame, RolePlayingGame, NetRumble) do
+not end on one key on the desktop either.
+
+The real games in a browser (`scripts/browser-sample.sh games/<Game>`): 14 of 16 reach their title or
+play; HeliumBiker starts a thread and Playing in Traffic plays a video, neither available in this
+browser build.
 
 ### 2026-10-02 -- CSX-108: isolated storage in a browser
 
