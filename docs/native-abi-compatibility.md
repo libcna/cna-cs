@@ -24,14 +24,14 @@ It cannot express CNA's documented experimental-0.x exception by itself.
 
 | CNA.NET consumer | Native library | CNA.NET result | Evidence |
 | --- | --- | --- | --- |
-| 0.42.0 | 0.42.0 | Accept | Consumer baseline at CNA `next` `938a22069`. |
-| 0.42.0 | Any other 0.x | Reject | No audited matrix entry. |
-| 0.42.0 | Any 1.x+ | Reject | Different ABI major. |
+| 0.43.0 | 0.43.0 | Accept | Consumer baseline at CNA `next` `23d7bad1e`. |
+| 0.43.0 | Any other 0.x | Reject | No audited matrix entry. |
+| 0.43.0 | Any 1.x+ | Reject | Different ABI major. |
 
 One accepted entry is not a simplification of the policy; it is what the policy produces when the
-consumer moves. There is no `>= 0.42` rule and there never was a `>= 0.6` one.
+consumer moves. There is no `>= 0.43` rule and there never was a `>= 0.6` one.
 
-`938a22069` is 0.42.0 as CNA first published it, and carries everything this binding needs from
+`23d7bad1e` is 0.43.0 as CNA first published it, and carries everything this binding needs from
 the earlier lines: CBIND-128/129 (component callbacks), CBIND-130 (packet-reader copy), CBIND-131
 (exit-time teardown), CBIND-132 (the canonical exception behind a failure), CBIND-133 (a header
 libc++ and so every Emscripten build can compile), CBIND-134 (the host-driven run), CBIND-136..140
@@ -39,11 +39,12 @@ libc++ and so every Emscripten build can compile), CBIND-134 (the host-driven ru
 CBIND-142..144 (a video frame for SpriteBatch, avatars in a browser, NoSuitableGraphicsDeviceException)
 CBIND-145 (the graphics adapters answer the game's own handle), CBIND-146..151, CBIND-152 (the
 game thread runs other threads' queued calls while it waits for them) and CBIND-153 (a game lends
-its device before its run, as XNA's `ApplyChanges` in a constructor created one).
+its device before its run, as XNA's `ApplyChanges` in a constructor created one) and CBIND-154
+(sound effects play from any thread).
 
 ### Retired entries
 
-0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0, 0.21.0, 0.35.0, 0.36.0, 0.37.0, 0.38.0, 0.39.0, 0.40.0 and 0.41.0 were accepted once. 0.6.0-0.8.0
+0.6.0, 0.7.0, 0.8.0, 0.19.0, 0.20.0, 0.21.0, 0.35.0, 0.36.0, 0.37.0, 0.38.0, 0.39.0, 0.40.0, 0.41.0 and 0.42.0 were accepted once. 0.6.0-0.8.0
 were retired when this binding began importing routes they do not export; 0.19.0, 0.20.0 and 0.21.0
 when the next reviewed generation superseded them; 0.35.0 when this binding began importing 0.36.0's
 `cna_packet_reader_copy_data_ext`, 0.36.0 when it began importing 0.37.0's exception queries,
@@ -51,8 +52,9 @@ when the next reviewed generation superseded them; 0.35.0 when this binding bega
 importing 0.39.0's `cna_game_set_foreign_thread_calls_ext`, 0.39.0 when it began handing the
 game's own handle to the graphics-adapter routes, which 0.39.0 refuses, 0.40.0 when it began
 importing 0.41.0's `cna_game_run_foreign_thread_calls_ext`, and 0.41.0 when it began reading a
-game's device in its constructor once `ApplyChanges` has created it, which 0.41.0 refuses.
-The retirements are enforced: `retired-0.8.0`, `retired-0.21.0` and `retired-0.41.0` are refused.
+game's device in its constructor once `ApplyChanges` has created it, which 0.41.0 refuses, and
+0.42.0 when its game threads' sound effects began playing directly, which 0.42.0 queues.
+The retirements are enforced: `retired-0.8.0`, `retired-0.21.0` and `retired-0.42.0` are refused.
 
 Each retired fixture exports every route this binding imports and passes every runtime shape probe,
 so the version rule alone refuses it. The sharpest was `retired-0.39.0`: a real 0.39.0 library
@@ -61,7 +63,21 @@ written as "whatever exports the names we call" would have taken it and then fai
 query made outside a callback. Package acceptance met exactly that case on
 2026-10-01: an installed 0.36.0 library left in the package's native directory was refused by name.
 
-### What the 0.42.0 admission measured
+### What the 0.43.0 admission measured
+
+0.42.0 (CNA `938a22069`) to 0.43.0 (CNA `23d7bad1e`), 2026-10-03: no route, constant or structure
+changed; `cna_sound_effect_play` and `cna_sound_effect_play_with_settings` answer on any thread.
+
+| Measurement | Result |
+| --- | --- |
+| Consumed entry points | 1416, as 0.42.0 |
+| Consumed entry points absent / changed prototype | 0 / 0 |
+| Upstream exports | 3210 -> 3210; 0 struct, scalar, constant or string differences; the upstream allowlist holds no entries |
+| `tools/abi-verify` | 1137 native and 1137 managed layout/type values, 0 mismatches; 1416 of 1416 prototypes compiled; 23 callbacks; 604 constants |
+| Fixtures | 2 accepted, 10 rejected (`retired-0.42.0` and `unreviewed-0.44.0` on either side) |
+| Native integration (Release, OPENGLES3 with compiled effects) | 237 of 237, GamerServices/Avatar/Net 24 of 24, framework 652 of 652, XnaCompat 304 of 304; package acceptance not rerun |
+
+### What the 0.42.0 admission measured (retired)
 
 0.41.0 (CNA `c77f983b1`) to 0.42.0 (CNA `938a22069`), 2026-10-02: no route, constant or structure
 changed; `cna_game_get_graphics_device` also lends the device before the game's run begins.
@@ -287,16 +303,16 @@ a fresh managed process. The exact matrix is:
 
 | Fixture | Expected | Property proved |
 | --- | --- | --- |
-| `exact-0.42.0` | Accept | Exact expected ABI. |
-| `exact-0.42.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
+| `exact-0.43.0` | Accept | Exact expected ABI. |
+| `exact-0.43.0-extra-symbol` | Accept | Unrelated added exports do not break a consumer. |
 | `retired-0.8.0` | Reject | A generation retired because this consumer outgrew it. |
 | `retired-0.21.0` | Reject | A generation retired because a newer one superseded it -- being previously audited is not admission. It exports every required symbol and passes every shape probe, so the version rule alone refuses it. |
-| `retired-0.41.0` | Reject | The generation this admission retired, one below the accepted entry. |
-| `unreviewed-0.43.0` | Reject | Nor is being newer: the matrix is a point list, not a floor. |
+| `retired-0.42.0` | Reject | The generation this admission retired, one below the accepted entry. |
+| `unreviewed-0.44.0` | Reject | Nor is being newer: the matrix is a point list, not a floor. |
 | `missing-required-symbol` | Reject | Any missing managed import fails at load, not at first use. |
 | `changed-required-signature` | Reject | A testable core signature/out-parameter change fails its canary. |
 | `incompatible-major-1.0.0` | Reject | Major mismatch. |
-| `structurally-incompatible-0.42.0` | Reject | An accepted version cannot override guarded shape evidence. |
+| `structurally-incompatible-0.43.0` | Reject | An accepted version cannot override guarded shape evidence. |
 | `malformed-metadata-0.0.0` | Reject | An incomplete/unrecognized encoded generation. |
 | `unreadable-metadata` | Reject | Missing version export. |
 

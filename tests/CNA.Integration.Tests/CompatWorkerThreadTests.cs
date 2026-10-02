@@ -251,6 +251,71 @@ public class CompatWorkerThreadTests
     }
 
     /// <summary>
+    /// stpettersens/21's dealer shuffles on a thread of its own, which plays the shuffle sound,
+    /// while the game thread spins on <c>IsAlive</c> -- not a wait, so nothing runs that thread's
+    /// queued calls. XNA's <c>SoundEffect.Play</c> answered on any thread; CNA's does since C ABI
+    /// 0.43.0 (cna-cs CSX-124). The spin is bounded here so a regression fails instead of hanging.
+    /// </summary>
+    private sealed class ShufflingGame : XnaGame
+    {
+        private bool _shuffled;
+
+        public ShufflingGame()
+        {
+            _ = new GraphicsDeviceManager(this);
+        }
+
+        public bool WorkerEnded { get; private set; }
+
+        public Exception? WorkerFailure { get; private set; }
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (!_shuffled)
+            {
+                _shuffled = true;
+                using var shuffle = new Microsoft.Xna.Framework.Audio.SoundEffect(
+                    new byte[4410 * 2], 44100, Microsoft.Xna.Framework.Audio.AudioChannels.Mono);
+                var worker = new Thread(() =>
+                {
+                    try
+                    {
+                        shuffle.Play();
+                        shuffle.Play(0.5f, 0.0f, 0.0f);
+                    }
+                    catch (Exception ex)
+                    {
+                        WorkerFailure = ex;
+                    }
+                }) { IsBackground = true };
+                worker.Start();
+                var clock = System.Diagnostics.Stopwatch.StartNew();
+                while (worker.IsAlive && clock.Elapsed < TimeSpan.FromSeconds(10))
+                {
+                }
+
+                WorkerEnded = !worker.IsAlive;
+                Exit();
+            }
+
+            base.Update(gameTime);
+        }
+    }
+
+    [global::CNA.Integration.Tests.NativeFact]
+    public void AWorkerThread_PlaysASound_WhileTheGameThreadSpinsOnIt()
+    {
+        using var game = new ShufflingGame();
+        game.Run();
+
+        Assert.True(game.WorkerEnded, "the worker's Play waited for the spinning game thread");
+        if (game.WorkerFailure is not null)
+        {
+            throw new Xunit.Sdk.XunitException("the worker failed: " + game.WorkerFailure);
+        }
+    }
+
+    /// <summary>
     /// escape-from-enceladus's title screen starts three threads at once, one per save slot; each
     /// selects the shared static StorageDevice under a lock if no thread has yet, then opens a
     /// container on it. Before CNA.NET selected the device on the game thread (CSX-109), the threads
