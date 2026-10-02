@@ -201,7 +201,8 @@ the phone assembly -- and at the boundaries XNA code catches around: `AudioEngin
 `SoundBank` construction (`NoAudioHardwareException`), `SoundEffect.CreateInstance`/`Play` and
 `SoundEffectInstance.Play` (`InstancePlayLimitException`), `Microphone.Start`
 (`NoMicrophoneConnectedException`), `MediaPlayer.Play` (`InvalidOperationException`), and
-`ContentManager.Load` (`ContentLoadException`, as before). Elsewhere a native refusal still
+`ContentManager.Load` (`ContentLoadException`, as before), and the `Game` constructor, which
+creates the device (`NoSuitableGraphicsDeviceException` when it cannot be created). Elsewhere a native refusal still
 surfaces as `CNA.CnaException` (carrying the canonical type), which XNA code catching a specific
 type would miss: the remaining facade calls are converted as they are met (CSX-080).
 

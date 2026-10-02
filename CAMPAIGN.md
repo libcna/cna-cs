@@ -99,7 +99,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | doing: ABI 0.37.0 names the canonical exception (CNA e9dd5d879); GS/Net/Avatar/Guide, PhoneCompat and the audio/media/content boundaries samples catch around re-raise it; other facade calls still leak CnaException |
+| CSX-080 | Facade exception types: map native refusals to the XNA exception the same call throws | doing: ABI 0.37.0 names the canonical exception (CNA e9dd5d879); GS/Net/Avatar/Guide, PhoneCompat, the audio/media/content boundaries samples catch around, and `new Game()` (NoSuitableGraphicsDeviceException, CNA CBIND-144) re-raise it; other facade calls still leak CnaException |
 | CSX-082 | Callback exceptions unwind out of `Run`/`Components.Add` with their own type and stack | done (741e441) |
 | CSX-081 | `GraphicsDeviceManager` default profile from the `Microsoft.Xna.Framework.RuntimeProfile` resource (XNA IL `ReadDefaultGraphicsProfile`), plus MSBuild glue embedding it from `<XnaProfile>` | done; samples' Directory.Build.targets import + per-sample XnaProfile is part of CSX-050 |
 | CSX-083 | Device state cache coherent with what native SpriteBatch applies; BlendFactor/MultiSampleMask/ReferenceStencil dirty the state as XNA's setters do | done |
@@ -136,6 +136,22 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-080: a game with no graphics device, in XNA's exception
+
+Reproduced on a private Xvfb without GLX: an unchanged gallery game (Platformer) died with
+`CNA.CnaException: cna_game_create failed with native result Platform: ... CreateWindow failed: GLX
+is not supported`, and with no display at all with `AcquireSubsystem(Video) failed`. XNA throws
+`NoSuitableGraphicsDeviceException` there -- `GraphicsDeviceManager.CreateDevice` (IL) wraps any
+failure to create the device in it -- and the Racing Game Kit's `Program` catches exactly that to tell
+the player the machine cannot run it. CNA creates the device in `Game`'s constructor, so CNA
+`a71cc2415` (CBIND-144) wraps there, and the XNA `Game` constructor now re-raises the canonical
+exception (`XnaExceptions.Guard`). `CompatGameCreationTests` runs the integration assembly again as a
+child process (`Program.cs`; the test host never calls it) with an unreachable X server and
+compositor, so no window can appear anywhere: `Microsoft.Xna.Framework.Graphics.NoSuitableGraphicsDeviceException`,
+"Unable to create the graphics device. ..."; before the guard `CNA.CnaException`. Integration
+229/229, XnaCompat 286/286. The protected native library CI uses must be at CNA `a71cc2415` or later
+for that test; no ABI change.
 
 ### 2026-10-02 -- CSX-104: the games that cannot run here, compiled
 

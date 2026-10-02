@@ -3,6 +3,8 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Program.cs: a test can run this assembly again as a process of its own. -->
+    <GenerateProgramFile>false</GenerateProgramFile>
     <Description>
       The only tests in this repository that load the real native library. Everything else here is
       managed-only and proves nothing about whether the binding runs.
