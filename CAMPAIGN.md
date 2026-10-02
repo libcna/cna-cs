@@ -143,6 +143,17 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
 
+### 2026-10-02 -- CNA FX-143: volume samplers on GLSL ES 3
+
+The handoff's next step, taken: GLSL ES 3.00 gives `sampler3D` no default precision, so every
+MojoShader GLSL ES 3 shader with a volume sampler failed to compile on OPENGLES3 and WEBGL2 -- any
+HiDef game with a `Texture3D` on GLES or in a browser. CNA `d9d599263` appends a pinned MojoShader
+patch declaring `precision highp sampler3D;`; five failing CNA compiled-effect tests pass
+(`ctest -R EasyGLCompiledEffect` 679 -> 684 of 686). Eight deterministic desktop gallery rows with
+compiled effects are pixel-identical before and after; SpriteEffects' lower-right quadrant moves by at
+most 2/255 per channel. `^CApi` 119/119. Left: vertex-texture LOD bias on GLES 3 (no sampler LOD bias
+there) and `FlippedSourceRetainsFormatAndFullFloatPrecision` aborting.
+
 ### 2026-10-02 -- the Racing Game Kit races; its "lost input" was the harness
 
 The input that seemed not to reach the Racing Game Kit after its full-screen switch was the capture
