@@ -158,6 +158,11 @@ The real games in a browser (`scripts/browser-sample.sh games/<Game>`): 14 of 16
 play; HeliumBiker starts a thread and Playing in Traffic plays a video, neither available in this
 browser build.
 
+Desktop, the same day on the same CNA (`scripts/requalify.sh`, `/rv/tmp/cs-samples/requal-20261002`):
+84/84 build (Debug and Release) and run, and every row's build, run and exit result is the
+2026-10-01 baseline's (`requal-20261001-csx098`): Task 1120, CBIND-142 and CBIND-143 changed no
+gallery row. The six that do not exit are the six above.
+
 ### 2026-10-02 -- CSX-108: isolated storage in a browser
 
 The browser corpus (84 rows, CNA `1c2923efd`, CNA.NET `11e5bd3`+) passed 77; UISample, MarbleMaze,
