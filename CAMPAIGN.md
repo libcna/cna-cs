@@ -146,6 +146,58 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
 
+### 2026-10-02 -- CSX-115/116/117: games that start threads, in a browser; CNA CBIND-151
+
+CNA `cde2251fa`, CNA.NET `e550614`, cna-cs-samples `fe1d8d6`. Five real games start threads, which a
+single-threaded bundle refuses (`PlatformNotSupportedException`): HeliumBiker, Resonance's level
+load, Escape From Enceladus, the Racing Game Kit; Missile Command too. A `WasmEnableThreads` bundle
+(`scripts/browser-sample.sh games/<Game> --threads`, CNA from `Build-BrowserNative.sh --threads`)
+now runs them. What it took, in the order found:
+
+1. CNA CBIND-151, four defects of a game thread that is a worker (.NET's deputy runs `Main`): the
+   shared-memory link's initial memory; a worker's proxied WebGL context presented only by
+   `emscripten_webgl_commit_frame()` (SDL patch 0004 -- the canvas stayed black); the worker's
+   `GLctx` stand-in without `getExtension`; `StorageDevice` reading the IDBFS flag in the worker's
+   realm.
+2. CSX-115: `WebStoragePre.js`, which mounts IDBFS, was never linked into any browser bundle; every
+   `OpenContainer` refused. Found by Enceladus; affects single-threaded bundles as well.
+3. CSX-116, the loop: a JSImport from the deputy runs on the page's thread, which may not call C#
+   back synchronously, so the first threaded loop blocked on the deputy. It drew, but had no keyboard.
+   The page hands SDL's input callbacks to the thread that registered them as queued calls, run when
+   that thread returns to its event loop. Draining them from `SDL_PumpEvents` did nothing: the
+   deputy's whole loop ran inside the proxied call to `Main`, a system-queue task, and Emscripten's
+   recursion guard returns from a nested drain. Frames now come from `emscripten_set_main_loop_arg`
+   on the deputy (an `[UnmanagedCallersOnly]` frame), `Main` returns as in a single-threaded bundle,
+   and the events arrive between frames (a mailbox-check count went from 1 to 1 + one per event).
+4. CSX-116, the pool: the Racing Game Kit hung after frame 1. Pausing every worker through CDP
+   (`Debugger.pause` per auto-attached worker, a relink with `WasmNativeStrip=false`) showed the game
+   thread in `Thread.Start` -> mono `create_thread` -> `sem_wait`, and the page's Worker objects
+   showed the new thread assigned to a worker with `loaded=false`. .NET 11 RC1's `getNewWorker`
+   returns the first unused worker whose `loaded` is set, which nothing sets with this Emscripten,
+   so it falls back to the worker it has just created; a thread given such a worker never runs.
+   Reproduced with no CNA (`build-consumer/browser/ThreadStartProbe`, gitignored: `Main` starts
+   blocking threads one by one): 3 start on the default pool of 7, 12 on 16. Upstream, not fixed here.
+5. CSX-117: XNA games size their threads by `Environment.ProcessorCount` (the browser's
+   `hardwareConcurrency`); Resonance's level builds a BEPUphysics space with two threads per
+   processor (74 threads in its desktop run on 16 cores, 32 of them physics), and hung on 16 or 32
+   workers. The default page preloads `max(16, 3 * processors + 8)`; a worker costs about 5 MB in
+   Chromium (649 MB with 16, 889 MB with 64) and startup a few hundred ms. `DOTNET_PROCESSOR_COUNT`
+   is honoured by this runtime but not used: the game sees the browser's own count.
+
+Results, headless Chromium (SwiftShader): Escape From Enceladus -- title and its three save slots
+from IndexedDB; Missile Command -- Space starts a game; Resonance -- its threaded level load, the
+arena, ArrowUp moves; HeliumBiker -- its CONNECT screen, as on the desktop; the Racing Game Kit --
+its attract mode at about 0.65 fps (each GL call of the worker is a round trip to the page's thread;
+its menus test a press while drawing, and at that rate XNA's fixed-step catch-up runs several updates
+per draw, so they never see one); AimingSample, threaded and single-threaded -- held ArrowRight moves
+the cat, Escape ends the run. The single-threaded browser requalification passes 84/84 in one run
+(`/rv/tmp/cs-samples/browser-requal-20261002-st/`, CNA with CBIND-151's changes; NetRumble, failing
+in the CSX-108 partial run, passes); against the earlier passes only animated rows moved. Framework
+646/646, XnaCompat 297/297, integration 233/233.
+
+Not done: a threaded bundle's WebGL runs proxied (an OffscreenCanvas on the deputy would need .NET to
+hand the canvas to the thread it creates); interactive Chrome with a GPU; browser audio.
+
 ### 2026-10-02 -- CSX-114's border style applied; CNA FX-144; the Windows Forms games re-checked
 
 `Form.FormBorderStyle` now reaches the game window: CNA.Framework's `GameWindow.IsBorderlessEXT` binds
