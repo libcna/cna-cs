@@ -132,7 +132,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-111 | ABI 0.40.0: the graphics adapters answer in a game's constructor (CNA CBIND-145) | done |
 | CSX-112 | `GraphicsDeviceManager.GraphicsDevice` (and `Game.GraphicsDevice` with a device service) is null until the device exists, as in XNA | done |
 | CSX-113 | A content asset's directories resolve ignoring case, as CNA's native loader does (`models\Cube` for `Models/Cube.xnb`) | done (cna-cs `7780921`); found by the Racing Game Kit |
-| CSX-114 | Opt-in `CNA.WindowsFormsCompat`: `Control`/`Form.FromHandle(Window.Handle)` (the game window's form, null otherwise), `Form.Opacity`/`FormBorderStyle` kept but not applied, `MessageBox` to stderr answering with its first button; games opt in with `<CnaWindowsFormsCompat>` | done (cna-cs `ff08b93`); found by the Racing Game Kit |
+| CSX-114 | Opt-in `CNA.WindowsFormsCompat`: `Control`/`Form.FromHandle(Window.Handle)` (the game window's form, null otherwise), `FormBorderStyle` applied through CNA's borderless window route (`137f954`, imports 1413 -> 1415), `Opacity` kept but not applied (no window-opacity service), `MessageBox` to stderr answering with its first button (CNA's native dialog needs a live game, and XNA games show it once theirs failed to start); games opt in with `<CnaWindowsFormsCompat>` | done (cna-cs `ff08b93`, `137f954`); found by the Racing Game Kit |
 
 ### P9 -- portability
 
@@ -142,6 +142,23 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-114's border style applied; CNA FX-144; the Windows Forms games re-checked
+
+`Form.FormBorderStyle` now reaches the game window: CNA.Framework's `GameWindow.IsBorderlessEXT` binds
+`cna_game_window_get/set_is_borderless_ext` (present in 0.40.0; 1415 imports, `Verify-Abi.sh` 0
+mismatches, native ABI fixtures regenerated, `CnaAbiTests` tripwire 1413 -> 1415), and the Racing Game
+Kit's `FormBorderStyle.None` removes its border as under XNA. `GameWindow_BorderlessRoundTrips` and the
+Windows Forms integration test cover it; integration 233/233, Framework 646/646, XnaCompat 297/297,
+api-compat 0. CNA FX-144 (`47b5f7665`): the one OPENGLES3 compiled-effect test that aborted
+(`FlippedSourceRetainsFormatAndFullFloatPrecision`) called meta-gl through the test binary's own,
+never-initialised copy (CnaTests links meta-gl statically, apart from `libcna.so`'s); it now
+initialises it from the renderer's loader and passes -- `ctest -R EasyGLCompiledEffect` 685/686, the one
+left being the vertex-texture LOD bias OpenGL ES 3 cannot express. The Windows Forms-blocked games,
+re-checked against CSX-114: none is unblocked -- Flux uses `System.Drawing` only in a helper it never
+calls (the official package would compile it) but its fonts Fabada and Origin are not in its repository;
+infinecraft needs a Neoforce library its repository lacks; Mannux P/Invokes `winmm.dll`; Minor
+Destruction stops at .NET 7's `BitConverter.GetBytes(sbyte)` ambiguity.
 
 ### 2026-10-02 -- the nine newest games in a browser and on Android; CNA CBIND-149/150
 
