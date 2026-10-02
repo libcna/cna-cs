@@ -129,10 +129,17 @@ What stops them is Windows Forms, Silverlight, a library their repositories do n
 change in .NET itself: since .NET 7, `BitConverter.GetBytes(sbyte)` is ambiguous, because `sbyte`
 converts implicitly to `Half` (`CAMPAIGN.md`, 2026-10-02).
 
-The runtime differs from the one XNA games were written for in one way CNA.NET repairs at compile
-time: .NET Framework 4.0's `List<T>.ForEach` keeps walking when the action changes the list, where
-.NET throws. CNA.XnaCompat.targets intercepts a game's own `ForEach` calls with the 4.0 loop
-(CSX-110; `<CnaNetFx40ListForEach>false</CnaNetFx40ListForEach>` opts out).
+The runtime differs from the one XNA games were written for in three ways CNA.NET repairs at
+compile time, each with an opt-out property in CNA.XnaCompat.targets:
+
+- .NET Framework 4.0's `List<T>.ForEach` keeps walking when the action changes the list, where
+  .NET throws: a game's own `ForEach` calls are intercepted with the 4.0 loop (CSX-110,
+  `CnaNetFx40ListForEach`).
+- `Assembly.LoadFile` of an assembly the application already loaded returned that assembly, where
+  .NET loads a second copy (CSX-122, `CnaNetFxAssemblyLoadFile`).
+- `System.Range`, `System.Index` and `PriorityQueue<,>` did not exist, so a game's own type of that
+  name was never shadowed or ambiguous: a project naming one compiles against reference copies in
+  which it is internal (CSX-126, `CnaNetFxTypeNames`).
 
 ## Behavior and content
 
