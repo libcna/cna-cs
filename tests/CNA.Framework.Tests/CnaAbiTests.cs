@@ -131,10 +131,12 @@ public class CnaAbiTests
         // plus 0.37.0's four routes naming the canonical exception behind a failure (1409),
         // plus 0.38.0's cna_game_run_frame_ext, the run a browser host drives (1410),
         // plus the touch panel's mouse-as-touch bridge a phone title turns on (1412, CSX-098),
-        // plus 0.39.0's cna_game_set_foreign_thread_calls_ext, for XNA's loading threads (1413).
+        // plus 0.39.0's cna_game_set_foreign_thread_calls_ext, for XNA's loading threads (1413),
+        // plus 0.40.0's cna_game_window_get/set_is_borderless_ext, the border a Windows Forms game
+        // removes with FormBorderStyle.None (1415, CSX-114).
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(1413, declared.Length);
+        Assert.Equal(1415, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 

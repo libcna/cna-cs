@@ -82,6 +82,25 @@ public class GameWindow
         }
     }
 
+    /// <summary>Whether the window has no border or title bar (a CNA extension; under XNA a game
+    /// reached it through its Windows Forms form). The setter fails with a platform error on a
+    /// backend that cannot honour it, as <see cref="AllowUserResizing"/> does.</summary>
+    public bool IsBorderlessEXT
+    {
+        get
+        {
+            CnaResult result = Native.cna_game_window_get_is_borderless_ext(NativeGame, out byte borderless);
+            CnaException.ThrowIfFailed(result, nameof(IsBorderlessEXT));
+            return borderless != 0;
+        }
+        set
+        {
+            CnaResult result = Native.cna_game_window_set_is_borderless_ext(
+                NativeGame, value ? (byte)1 : (byte)0);
+            CnaException.ThrowIfFailed(result, nameof(IsBorderlessEXT));
+        }
+    }
+
     /// <summary>The drawable client area, excluding any border or title bar.</summary>
     public Rectangle ClientBounds
     {

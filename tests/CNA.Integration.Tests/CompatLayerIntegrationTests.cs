@@ -1152,6 +1152,10 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         Assert.Null(System.Windows.Forms.Control.FromHandle(IntPtr.Zero));
         Assert.Null(System.Windows.Forms.Control.FromHandle(game.Window.Handle + 1));
 
+        // Back to a bordered window, through the same route.
+        game.FormInConstructor.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
+        Assert.Equal(System.Windows.Forms.FormBorderStyle.Sizable, game.FormInConstructor.FormBorderStyle);
+
         game.RunOneFrame();
     }
 

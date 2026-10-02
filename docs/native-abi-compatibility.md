@@ -64,7 +64,7 @@ changed; the twelve `cna_graphics_adapter_*` routes also take the active game's 
 
 | Measurement | Result |
 | --- | --- |
-| Consumed entry points | 1413, as 0.39.0 |
+| Consumed entry points | 1413, as 0.39.0; 1415 since CSX-114 bound `cna_game_window_get/set_is_borderless_ext` (present in 0.40.0; `Verify-Abi.sh`: 1415 prototypes compiled, 0 mismatches) |
 | Consumed entry points absent / changed prototype | 0 / 0 |
 | Upstream exports | 3209 -> 3209; 0 struct, scalar, constant or string differences; the upstream allowlist holds no entries |
 | `tools/abi-verify` | 1137 native and 1137 managed layout/type values, 0 mismatches; 23 callbacks; 604 constants (its phone-enum scope now excludes the managed-only `StartupMode`, which had stopped the run since CSX-103) |

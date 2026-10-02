@@ -150,6 +150,13 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_window_set_allow_user_resizing(CnaHandle game, byte allowed);
 
+    // CSX-114: an XNA game's Windows Forms form drops its border (FormBorderStyle.None).
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_game_window_get_is_borderless_ext(CnaHandle game, out byte outBorderless);
+
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_game_window_set_is_borderless_ext(CnaHandle game, byte borderless);
+
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_window_get_client_bounds(CnaHandle game, out CnaRect outBounds);
 

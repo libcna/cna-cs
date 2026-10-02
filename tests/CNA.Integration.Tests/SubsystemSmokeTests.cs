@@ -468,4 +468,26 @@ public class SubsystemSmokeTests(ITestOutputHelper output, NativeGameFixture fix
             output.WriteLine($"client bounds {game.Window.ClientBounds}, handle 0x{game.Window.Handle:x}");
         });
     }
+
+    /// <summary>The border a Windows Forms game removes with FormBorderStyle.None (CSX-114), through
+    /// CNA's borderless window route.</summary>
+    [NativeFact]
+    public void GameWindow_BorderlessRoundTrips()
+    {
+        fixture.InsideAFrame(game =>
+        {
+            bool original = game.Window.IsBorderlessEXT;
+            try
+            {
+                game.Window.IsBorderlessEXT = true;
+                Assert.True(game.Window.IsBorderlessEXT);
+                game.Window.IsBorderlessEXT = false;
+                Assert.False(game.Window.IsBorderlessEXT);
+            }
+            finally
+            {
+                game.Window.IsBorderlessEXT = original;
+            }
+        });
+    }
 }

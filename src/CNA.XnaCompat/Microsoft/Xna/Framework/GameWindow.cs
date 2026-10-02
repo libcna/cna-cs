@@ -21,12 +21,16 @@ public abstract class GameWindow
     {
         ArgumentNullException.ThrowIfNull(backend);
         _title = backend.Title;
+        Backend = backend;
         lock (Attached)
         {
             Attached.RemoveAll(reference => !reference.TryGetTarget(out _));
             Attached.Add(new WeakReference<GameWindow>(this));
         }
     }
+
+    /// <summary>The CNA window behind this one, for CNA.WindowsFormsCompat's form.</summary>
+    internal CNA.GameWindow? Backend { get; private set; }
 
     // Under XNA every game window is a Windows Forms form, and a game reaches it with
     // Control.FromHandle(Window.Handle) (the Racing Game Kit hides its form while it loads).
