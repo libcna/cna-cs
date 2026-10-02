@@ -123,6 +123,12 @@ The same representative template source currently compiles against:
 
 A build is not a runtime claim.
 
+Beyond the games that run (cna-cs-samples `games/`), ten real XNA 4.0 codebases that cannot run on
+Linux were compiled from their own project files: none uses an XNA type or member CNA.NET lacks.
+What stops them is Windows Forms, Silverlight, a library their repositories do not ship, or one
+change in .NET itself: since .NET 7, `BitConverter.GetBytes(sbyte)` is ambiguous, because `sbyte`
+converts implicitly to `Half` (`CAMPAIGN.md`, 2026-10-02).
+
 ## Behavior and content
 
 The managed suites currently pass 560 framework and 199 compat tests. The selected ABI 0.8.0 CNA

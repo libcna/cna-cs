@@ -137,6 +137,21 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
 
+### 2026-10-02 -- CSX-104: the games that cannot run here, compiled
+
+Ten real XNA 4.0 codebases that cannot run here (Windows Forms or Win32, Silverlight, content or
+libraries their repositories do not ship) were compiled against CNA.NET `024f2b2` to look for XNA
+API they use that CNA.NET lacks: each original `.csproj`'s own Compile items, DefineConstants and
+HintPath libraries, its project references mapped one to one, and an empty `System.Windows.Forms`
+namespace so that Roslyn binds method bodies past the using directive. Racing Game Kit, Mannux,
+infinecraft (Core + BlockRLH), WPDrumkit and Flux (FluxEngine + its prebuilt Farseer) compile but
+for Windows Forms and `System.Drawing`. DiseasedToast stops at Nuclex.Input (not in its repository;
+its TiledLib is a content-pipeline importer), EvoNet at Windows Forms and YamlDotNet, WP.NuPogodi at
+Silverlight, Sleepwalker at four calls into an older Swf2XNA runtime than the one its repository
+ships. Minor Destruction (with Lidgren, MiningGameServer and its shipped GeeUI.dll) fails only at
+`BitConverter.GetBytes(sbyte)`, which .NET 7's implicit `sbyte`-to-`Half` conversion made
+ambiguous -- a change in .NET, not in XNA's API. No XNA type or member was missing.
+
 ### 2026-10-02 -- CSX-031: the template in a browser and on Android
 
 cna-cs-template `2a76388`: `Platforms/Browser` and `Platforms/Android` compile the template's own
