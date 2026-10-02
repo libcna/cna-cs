@@ -130,6 +130,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-109 | A storage device several worker threads share works from each of them, as XNA's did | done |
 | CSX-110 | `List<T>.ForEach` as the .NET Framework 4.0 that XNA games target ran it, by compile-time interception | done |
 | CSX-111 | ABI 0.40.0: the graphics adapters answer in a game's constructor (CNA CBIND-145) | done |
+| CSX-112 | `GraphicsDeviceManager.GraphicsDevice` (and `Game.GraphicsDevice` with a device service) is null until the device exists, as in XNA | done |
 
 ### P9 -- portability
 
@@ -139,6 +140,18 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-112: no device yet is null, not an exception
+
+gamealgorithms/defense, past CSX-111, died next in its constructor: `GraphicsManager.SetResolutionToCurrent`
+tests `if (m_Graphics.GraphicsDevice != null)` before applying the resolution, and CNA.NET threw
+"The graphics device is not available until the game has initialized". XNA's IL: the manager's
+getter returns its device field, null until `Run` creates it; `Game.GraphicsDevice` returns its
+`IGraphicsDeviceService`'s device the same way and throws only when there is no such service
+("This property requires a graphics device service in the game service container."). Both now do;
+a game with no service still gets its device once it runs, because CNA creates one for every game.
+The constructor case in `CompatGame_ReadsTheGraphicsAdaptersInItsConstructor` fails without the
+change. Integration 231/231, XnaCompat 290/290, api-compat 0 diagnostics. Defense then shows its menu.
 
 ### 2026-10-02 -- CSX-111: the graphics adapters in a game's constructor (ABI 0.40.0)
 

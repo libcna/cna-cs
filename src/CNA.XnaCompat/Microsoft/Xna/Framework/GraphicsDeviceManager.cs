@@ -160,7 +160,9 @@ public class GraphicsDeviceManager : Graphics.IGraphicsDeviceService, IGraphicsD
         set => _backend.SupportedOrientations = (CNA.DisplayOrientation)(int)value;
     }
 
-    public Graphics.GraphicsDevice GraphicsDevice => Game.GraphicsDevice;
+    /// <summary>XNA (IL): the device this manager created, null until it has -- a game's constructor
+    /// sees null (gamealgorithms/defense tests it before applying a resolution).</summary>
+    public Graphics.GraphicsDevice GraphicsDevice => Game.CreatedGraphicsDevice!;
 
     public event EventHandler<PreparingDeviceSettingsEventArgs>? PreparingDeviceSettings
     {

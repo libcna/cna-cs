@@ -1145,6 +1145,8 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         public AdapterInConstructorGame()
         {
             var graphics = new GraphicsDeviceManager(this);
+            // XNA (IL): no device until Run creates it -- null, not an exception.
+            DeviceInConstructor = graphics.GraphicsDevice ?? GraphicsDevice;
             AdapterCount = GraphicsAdapter.Adapters.Count;
             ModeInConstructor = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
             graphics.PreferredBackBufferWidth = Math.Min(ModeInConstructor.Width, 320);
@@ -1152,6 +1154,8 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         }
 
         public int AdapterCount { get; }
+
+        public GraphicsDevice? DeviceInConstructor { get; }
 
         public DisplayMode ModeInConstructor { get; }
 
@@ -1169,12 +1173,14 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
     public void CompatGame_ReadsTheGraphicsAdaptersInItsConstructor()
     {
         using var game = new AdapterInConstructorGame();
+        Assert.Null(game.DeviceInConstructor);
         Assert.True(game.AdapterCount > 0);
         Assert.True(game.ModeInConstructor.Width > 0 && game.ModeInConstructor.Height > 0);
 
         game.RunOneFrame();
 
         Assert.NotNull(game.ModeInUpdate);
+        Assert.NotNull(game.GraphicsDevice);
         Assert.Equal(game.ModeInConstructor.Width, game.ModeInUpdate.Width);
         Assert.Equal(game.ModeInConstructor.Height, game.ModeInUpdate.Height);
     }

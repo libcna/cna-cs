@@ -75,9 +75,20 @@ public class Game : IDisposable
         set => _content = value ?? throw new ArgumentNullException(nameof(value));
     }
 
+    /// <summary>XNA (IL): the device of the game's <c>IGraphicsDeviceService</c>, null until that
+    /// service has created it -- in a constructor, before <c>Run</c> -- and an
+    /// <see cref="InvalidOperationException"/> only when the game has no such service. CNA creates a
+    /// device for every game, so one that registered no service still gets it once it runs.</summary>
     public Graphics.GraphicsDevice GraphicsDevice =>
-        _backend.CompatGraphicsDevice ?? throw new InvalidOperationException(
-            "The graphics device is not available until the game has initialized.");
+        _backend.CompatGraphicsDevice
+        ?? (Services.GetService(typeof(Graphics.IGraphicsDeviceService)) is not null
+            ? null!
+            : throw new InvalidOperationException(
+                "This property requires a graphics device service in the game service container."));
+
+    /// <summary>The device once created, or null: what <c>GraphicsDeviceManager.GraphicsDevice</c>
+    /// returns.</summary>
+    internal Graphics.GraphicsDevice? CreatedGraphicsDevice => _backend.CompatGraphicsDevice;
 
     public TimeSpan InactiveSleepTime
     {
