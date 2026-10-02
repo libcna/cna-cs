@@ -129,6 +129,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-108 | `System.IO.IsolatedStorage` in a browser build (CNA.BrowserCompat), where .NET ships only a PlatformNotSupported stub | done |
 | CSX-109 | A storage device several worker threads share works from each of them, as XNA's did | done |
 | CSX-110 | `List<T>.ForEach` as the .NET Framework 4.0 that XNA games target ran it, by compile-time interception | done |
+| CSX-111 | ABI 0.40.0: the graphics adapters answer in a game's constructor (CNA CBIND-145) | done |
 
 ### P9 -- portability
 
@@ -138,6 +139,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-111: the graphics adapters in a game's constructor (ABI 0.40.0)
+
+gamealgorithms/defense died in its `Game` constructor: `Adapters failed with native result
+InvalidState: The graphics device may be borrowed only during a game lifecycle callback`. It reads
+`GraphicsAdapter.DefaultAdapter.CurrentDisplayMode` there to size its back buffer -- XNA's usual way,
+and XNA answers it anywhere -- and CNA.NET borrowed the game's device for the adapter routes, which
+CNA lends only inside a callback. CNA CBIND-145 (C ABI 0.40.0, `22b30b30e`) lets the twelve
+`cna_graphics_adapter_*` routes take the active game's own handle; CNA.Framework's `GraphicsAdapter`
+now passes it. Admission as for 0.39.0: baselinediff 0.39.0 -> 0.40.0 1413 consumed exports, 0
+absent, 0 changed, 0 added, 0 breaking; the matrix accepts exactly 0.40.0 and retires 0.39.0, whose
+exports are identical, so `retired-0.39.0` is refused on the version rule alone; fixtures move to
+exact-0.40.0, retired-0.39.0 and unreviewed-0.41.0 (the two shape fixtures too, which otherwise
+failed for their version first). CI pins `22b30b30e`, previous accepted `0a57ccad2`.
+`tools/abi-verify` had stopped at `CNA_STARTUP_MODE_LAUNCH undeclared` since CSX-103: it checked every
+public phone enum, and `StartupMode` never reaches native; its scope is now the `Microsoft.Devices`
+enums. Results: abi-verify 1137 values, 23 callbacks, 604 constants, 0 mismatches; fixtures passed;
+`CompatLayerIntegrationTests.CompatGame_ReadsTheGraphicsAdaptersInItsConstructor` (fails without the
+change); integration 231/231, GamerServices 24/24 (now with isolated XDG directories), framework
+645/645, XnaCompat 290/290, api-compat 0 diagnostics; package acceptance passed on 0.40.0.
 
 ### 2026-10-02 -- CSX-110: List<T>.ForEach as .NET Framework 4.0 ran it
 

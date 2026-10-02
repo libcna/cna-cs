@@ -34,7 +34,8 @@ public class CnaAbiTests
 
     /// <summary>
     /// The constant this binding compares against must be the version it was written for, now
-    /// 0.39.0, whose foreign-thread calls XNA's loading threads need; 0.38.0 before it added the
+    /// 0.40.0, whose adapter routes take the game's own handle, as XNA's constructors need; 0.39.0
+    /// before it ran other threads' calls on the game thread; 0.38.0 before it added the
     /// host-driven run a browser's Game.Run needs, and 0.37.0 before that named the
     /// canonical exception behind a failure, and 0.36.0 before that added the
     /// packet-reader copy XNA's managed PacketReader receives through. Before that it was 0.35.0, reached by dropping the 44 engine-layer imports CNA removed in
@@ -51,7 +52,7 @@ public class CnaAbiTests
     [Fact]
     public void ExpectedVersion_IsTheAbiThisBindingWasWrittenAgainst()
     {
-        Assert.Equal((0, 39, 0), CnaAbi.Decode(CnaAbi.ExpectedVersion));
+        Assert.Equal((0, 40, 0), CnaAbi.Decode(CnaAbi.ExpectedVersion));
     }
 
     /// <summary>Round-trips every field independently, so a mask that swallowed a neighbouring
@@ -65,7 +66,7 @@ public class CnaAbiTests
     }
 
     [Theory]
-    [InlineData(0, 39, 0, "exact")]
+    [InlineData(0, 40, 0, "exact")]
     public void Policy_AcceptsOnlyReviewedAbiGenerations(int major, int minor, int patch, string classification)
     {
         uint version = ((uint)major << 16) | ((uint)minor << 8) | (uint)patch;
@@ -74,8 +75,8 @@ public class CnaAbiTests
     }
 
     /// <summary>
-    /// 0.6.0 through 0.38.0 are here rather than in the accepting theory above because they were
-    /// retired, not because they were never reviewed. 0.38.0 and 0.40.0 sit on either side of the
+    /// 0.6.0 through 0.39.0 are here rather than in the accepting theory above because they were
+    /// retired, not because they were never reviewed. 0.39.0 and 0.41.0 sit on either side of the
     /// accepted entry to keep the matrix a point list -- being newer than an audited generation is
     /// not evidence about an experimental 0.x ABI, and neither is having been audited once.
     ///
@@ -97,8 +98,9 @@ public class CnaAbiTests
     [InlineData(0, 36, 0)]
     [InlineData(0, 37, 0)]
     [InlineData(0, 38, 0)]
-    [InlineData(0, 39, 1)]
-    [InlineData(0, 40, 0)]
+    [InlineData(0, 39, 0)]
+    [InlineData(0, 40, 1)]
+    [InlineData(0, 41, 0)]
     [InlineData(1, 0, 0)]
     public void Policy_RejectsUnauditedVersions(int major, int minor, int patch)
     {
@@ -144,7 +146,7 @@ public class CnaAbiTests
         JsonElement root = document.RootElement;
 
         Assert.Equal(CnaNativeAbiPolicy.PolicyVersion, root.GetProperty("policyVersion").GetString());
-        Assert.Equal("0.39.0", root.GetProperty("consumerAbi").GetString());
+        Assert.Equal("0.40.0", root.GetProperty("consumerAbi").GetString());
         JsonElement[] entries = root.GetProperty("acceptedVersions").EnumerateArray().ToArray();
         string[] versions = entries.Select(item => item.GetProperty("libraryAbi").GetString()!).ToArray();
         Assert.Equal(

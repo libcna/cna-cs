@@ -230,10 +230,12 @@ static class InteropConstants
             .Where(type => type is { IsEnum: true, IsPublic: true })
             .Where(type => type.Namespace is "Microsoft.Xna.Framework.GamerServices" or "Microsoft.Xna.Framework.Net");
 
-        // The phone compatibility enums (DeviceType, SensorState), cast the same way.
+        // The phone compatibility enums that are cast the same way (DeviceType, SensorState): the
+        // Microsoft.Devices ones. StartupMode (Microsoft.Phone.Shell, CSX-103) never reaches native.
         IEnumerable<Type> phoneEnums = typeof(Microsoft.Devices.Sensors.Accelerometer).Assembly
             .GetTypes()
-            .Where(type => type is { IsEnum: true, IsPublic: true });
+            .Where(type => type is { IsEnum: true, IsPublic: true })
+            .Where(type => type.Namespace is "Microsoft.Devices" or "Microsoft.Devices.Sensors");
 
         return interopEnums.Concat(frameworkEnums).Concat(compatEnums).Concat(phoneEnums)
             .OrderBy(type => type.Name, StringComparer.Ordinal);

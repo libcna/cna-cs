@@ -1133,4 +1133,49 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
             Assert.Equal(32, asTexture.Width);
         });
     }
+
+    /// <summary>
+    /// gamealgorithms/defense, like many XNA games, reads GraphicsAdapter.DefaultAdapter in its
+    /// constructor -- XNA's way to size a back buffer from the desktop's display mode -- before any
+    /// lifecycle callback has run. CNA lent its device only inside a callback, so the adapters
+    /// failed there; the adapter routes take the game's own handle since C ABI 0.40.0 (CSX-111).
+    /// </summary>
+    private sealed class AdapterInConstructorGame : XnaGame
+    {
+        public AdapterInConstructorGame()
+        {
+            var graphics = new GraphicsDeviceManager(this);
+            AdapterCount = GraphicsAdapter.Adapters.Count;
+            ModeInConstructor = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+            graphics.PreferredBackBufferWidth = Math.Min(ModeInConstructor.Width, 320);
+            graphics.PreferredBackBufferHeight = Math.Min(ModeInConstructor.Height, 240);
+        }
+
+        public int AdapterCount { get; }
+
+        public DisplayMode ModeInConstructor { get; }
+
+        public DisplayMode? ModeInUpdate { get; private set; }
+
+        protected override void Update(GameTime gameTime)
+        {
+            ModeInUpdate = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode;
+            Exit();
+            base.Update(gameTime);
+        }
+    }
+
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_ReadsTheGraphicsAdaptersInItsConstructor()
+    {
+        using var game = new AdapterInConstructorGame();
+        Assert.True(game.AdapterCount > 0);
+        Assert.True(game.ModeInConstructor.Width > 0 && game.ModeInConstructor.Height > 0);
+
+        game.RunOneFrame();
+
+        Assert.NotNull(game.ModeInUpdate);
+        Assert.Equal(game.ModeInConstructor.Width, game.ModeInUpdate.Width);
+        Assert.Equal(game.ModeInConstructor.Height, game.ModeInUpdate.Height);
+    }
 }

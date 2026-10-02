@@ -45,9 +45,9 @@ public class GraphicsAdapter
     /// </summary>
     internal GraphicsDevice? OwningGraphicsDevice => _graphicsDevice;
 
-    /// <summary>This adapter's device handle: the one it was constructed with, or the ambient
-    /// game's when it was constructed without.</summary>
-    private CnaHandle DeviceHandle => _graphicsDevice?.ResolveNativeDeviceHandle() ?? AmbientDeviceHandle();
+    /// <summary>This adapter's context handle: the device it was constructed with, or the ambient
+    /// game's own handle when it was constructed without.</summary>
+    private CnaHandle DeviceHandle => _graphicsDevice?.ResolveNativeDeviceHandle() ?? AmbientGameHandle();
 
     public uint AdapterIndex { get; }
 
@@ -163,17 +163,16 @@ public class GraphicsAdapter
     /// <summary>
     /// Every adapter on the system. Matches real XNA's static <c>Adapters</c>.
     ///
-    /// Static after all. The doc comment above says enumerating "needs a device", which is true of
-    /// the ABI route -- but a device is reachable from the ambient game
-    /// (<c>cna_game_get_graphics_device</c>), the same way <c>Keyboard</c>/<c>Mouse</c> reach one.
-    /// So the XNA shape is available and <see cref="GetAdapters(GraphicsDevice)"/> stays for a
-    /// caller that has a specific device in hand.
+    /// Static after all. The ABI routes take a context handle, and the ambient game's own handle is
+    /// one (C ABI 0.40.0) from the game's construction on, the same way <c>Keyboard</c>/<c>Mouse</c>
+    /// reach the game. So the XNA shape is available and <see cref="GetAdapters(GraphicsDevice)"/>
+    /// stays for a caller that has a specific device in hand.
     /// </summary>
     public static IReadOnlyList<GraphicsAdapter> Adapters
     {
         get
         {
-            CnaResult result = Native.cna_graphics_adapter_get_count(AmbientDeviceHandle(), out ulong count);
+            CnaResult result = Native.cna_graphics_adapter_get_count(AmbientGameHandle(), out ulong count);
             CnaException.ThrowIfFailed(result, nameof(Adapters));
 
             var adapters = new GraphicsAdapter[count];
@@ -207,14 +206,12 @@ public class GraphicsAdapter
         }
     }
 
-    /// <summary>The ambient game's graphics device handle. Throws with a message naming the cause
-    /// when no game is running, rather than passing a zero handle to native.</summary>
-    private static CnaHandle AmbientDeviceHandle()
-    {
-        CnaResult result = Native.cna_game_get_graphics_device(CnaAmbientGame.Current, out CnaHandle device);
-        CnaException.ThrowIfFailed(result, nameof(Adapters));
-        return device;
-    }
+    /// <summary>The ambient game's own handle. The adapters are the system's, and the adapter routes
+    /// take the game handle (C ABI 0.40.0), which its thread holds from construction on -- so the
+    /// static adapters answer in a game's constructor, where XNA games read them to size their back
+    /// buffer (gamealgorithms/defense, CSX-111). A borrowed device lasted only one callback. With
+    /// no game, native refuses the zero handle and the failure names the call.</summary>
+    private static CnaHandle AmbientGameHandle() => CnaAmbientGame.Current;
 
     /// <summary>
     /// What this adapter would actually give you for a requested render-target format.
@@ -266,7 +263,7 @@ public class GraphicsAdapter
     {
         var selection = new CnaGraphicsFormatSelection();
         CnaResult result = query(
-            AmbientDeviceHandle(), AdapterIndex, (uint)graphicsProfile, (uint)format, (uint)depthFormat,
+            AmbientGameHandle(), AdapterIndex, (uint)graphicsProfile, (uint)format, (uint)depthFormat,
             multiSampleCount, ref selection);
         CnaException.ThrowIfFailed(result, context);
 
