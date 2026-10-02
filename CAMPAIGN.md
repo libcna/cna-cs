@@ -77,7 +77,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
-| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 25 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) Jomata's Mahjong (which found CNA CBIND-147/148) and the XNA 4.0 Racing Game Kit (menu and a race; CSX-113, CSX-114, CNA FX-142) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video). The nine added 2026-10-02 (CNA `3c72165e6`): browser 7 of 9 (Enceladus and the Racing Game Kit start threads), Android 9 of 9 -- 21 of 25 in a browser, 24 of 25 on the emulator |
+| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 34 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) Jomata's Mahjong (which found CNA CBIND-147/148) and the XNA 4.0 Racing Game Kit (menu and a race; CSX-113, CSX-114, CNA FX-142) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video). The nine added 2026-10-02 (CNA `3c72165e6`): browser 7 of 9 (Enceladus and the Racing Game Kit start threads), Android 9 of 9 -- 21 of 25 in a browser, 24 of 25 on the emulator Added later on 2026-10-02: Microsoft's Network Prediction, Peer to Peer, Network Game State Management, Memory Madness and Saving Embedded Images (CSX-118/119, CNA CBIND-152; the first two also as SystemLink host and client), Quadtree Terrain, FightingGame, Some 2D RPG, and SKraft (CSX-121, CNA CBIND-153) |
 
 ### P7 -- browser
 
@@ -149,6 +149,41 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- SKraft plays; CSX-121 and CNA CBIND-153 (ABI 0.42.0); Zelda Oracle on a branch
+
+CNA `938a22069`, CNA.NET `834e7ec`, cna-cs-samples `4d66fd6`. The five Microsoft samples of the
+previous entry also run as a SystemLink host and a joining client in two processes (Network
+Prediction, Peer to Peer), and reach their first screens in a browser and on the Android emulator;
+where they stop there is recorded in cna-cs-samples `games/README.md` (a blocking Guide `End*` in a
+single-threaded page; Network Game State Management's `Thread.Join` on Mono, which does not consult
+the SynchronizationContext CSX-118 relies on). Quadtree Terrain, FightingGame and Some 2D RPG run
+unchanged with no defect found.
+
+1. Kermit/SKraft (`2480755`, content by XNA's BuildContent with its own model processor, Reach)
+   threw a NullReferenceException in its constructor: it calls `ApplyChanges` there and sizes its
+   menu from `GraphicsDevice.Viewport`. XNA's `ApplyChanges` with no device creates it (IL:
+   `ChangeDevice(false)` -> `CreateDevice`; FNA's too), CNA.NET left it null until the run, and
+   native lent the device only inside a callback. CNA CBIND-153 lends it before the run on the
+   creating thread (ABI 0.42.0, a changed rule, 0 breaking differences); CSX-121 wraps it in
+   `ApplyChanges`. SKraft then plays: instanced cubes through its own shader, mouse look, its day
+   cycle, Quit saving its sectors. Its world is read from a Windows path its repository leaves
+   empty; the run copies the shipped sectors to the name Linux reads.
+2. Zelda Oracle (`92be3a1`; the tip adds a file that compiles nowhere) needed Windows Forms beyond
+   CSX-114 -- `System.Drawing.Icon`, which .NET's System.Drawing.Common cannot construct off
+   Windows, `Form.Shown`/`Focused`/`Icon`/`MinimumSize`/`Activate`, `Application.VisualStyleState`,
+   `Clipboard` -- and then stops in `Initialize` at its `EventInput` hook: `SetWindowLong(GWL_WNDPROC,
+   (int)Marshal.GetFunctionPointerForDelegate(...))`, compiled to `conv.i4`, so x86 Windows only.
+   AutonomousCar uses the same hook. CSX-120 is kept on branch `zelda-oracle-forms` (cna-cs
+   `23e3900`, samples `851590a`) until a running game needs it.
+3. Ten more local trees triaged: Voxeliq's XNA client needs Calibri (three sprite fonts), Pokémon
+   Azure Lua DLLs it does not ship, Old School Adventure is MonoGame now; AngryTanks, Flotilla, XNA
+   Street Fighter and Infiniminer are XNA 3.x.
+
+Tests: CNA `^CApi` 119/119, C API gates 9/9; CNA.NET framework 651/651, XnaCompat 299/299,
+integration 235/235, GamerServices 24/24, `Verify-Abi.sh` 1416 prototypes and 0 mismatches, ABI
+fixtures 2 accepted and 10 rejected. Browser and Android bundles still carry the 0.41.0 archives and
+need CNA rebuilt for them before their next run.
 
 ### 2026-10-02 -- five Microsoft samples outside the gallery; CSX-118/119, CNA CBIND-152
 
