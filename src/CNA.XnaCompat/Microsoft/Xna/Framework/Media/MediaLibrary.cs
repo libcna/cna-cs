@@ -67,9 +67,27 @@ public sealed class MediaLibrary : IDisposable
     public Picture? GetPictureFromToken(string token) =>
         _inner.GetPictureFromToken(token) is { } picture ? new Picture(picture) : null;
 
-    public Picture SavePicture(string name, byte[] imageBuffer) => new(_inner.SavePicture(name, imageBuffer));
+    public Picture SavePicture(string name, byte[] imageBuffer) => new(Saved(() => _inner.SavePicture(name, imageBuffer)));
 
-    public Picture SavePicture(string name, Stream source) => new(_inner.SavePicture(name, source));
+    public Picture SavePicture(string name, Stream source) => new(Saved(() => _inner.SavePicture(name, source)));
+
+    /// <summary>
+    /// Saving is the Windows Phone library's (Windows XNA throws NotSupportedException), and a picture
+    /// it could not save was its InvalidOperationException: Microsoft's Saving Embedded Images sample
+    /// catches exactly that to tell the player (CSX-119). CNA's picture store refuses with an I/O
+    /// failure -- no writable picture folder, a write that failed.
+    /// </summary>
+    private static CNA.Media.Picture Saved(Func<CNA.Media.Picture> save)
+    {
+        try
+        {
+            return save();
+        }
+        catch (CNA.CnaException ex) when (ex.NativeResult == "Io")
+        {
+            throw new InvalidOperationException(ex.Message, ex);
+        }
+    }
 
     public void Dispose()
     {

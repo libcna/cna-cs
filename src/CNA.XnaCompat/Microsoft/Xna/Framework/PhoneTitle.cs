@@ -5,14 +5,41 @@ namespace Microsoft.Xna.Framework;
 /// XNA's build marks the title in its <c>Microsoft.Xna.Framework.RuntimeProfile</c> resource
 /// (<c>WindowsPhone.v4.0.&lt;profile&gt;</c>). Two things the phone itself supplied have no desktop
 /// counterpart, and the facade stands in for them: full screen is the status bar, not a display
-/// mode (cna-cs CSX-094), player one's pad is the phone, with its Back button (CSX-095), and the
-/// mouse is the finger, as in the emulator (CSX-098).
+/// mode (cna-cs CSX-094), player one's pad is the phone, with its Back button (CSX-095), the
+/// mouse is the finger, as in the emulator (CSX-098), and the Guide's keyboard prompt and message box
+/// need no GamerServicesComponent (CSX-119).
 /// On Android and iOS the host is a phone and none of this applies.
 /// </summary>
 internal static class PhoneTitle
 {
     /// <summary>Set by each <see cref="Game"/> from its own assembly.</summary>
     internal static bool Active { get; set; }
+
+    /// <summary>The phone title running now, whose services gamer services start with.</summary>
+    internal static Game? Title { get; set; }
+
+    /// <summary>Whether the facade started gamer services for the Guide, and so pumps them each
+    /// frame, as a GamerServicesComponent would.</summary>
+    internal static bool PumpsGamerServices { get; set; }
+
+    /// <summary>
+    /// On Windows Phone the Guide's keyboard prompt and message box were the phone's own and needed no
+    /// GamerServicesComponent: Microsoft's Saving Embedded Images sample asks for a file name with
+    /// <c>Guide.BeginShowKeyboardInput</c> and has none. On Windows, XNA's Guide needs the dispatcher
+    /// initialized (its IL dispatches through <c>GamerServicesDispatcher.PacketBuffer</c>). So a phone
+    /// title starts gamer services the first time the Guide shows itself, unless its own component
+    /// already did; a Windows title is left to fail as on Windows.
+    /// </summary>
+    internal static void EnsureGuide(Func<bool> isInitialized, Action initialize)
+    {
+        if (!Active || PumpsGamerServices || isInitialized())
+        {
+            return;
+        }
+
+        initialize();
+        PumpsGamerServices = true;
+    }
 
     internal static bool IsOffAPhone(string? runtimeProfileLine) =>
         IsOffAPhone(runtimeProfileLine, OperatingSystem.IsAndroid() || OperatingSystem.IsIOS());

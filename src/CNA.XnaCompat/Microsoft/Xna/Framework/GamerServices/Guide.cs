@@ -24,7 +24,9 @@ public static class Guide
     /// own visibility, so nothing in this facade sets it.</summary>
     public static bool IsVisible
     {
-        get => Flag(Native.cna_guide_get_is_visible, nameof(IsVisible));
+        // A phone title whose Guide has not shown itself has no Guide to be visible (CSX-119).
+        get => (!PhoneTitle.Active || PhoneTitle.PumpsGamerServices || GamerServicesDispatcher.IsInitialized)
+            && Flag(Native.cna_guide_get_is_visible, nameof(IsVisible));
         internal set => throw new InvalidOperationException("The Guide's visibility is CNA's own state.");
     }
 
@@ -60,6 +62,7 @@ public static class Guide
         ArgumentNullException.ThrowIfNull(title);
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(buttons);
+        EnsurePhoneGuide();
         ThrowIfVisible();
 
         string[] captions = buttons.ToArray();
@@ -98,6 +101,7 @@ public static class Guide
         PlayerIndex player, string title, string description, string defaultText, AsyncCallback callback,
         object state, bool usePasswordMode)
     {
+        EnsurePhoneGuide();
         ThrowIfVisible();
         var result = new GamerServicesAsyncResult(callback, state, s_keyboardOwner);
         nint context = result.NativeContext();
@@ -197,6 +201,11 @@ public static class Guide
         GamerServicesInterop.Check(query(out byte value), operation);
         return value != 0;
     }
+
+    private static void EnsurePhoneGuide() => PhoneTitle.EnsureGuide(
+        () => GamerServicesDispatcher.IsInitialized,
+        () => GamerServicesDispatcher.Initialize(PhoneTitle.Title?.Services
+            ?? throw new InvalidOperationException("CNA's gamer services run inside a game; create the Game first.")));
 
     /// <summary>XNA's IL checks this before anything else it validates for a Guide screen.</summary>
     private static void ThrowIfVisible()

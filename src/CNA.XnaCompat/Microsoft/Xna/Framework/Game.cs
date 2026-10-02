@@ -17,6 +17,8 @@ public class Game : IDisposable
     public Game()
     {
         PhoneTitle.Active = PhoneTitle.IsOffAPhone(GraphicsDeviceManager.ReadRuntimeProfileLine(GetType().Assembly));
+        PhoneTitle.Title = PhoneTitle.Active ? this : null;
+        PhoneTitle.PumpsGamerServices = false;
         Services = new GameServiceContainer();
         // The game's device is created with the native game: a device that cannot be created is
         // XNA's NoSuitableGraphicsDeviceException, as GraphicsDeviceManager.CreateDevice throws it.
@@ -479,6 +481,11 @@ public class Game : IDisposable
                 }
 
                 Started?.Invoke(_owner);
+            }
+
+            if (PhoneTitle.PumpsGamerServices)
+            {
+                GamerServices.GamerServicesDispatcher.Update();
             }
 
             _owner.ComponentsUpdatedThisFrame = false;
