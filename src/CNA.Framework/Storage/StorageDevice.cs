@@ -115,24 +115,21 @@ public class StorageDevice
     }
 
     /// <summary>Shows the storage selector and returns the chosen device. The synchronous form --
-    /// see this class's own doc comment for why both exist.</summary>
-    public static StorageDevice ShowSelector()
-    {
-        CnaResult result = Native.cna_storage_device_show_selector(0, 0, out CnaHandle device);
-        CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.Value);
-    }
+    /// see this class's own doc comment for why both exist.
+    ///
+    /// The device belongs to the thread that selects it, so it is selected on the game thread
+    /// (<see cref="GameThread"/>): CNA then runs any other thread's calls on it, and on the
+    /// containers and streams it opens, there (CSX-109). escape-from-enceladus starts one thread
+    /// per save slot, all sharing the device the first of them selects.</summary>
+    public static StorageDevice ShowSelector() => GameThread.Invoke(static () =>
+        Selected(Native.cna_storage_device_show_selector(0, 0, out CnaHandle device), device));
 
     /// <summary>Shows the selector for one player. Real XNA's per-player overload -- the ABI takes
     /// a <c>CNA_PlayerIndex</c>, which is what makes this a distinct route rather than an argument
     /// this layer could drop.</summary>
-    public static StorageDevice ShowSelector(PlayerIndex player)
-    {
-        CnaResult result = Native.cna_storage_device_show_selector_for_player(
-            (uint)player, 0, 0, out CnaHandle device);
-        CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.Value);
-    }
+    public static StorageDevice ShowSelector(PlayerIndex player) => GameThread.Invoke(static player =>
+        Selected(Native.cna_storage_device_show_selector_for_player((uint)player, 0, 0, out CnaHandle device), device),
+        player);
 
     /// <summary>Shows the selector, requiring the device to have room for
     /// <paramref name="sizeInBytes"/> across <paramref name="directoryCount"/> directories.</summary>
@@ -141,10 +138,9 @@ public class StorageDevice
         ArgumentOutOfRangeException.ThrowIfNegative(sizeInBytes);
         ArgumentOutOfRangeException.ThrowIfNegative(directoryCount);
 
-        CnaResult result = Native.cna_storage_device_show_selector_with_space(
-            sizeInBytes, directoryCount, 0, 0, out CnaHandle device);
-        CnaException.ThrowIfFailed(result, nameof(ShowSelector));
-        return new StorageDevice(device.Value);
+        return GameThread.Invoke(static a => Selected(
+            Native.cna_storage_device_show_selector_with_space(a.sizeInBytes, a.directoryCount, 0, 0, out CnaHandle device),
+            device), (sizeInBytes, directoryCount));
     }
 
     /// <summary>Both of the above at once.</summary>
@@ -153,8 +149,14 @@ public class StorageDevice
         ArgumentOutOfRangeException.ThrowIfNegative(sizeInBytes);
         ArgumentOutOfRangeException.ThrowIfNegative(directoryCount);
 
-        CnaResult result = Native.cna_storage_device_show_selector_for_player_with_space(
-            (uint)player, sizeInBytes, directoryCount, 0, 0, out CnaHandle device);
+        return GameThread.Invoke(static a => Selected(
+            Native.cna_storage_device_show_selector_for_player_with_space(
+                (uint)a.player, a.sizeInBytes, a.directoryCount, 0, 0, out CnaHandle device),
+            device), (player, sizeInBytes, directoryCount));
+    }
+
+    private static StorageDevice Selected(CnaResult result, CnaHandle device)
+    {
         CnaException.ThrowIfFailed(result, nameof(ShowSelector));
         return new StorageDevice(device.Value);
     }

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Storage;
 using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
@@ -173,5 +174,99 @@ public class CompatWorkerThreadTests
         {
             throw new Xunit.Sdk.XunitException("the worker failed: " + game.WorkerFailure);
         }
+    }
+
+    /// <summary>
+    /// escape-from-enceladus's title screen starts three threads at once, one per save slot; each
+    /// selects the shared static StorageDevice under a lock if no thread has yet, then opens a
+    /// container on it. Before CNA.NET selected the device on the game thread (CSX-109), the threads
+    /// that did not select it were refused (CNA_RESULT_THREAD).
+    /// </summary>
+    private sealed class SavingGame : XnaGame
+    {
+        private const string ContainerName = "cna-cs CompatWorkerThreadTests";
+        private static readonly object Lock = new();
+        private StorageDevice? _device;
+        private Thread[]? _workers;
+        private int _frames;
+
+        public SavingGame()
+        {
+            _ = new GraphicsDeviceManager(this);
+        }
+
+        public Exception? WorkerFailure { get; private set; }
+
+        public int Opened;
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (_workers is null)
+            {
+                _workers = Enumerable.Range(0, 3).Select(_ => new Thread(Load) { IsBackground = true }).ToArray();
+                Array.ForEach(_workers, worker => worker.Start());
+            }
+
+            if (_workers.All(worker => !worker.IsAlive) || ++_frames > 1200)
+            {
+                Exit();
+            }
+
+            base.Update(gameTime);
+        }
+
+        private void Load()
+        {
+            try
+            {
+                lock (Lock)
+                {
+                    if (_device is null)
+                    {
+                        IAsyncResult selected = StorageDevice.BeginShowSelector(null, null);
+                        selected.AsyncWaitHandle.WaitOne();
+                        _device = StorageDevice.EndShowSelector(selected);
+                    }
+                }
+
+                IAsyncResult opened = _device.BeginOpenContainer(ContainerName, null, null);
+                opened.AsyncWaitHandle.WaitOne();
+                using StorageContainer container = _device.EndOpenContainer(opened);
+                string file = $"slot{Environment.CurrentManagedThreadId}.sav";
+                byte[] save = BitConverter.GetBytes(Environment.CurrentManagedThreadId);
+                using (Stream stream = container.CreateFile(file))
+                {
+                    stream.Write(save);
+                }
+
+                using (Stream stream = container.OpenFile(file, FileMode.Open))
+                {
+                    var read = new byte[save.Length];
+                    Assert.Equal(save.Length, stream.Read(read));
+                    Assert.Equal(save, read);
+                }
+
+                container.DeleteFile(file);
+                Interlocked.Increment(ref Opened);
+            }
+            catch (Exception ex)
+            {
+                WorkerFailure = ex;
+            }
+        }
+    }
+
+    [global::CNA.Integration.Tests.NativeFact]
+    public void WorkerThreads_ShareOneStorageDevice_WhileTheGameRuns()
+    {
+        using var game = new SavingGame();
+        game.Run();
+
+        if (game.WorkerFailure is not null)
+        {
+            throw new Xunit.Sdk.XunitException("a worker failed: " + game.WorkerFailure);
+        }
+
+        Assert.Equal(3, game.Opened);
     }
 }

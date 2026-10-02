@@ -127,6 +127,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-106 | `ActivatedEventArgs.IsApplicationInstancePreserved` (Windows Phone 7.5): a desktop process always is | done |
 | CSX-107 | A stock effect in `SpriteBatch.Begin` places the sprites in 3D, as XNA does (CNA Task 1120) | done |
 | CSX-108 | `System.IO.IsolatedStorage` in a browser build (CNA.BrowserCompat), where .NET ships only a PlatformNotSupported stub | done |
+| CSX-109 | A storage device several worker threads share works from each of them, as XNA's did | done |
 
 ### P9 -- portability
 
@@ -136,6 +137,22 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- CSX-109: one storage device, several worker threads
+
+zachmu/escape-from-enceladus's title screen loads its three save slots at once, each on a thread of
+its own sharing one static StorageDevice: the first thread to need it selects it under a lock, the
+others open containers on it. Two of the three died with `OpenContainer failed with native result
+Thread`: a CNA handle answers only the thread that created it, and the device was created by
+whichever worker selected it. CNA serves another thread's calls on the game thread (CBIND-141), but
+this handle was not the game thread's. `StorageDevice.ShowSelector` (all four overloads, so every
+`BeginShowSelector`) now selects on the game thread (`GameThread`); every later call on the device,
+and on the containers and streams it opens, is then served there. The callback of a
+`BeginShowSelector` still runs on the caller's thread. A sequential version of the test passed even
+without the fix: a new thread can inherit a finished one's native thread id. The concurrent
+`CompatWorkerThreadTests.WorkerThreads_ShareOneStorageDevice_WhileTheGameRuns` (three workers, each
+writes, reads back and deletes its own file) fails without the fix and passes with it. Integration
+230/230 twice, Framework 644/644. The game then reaches its title screen with every slot read.
 
 ### 2026-10-02 -- CSX-080: a game with no graphics device, in XNA's exception
 
