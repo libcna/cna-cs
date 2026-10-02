@@ -21,6 +21,50 @@ public abstract class GameWindow
     {
         ArgumentNullException.ThrowIfNull(backend);
         _title = backend.Title;
+        lock (Attached)
+        {
+            Attached.RemoveAll(reference => !reference.TryGetTarget(out _));
+            Attached.Add(new WeakReference<GameWindow>(this));
+        }
+    }
+
+    // Under XNA every game window is a Windows Forms form, and a game reaches it with
+    // Control.FromHandle(Window.Handle) (the Racing Game Kit hides its form while it loads).
+    // CNA.WindowsFormsCompat answers that question through this list.
+    private static readonly List<WeakReference<GameWindow>> Attached = [];
+
+    /// <summary>The live game window whose <see cref="Handle"/> is <paramref name="handle"/>, or null.</summary>
+    internal static GameWindow? FromHandle(IntPtr handle)
+    {
+        if (handle == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        lock (Attached)
+        {
+            foreach (WeakReference<GameWindow> reference in Attached)
+            {
+                if (reference.TryGetTarget(out GameWindow? window) && HandleOf(window) == handle)
+                {
+                    return window;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static IntPtr HandleOf(GameWindow window)
+    {
+        try
+        {
+            return window.Handle;
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or CNA.CnaException)
+        {
+            // A disposed game's window, not yet collected: its native handle is gone.
+            return IntPtr.Zero;
+        }
     }
 
     public abstract bool AllowUserResizing { get; set; }

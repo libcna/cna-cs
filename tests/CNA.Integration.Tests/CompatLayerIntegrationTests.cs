@@ -1140,6 +1140,39 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
     /// lifecycle callback has run. CNA lent its device only inside a callback, so the adapters
     /// failed there; the adapter routes take the game's own handle since C ABI 0.40.0 (CSX-111).
     /// </summary>
+    [Fact]
+    public void WindowsForms_FromHandleFindsTheGamesOwnForm()
+    {
+        // The XNA 4.0 Racing Game Kit's BaseGame constructor does exactly this to hide its form.
+        using var game = new FormInConstructorGame();
+        Assert.NotNull(game.FormInConstructor);
+        Assert.Same(game.FormInConstructor, System.Windows.Forms.Control.FromHandle(game.Window.Handle));
+        Assert.Equal(0.0, game.FormInConstructor!.Opacity);
+        Assert.Equal(System.Windows.Forms.FormBorderStyle.None, game.FormInConstructor.FormBorderStyle);
+        Assert.Null(System.Windows.Forms.Control.FromHandle(IntPtr.Zero));
+        Assert.Null(System.Windows.Forms.Control.FromHandle(game.Window.Handle + 1));
+
+        game.RunOneFrame();
+    }
+
+    private sealed class FormInConstructorGame : XnaGame
+    {
+        public FormInConstructorGame()
+        {
+            var graphics = new GraphicsDeviceManager(this);
+            graphics.PreferredBackBufferWidth = 320;
+            graphics.PreferredBackBufferHeight = 240;
+            FormInConstructor = (System.Windows.Forms.Form?)System.Windows.Forms.Form.FromHandle(Window.Handle);
+            if (FormInConstructor is not null)
+            {
+                FormInConstructor.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+                FormInConstructor.Opacity = -1;
+            }
+        }
+
+        public System.Windows.Forms.Form? FormInConstructor { get; }
+    }
+
     private sealed class AdapterInConstructorGame : XnaGame
     {
         public AdapterInConstructorGame()

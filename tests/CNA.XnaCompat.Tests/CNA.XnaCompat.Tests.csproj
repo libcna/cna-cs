@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\CNA.XnaCompat\CNA.XnaCompat.csproj" />
+    <ProjectReference Include="..\..\src\CNA.WindowsFormsCompat\CNA.WindowsFormsCompat.csproj" />
     <!-- XnaBinaryLibraryTests: a library compiled against XNA 4.0, and the XNA identities it names. -->
     <ProjectReference Include="..\..\src\XnaAssemblies\Microsoft.Xna.Framework\Microsoft.Xna.Framework.csproj" />
     <ProjectReference Include="..\..\src\XnaAssemblies\Microsoft.Xna.Framework.Game\Microsoft.Xna.Framework.Game.csproj" />

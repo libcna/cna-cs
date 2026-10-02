@@ -17,3 +17,7 @@ using System.Runtime.CompilerServices;
 // CNA.PhoneCompat is the opt-in Windows Phone SDK assembly: its PhoneApplicationService raises
 // Launching at the internal Game.Started (cna-cs CSX-097).
 [assembly: InternalsVisibleTo("CNA.PhoneCompat")]
+//
+// CNA.WindowsFormsCompat is the opt-in Windows Forms assembly: its Control.FromHandle finds a game's
+// window through the internal GameWindow.FromHandle.
+[assembly: InternalsVisibleTo("CNA.WindowsFormsCompat")]

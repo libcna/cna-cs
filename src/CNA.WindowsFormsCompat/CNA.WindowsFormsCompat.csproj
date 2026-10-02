@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>
+      Opt-in Windows Forms compatibility for XNA 4.0 game source: the part of System.Windows.Forms an
+      XNA game uses on its own window -- Control.FromHandle(Window.Handle) and the Form it returns,
+      and MessageBox. Under XNA every game window is a Windows Forms form; on .NET outside Windows
+      there is no Windows Forms to bind to. Kept out of CNA.XnaCompat so the strict
+      Microsoft.Xna.Framework facade carries no Windows Forms API; a game that needs it references
+      this assembly as well. It is never referenced where the real Windows Forms exists.
+    </Description>
+    <RootNamespace>System.Windows.Forms</RootNamespace>
+    <IsPackable Condition="'$(CnaPackageAcceptance)' != 'true'">false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CNA.XnaCompat\CNA.XnaCompat.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\CNA.XnaCompat\CNA.XnaCompat.csproj" />
     <ProjectReference Include="..\..\src\CNA.PhoneCompat\CNA.PhoneCompat.csproj" />
+    <ProjectReference Include="..\..\src\CNA.WindowsFormsCompat\CNA.WindowsFormsCompat.csproj" />
     <!--
       Referencing CNA.Interop directly does not violate invariant 5 ("CNA.XnaCompat never
       references CNA.Interop"); that governs the shipping assemblies. This project needs it for

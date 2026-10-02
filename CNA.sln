@@ -89,6 +89,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNA.BrowserCompat.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNA.XnaCompat.Generators", "src\CNA.XnaCompat.Generators\CNA.XnaCompat.Generators.csproj", "{2FFFD87E-90C0-4F69-8D60-3CCC99381F8E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CNA.WindowsFormsCompat", "src\CNA.WindowsFormsCompat\CNA.WindowsFormsCompat.csproj", "{1852A2F9-8246-49A7-82AF-0FB0CBC354A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -239,6 +241,10 @@ Global
 		{2FFFD87E-90C0-4F69-8D60-3CCC99381F8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2FFFD87E-90C0-4F69-8D60-3CCC99381F8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2FFFD87E-90C0-4F69-8D60-3CCC99381F8E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1852A2F9-8246-49A7-82AF-0FB0CBC354A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1852A2F9-8246-49A7-82AF-0FB0CBC354A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1852A2F9-8246-49A7-82AF-0FB0CBC354A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1852A2F9-8246-49A7-82AF-0FB0CBC354A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -278,6 +284,7 @@ Global
 		{D4B99F43-D3A3-4A22-97E2-A2919EAA5966} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
 		{7D2C3D4C-2A16-4CBE-9F69-2A98ECB73C2D} = {0B4A16A4-71B3-4603-BD4F-8B4325ABC15F}
 		{2FFFD87E-90C0-4F69-8D60-3CCC99381F8E} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
+		{1852A2F9-8246-49A7-82AF-0FB0CBC354A5} = {29C9B97D-7CEB-4ED1-8ED9-9B0BA7C45CF9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {99B27873-E001-4C1E-B5E4-777769287C5A}
