@@ -20,6 +20,14 @@
     <CnaBrowserNativeArchive Condition="'$(CnaBrowserNativeArchive)' == ''">$(MSBuildThisFileDirectory)../../build-consumer/cna-native-browser-wasm/cna-native.a</CnaBrowserNativeArchive>
   </PropertyGroup>
 
+  <!-- XNA StorageDevice's backing store in a browser: CNA mounts IDBFS at /cna-storage before Main
+       from a pre-js staged beside the archive; without it every OpenContainer refuses with
+       "Persistent browser storage is unavailable". -->
+  <PropertyGroup>
+    <_CnaBrowserStoragePreJs>$([System.IO.Path]::GetDirectoryName('$(CnaBrowserNativeArchive)'))/WebStoragePre.js</_CnaBrowserStoragePreJs>
+    <EmccExtraLDFlags Condition="Exists('$(_CnaBrowserStoragePreJs)')">$(EmccExtraLDFlags) -lidbfs.js --pre-js &quot;$(_CnaBrowserStoragePreJs)&quot;</EmccExtraLDFlags>
+  </PropertyGroup>
+
   <ItemGroup>
     <NativeFileReference Include="$(CnaBrowserNativeArchive)" />
     <!-- The content manager creates readers by reflection from the type names an XNB declares,

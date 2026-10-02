@@ -133,6 +133,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-112 | `GraphicsDeviceManager.GraphicsDevice` (and `Game.GraphicsDevice` with a device service) is null until the device exists, as in XNA | done |
 | CSX-113 | A content asset's directories resolve ignoring case, as CNA's native loader does (`models\Cube` for `Models/Cube.xnb`) | done (cna-cs `7780921`); found by the Racing Game Kit |
 | CSX-114 | Opt-in `CNA.WindowsFormsCompat`: `Control`/`Form.FromHandle(Window.Handle)` (the game window's form, null otherwise), `FormBorderStyle` applied through CNA's borderless window route (`137f954`, imports 1413 -> 1415), `Opacity` kept but not applied (no window-opacity service), `MessageBox` to stderr answering with its first button (CNA's native dialog needs a live game, and XNA games show it once theirs failed to start); games opt in with `<CnaWindowsFormsCompat>` | done (cna-cs `ff08b93`, `137f954`); found by the Racing Game Kit |
+| CSX-115 | XNA `StorageDevice` in every browser bundle: CNA's IDBFS pre-js (`WebStoragePre.js`) is staged beside the archive and linked, which it never was -- every `OpenContainer` refused "Persistent browser storage is unavailable" | done; found by escape-from-enceladus |
 
 ### P9 -- portability
 

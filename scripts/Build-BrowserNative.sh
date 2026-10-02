@@ -62,6 +62,9 @@ cmake --build "$build" --target cna_c_api_static -j8
 stage="$here/build-consumer/cna-native-browser-wasm"
 mkdir -p "$stage"
 cp "$build/modules/c-api/libcna_c_api_static.a" "$stage/cna-native.a"
+# XNA StorageDevice's browser backing store: an IDBFS mount made before main() by CNA's own pre-js
+# (modules/storage/src/WebStoragePre.js), which the .NET link adds (eng/browser/CNA.Browser.targets).
+cp "$cna_root/modules/storage/src/WebStoragePre.js" "$stage/WebStoragePre.js"
 {
     echo "CNA WebGL2 C API for a .NET browser app"
     echo "staged: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
