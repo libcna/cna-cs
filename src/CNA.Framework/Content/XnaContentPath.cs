@@ -120,16 +120,14 @@ internal static class XnaContentPath
         // Probed where the file is, not where the process happens to be: XNA's
         // ContentManager.OpenStream reads a relative content path through TitleContainer, so a
         // relative root is the title's (XNA IL). The answer keeps the caller's relative form, which
-        // is what TitleContainer.OpenStream takes; only a re-cased file name is carried over.
-        string onDisk = ToTitlePath(exact);
-        if (File.Exists(onDisk))
-        {
-            return exact;
-        }
-        string matched = MatchIgnoringCase(onDisk);
-        return ReferenceEquals(matched, onDisk)
-            ? exact
-            : Path.Combine(Path.GetDirectoryName(exact) ?? string.Empty, Path.GetFileName(matched));
+        // is what TitleContainer.OpenStream takes.
+        //
+        // XNA games are written against a case-insensitive filesystem and rely on it, in the file
+        // name (CSSAMPLE-022 Pathfinding asks for "map1" and ships Map1.xnb) and in the directories
+        // (the Racing Game Kit asks for "models\Cube" where XNA's build wrote Models/Cube.xnb).
+        // CNA's native content manager walks every component ignoring case, so the managed side
+        // does the same; the exact path is tried first, so a correctly-cased game never scans.
+        return File.Exists(ToTitlePath(exact)) ? exact : ToHostPath(exact, AppContext.BaseDirectory);
     }
 
     /// <summary>
@@ -155,7 +153,7 @@ internal static class XnaContentPath
     /// (the working directory when null: what <c>Path.GetFullPath</c>, and so XNA's audio
     /// classes, resolve it against). A path that matches nothing comes back separator-normalized
     /// and otherwise unchanged, so the caller's own not-found error names it. Ties between
-    /// entries differing only in case go to the ordinal-first, as in <see cref="MatchIgnoringCase"/>.
+    /// entries differing only in case go to the ordinal-first.
     /// </summary>
     internal static string ToHostPath(string path, string? baseDirectory = null)
     {
@@ -211,50 +209,5 @@ internal static class XnaContentPath
 
         string joined = string.Join(Path.DirectorySeparatorChar, resolved);
         return rooted ? Path.Combine(start, joined) : joined;
-    }
-
-    /// <summary>
-    /// The file whose name differs from <paramref name="exact"/> only in case, or
-    /// <paramref name="exact"/> itself when there is none.
-    ///
-    /// XNA games are written against a case-INSENSITIVE filesystem and rely on it. The XNA sample
-    /// collection does so casually: `cna-cs-samples` CSSAMPLE-022 Pathfinding ships `Map1.xnb`
-    /// through `Map4.xnb` and asks for <c>"map1"</c>, which is correct on Windows and on Xbox 360
-    /// and fails on this host with "Could not open content asset 'map1'".
-    ///
-    /// CNA's own native content manager already resolves this way -- the C++ port of that sample
-    /// loads the same files under the same names -- so this is the managed side matching the
-    /// runtime it binds, not a new policy.
-    ///
-    /// The exact path is tried first and costs one <c>File.Exists</c>, so a correctly-cased game
-    /// never reaches the directory scan. When several files differ only in case, the ordinal-first
-    /// one wins: an arbitrary tie-break, but a deterministic one, and the situation cannot arise on
-    /// the filesystems these games were authored for.
-    /// </summary>
-    private static string MatchIgnoringCase(string exact)
-    {
-        string? directory = Path.GetDirectoryName(exact);
-        if (string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
-        {
-            return exact;
-        }
-
-        string wanted = Path.GetFileName(exact);
-        string? match = null;
-
-        foreach (string candidate in Directory.EnumerateFiles(directory))
-        {
-            if (!string.Equals(Path.GetFileName(candidate), wanted, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (match is null || string.CompareOrdinal(candidate, match) < 0)
-            {
-                match = candidate;
-            }
-        }
-
-        return match ?? exact;
     }
 }

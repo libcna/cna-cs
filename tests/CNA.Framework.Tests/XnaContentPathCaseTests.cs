@@ -66,6 +66,16 @@ public class XnaContentPathCaseTests : IDisposable
     }
 
     [Fact]
+    public void ADirectoryThatDiffersOnlyInCaseResolvesToo()
+    {
+        // The Racing Game Kit asks for "models\Cube"; XNA's own build wrote Models/Cube.xnb.
+        string onDisk = Write(Path.Combine("Models", "Cube.xnb"));
+
+        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, @"models\Cube", ".xnb"));
+        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, @"MODELS\cube", ".xnb"));
+    }
+
+    [Fact]
     public void AMissingAssetStillReturnsTheExactPathSoTheErrorNamesWhatWasAskedFor()
     {
         string expected = Path.Combine(_root, "absent.xnb");
