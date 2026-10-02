@@ -148,6 +148,37 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
 
+### 2026-10-02 -- five Microsoft samples outside the gallery; CSX-118/119, CNA CBIND-152
+
+CNA `c77f983b1` (+ the GS-AUDIT merge `46d55fa26` before it), CNA.NET `df752a2`, cna-cs-samples
+`c491dbb`. Microsoft XNA 4.0 samples with original trees and XNA-built content in cna-samples but no
+C++ port run as `games/` (the owner agreed): Network Prediction, Peer to Peer, Network Game State
+Management, Memory Madness, Saving Embedded Images. All five compile unchanged and play on the
+Linux desktop. What they found:
+
+1. Glue (cna-cs-samples): the games glue took only `Compile` items from a game's project; it now also
+   embeds its `.resx` under XNA's manifest name and copies the Content/None files its build copied
+   (NGSM's `MissingManifestResourceException`, Saving Embedded Images' missing `GameProjectImage.jpg`).
+2. CNA CBIND-152 / CSX-118 (ABI 0.41.0): NGSM's `LoadingScreen` joins, from `Update`, the thread
+   that draws its loading animation through the `GraphicsDevice`; that thread's calls waited for the
+   next `Update`, so both waited forever (a CDP-free diagnosis this time: `gdb` showed the game
+   thread in coreclr's wait, the source showed the `Join`). A probe confirmed .NET calls
+   `SynchronizationContext.Wait` for `Thread.Join`, wait handles, `Monitor.Wait` and
+   `ManualResetEventSlim` on Linux; the game thread's context now runs both queues between 2 ms
+   slices of every wait. Drawing from the worker happens while the game thread waits, not while it
+   computes (XNA ran it concurrently).
+3. CSX-119: a Windows Phone title's Guide keyboard prompt and message box needed no
+   GamerServicesComponent (Saving Embedded Images has none; Windows XNA needs the dispatcher, its
+   IL shows); `MediaLibrary.SavePicture` that cannot save throws the phone's
+   `InvalidOperationException` (Windows XNA throws `NotSupportedException` always).
+
+Input lessons: xdotool `key` is a tap a polled Guide misses (hold Escape); `type` swallows the rest
+of a chained command line; the Guide ignores input while it signs a player in. Known, unchanged: a
+game blocked in a Guide `End*` wait (CNA's modal frames) does not see CSX-084's SIGTERM request
+until the Guide closes. Threaded browser subset: 16 representative gallery rows pass as
+multithreaded bundles (`browser-requalify.sh --threads`). Tests: Framework 650/650, XnaCompat
+299/299, integration 234/234, GamerServices 24/24, api-compat 0; CNA `^CApi` 119/119, C API gates 9/9.
+
 ### 2026-10-02 -- CSX-115/116/117: games that start threads, in a browser; CNA CBIND-151
 
 CNA `cde2251fa`, CNA.NET `e550614`, cna-cs-samples `fe1d8d6`. Five real games start threads, which a
