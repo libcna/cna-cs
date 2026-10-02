@@ -2,7 +2,9 @@ namespace Microsoft.Xna.Framework.Input;
 
 public static class Mouse
 {
-    public static MouseState GetState() => new(CNA.Input.Mouse.GetState());
+    /// <summary>The mouse; before a game exists, released buttons at the origin, as for
+    /// <see cref="Keyboard.GetState()"/> (CSX-123).</summary>
+    public static MouseState GetState() => InputBeforeGame.HasGame ? new(CNA.Input.Mouse.GetState()) : default;
 
     /// <summary>Matches real XNA's <c>SetPosition</c>. Landed with the CNA-side member -- see
     /// <see cref="CNA.Input.Mouse.SetPosition"/> for how it came to be missing.</summary>

@@ -1244,6 +1244,47 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         Assert.Equal(240, game.ViewportInUpdate.Height);
     }
 
+    /// <summary>
+    /// dsplaisted/Disentanglement keeps <c>Keyboard.GetState()</c> as a field initializer, which runs
+    /// before the Game constructor and so before any CNA game exists (cna-cs CSX-123). XNA answered
+    /// from the thread's key state: nothing pressed. Once the game runs, input reads through it.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_ReadsInputInAFieldInitializer()
+    {
+        using var game = new InputInFieldInitializerGame();
+        Assert.Empty(game.KeyboardBeforeConstructor.GetPressedKeys());
+        Assert.False(game.PadBeforeConstructor.IsConnected);
+
+        game.RunOneFrame();
+
+        Assert.True(game.ReadInputInUpdate);
+    }
+
+    private sealed class InputInFieldInitializerGame : XnaGame
+    {
+        public readonly KeyboardState KeyboardBeforeConstructor = Keyboard.GetState();
+        public readonly GamePadState PadBeforeConstructor = GamePad.GetState(PlayerIndex.One);
+        public readonly MouseState MouseBeforeConstructor = Mouse.GetState();
+
+        public InputInFieldInitializerGame()
+        {
+            var graphics = new GraphicsDeviceManager(this);
+            graphics.PreferredBackBufferWidth = 320;
+            graphics.PreferredBackBufferHeight = 240;
+        }
+
+        public bool ReadInputInUpdate { get; private set; }
+
+        protected override void Update(GameTime gameTime)
+        {
+            _ = Keyboard.GetState();
+            _ = Mouse.GetState();
+            ReadInputInUpdate = true;
+            base.Update(gameTime);
+        }
+    }
+
     private sealed class ApplyChangesInConstructorGame : XnaGame
     {
         public ApplyChangesInConstructorGame()

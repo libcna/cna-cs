@@ -2,13 +2,17 @@ namespace Microsoft.Xna.Framework.Input;
 
 public static class GamePad
 {
+    /// <summary>The controller; before a game exists, a disconnected one, as for
+    /// <see cref="Keyboard.GetState()"/> (CSX-123).</summary>
     public static GamePadState GetState(PlayerIndex playerIndex) =>
-        AsThePhone(playerIndex, new(CNA.Input.GamePad.GetState((CNA.PlayerIndex)(int)playerIndex)));
+        !InputBeforeGame.HasGame ? default
+            : AsThePhone(playerIndex, new(CNA.Input.GamePad.GetState((CNA.PlayerIndex)(int)playerIndex)));
 
     /// <summary>Matches real XNA's <c>GetState(PlayerIndex, GamePadDeadZone)</c>.</summary>
     public static GamePadState GetState(PlayerIndex playerIndex, GamePadDeadZone deadZoneMode) =>
-        AsThePhone(playerIndex, new(CNA.Input.GamePad.GetState(
-            (CNA.PlayerIndex)(int)playerIndex, (CNA.Input.GamePadDeadZone)(int)deadZoneMode)));
+        !InputBeforeGame.HasGame ? default
+            : AsThePhone(playerIndex, new(CNA.Input.GamePad.GetState(
+                (CNA.PlayerIndex)(int)playerIndex, (CNA.Input.GamePadDeadZone)(int)deadZoneMode)));
 
     // Player one of a Windows Phone title off a phone is the phone (PhoneTitle, cna-cs CSX-095).
     private static GamePadState AsThePhone(PlayerIndex playerIndex, GamePadState state) =>
