@@ -77,7 +77,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-051 | Generated inventory: gallery (`samples.libcna.com`) x C++ evidence (`/rv/tmp/samples`) x original source (`/rv/tmp/XNAGameStudio/Samples`) | done (cna-cs-samples 4ebd96c): 84 gallery samples |
 | CSX-052 | Update obsolete cna-cs-samples policy (read-only CNA, stop-for-owner) | done (cna-cs-samples 26d06c1) |
 | CSX-053.. | One task per eligible sample: unchanged source, XNB content, Debug/Release, run, controls, clean exit, pixel comparison | 83 of 84 rows ✅, CSSAMPLE-071 Yacht 🛑 owner decision (cna-cs-samples plan.md, 2026-10-01) |
-| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 24 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) and Jomata's Mahjong (which found CNA CBIND-147/148) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video) |
+| CSX-104 | Real XNA 4.0 games beyond the gallery, unchanged (cna-cs-samples `games/`) | done on the Linux desktop: 25 games run -- Speedy Blupi, Rookie Drivers, TIE Fighter Forever, Resonance, Microsoft's Solitaire and Moto Trial Racer, NePlus, the XNASidescroller, Virulent, Kosmic Warz, Dominó Tropical, A Princess' Request, Swf2XNA's My Big Head and Playing in Traffic, Escape From Enceladus (2026-10-02, after CNA FX-141, CSX-109 and CSX-110), __Defense (after CNA CBIND-145, CSX-111 and CSX-112), Missile Command, a Super Mario World demo, a Zelda clone, Bubble Bound, Spineless (after CNA CBIND-146) Jomata's Mahjong (which found CNA CBIND-147/148) and the XNA 4.0 Racing Game Kit (to its attract mode; CSX-113, CSX-114, CNA FX-142) play or reach their menus; HeliumBiker (Wii Remote), Zombie Smashers and Playing in Traffic (Xbox 360 gamepad) wait for the controller they read, as on Windows without one. Content their repositories ship, or built from their own content projects by XNA's BuildContent under Wine (songs and videos as labelled stand-ins); prebuilt XNA libraries run through CSX-099. Four XNA builds compared with XNA under Wine (title frames 8 px to 0.32%). Nineteen recorded with the reason outside XNA (Snails' published source builds on no platform; two need commercial fonts; one needs its defunct server) (Windows API, Windows Forms, Silverlight, files their repositories do not ship). Found CSX-105/106/107 and CNA Task 1120, CBIND-142. In a browser 14 of the 16 reach their title or play (NePlus and Princess Request after generator fixes; Resonance its menu, its levels load on a thread); HeliumBiker starts a thread (single-threaded WebAssembly) and Playing in Traffic plays a video (no video backend in the browser build). On Android 15 of the 16 run on the emulator (Playing in Traffic stops at the same refusal of its video) |
 
 ### P7 -- browser
 
@@ -131,6 +131,8 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-110 | `List<T>.ForEach` as the .NET Framework 4.0 that XNA games target ran it, by compile-time interception | done |
 | CSX-111 | ABI 0.40.0: the graphics adapters answer in a game's constructor (CNA CBIND-145) | done |
 | CSX-112 | `GraphicsDeviceManager.GraphicsDevice` (and `Game.GraphicsDevice` with a device service) is null until the device exists, as in XNA | done |
+| CSX-113 | A content asset's directories resolve ignoring case, as CNA's native loader does (`models\Cube` for `Models/Cube.xnb`) | done (cna-cs `7780921`); found by the Racing Game Kit |
+| CSX-114 | Opt-in `CNA.WindowsFormsCompat`: `Control`/`Form.FromHandle(Window.Handle)` (the game window's form, null otherwise), `Form.Opacity`/`FormBorderStyle` kept but not applied, `MessageBox` to stderr answering with its first button; games opt in with `<CnaWindowsFormsCompat>` | done (cna-cs `ff08b93`); found by the Racing Game Kit |
 
 ### P9 -- portability
 
@@ -140,6 +142,43 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-02 -- the XNA 4.0 Racing Game Kit; CSX-113, CSX-114, CNA FX-142
+
+Source `/rv/tmp/XNAGameStudio/Samples/XNA-4-Racing-Game-Kit-master/RacingGameWindows1/RacingGame/RacingGame`
+(identical to cna-samples SAMPLE-152 `xna4-original`), unchanged; content is SAMPLE-152's
+`evidence/xna4-authentic-build/Debug/Content`, its own content project built by XNA 4.0 on Windows.
+cna-cs-samples `games/RacingGame` (`2c3058c`). In order of discovery:
+
+1. It does not compile on Linux: `System.Windows.Forms` (`Form.FromHandle(Window.Handle)` to hide its
+   form while loading; `MessageBox` when it cannot start). CSX-114 adds the opt-in subset.
+2. `ContentLoadException` for `Content\models\Cube`: XNA's build wrote `Models/Cube.xnb`. Native CNA
+   resolves every path component ignoring case; the managed model probe re-cased only the file name.
+   CSX-113 (`XnaContentPathCaseTests.ADirectoryThatDiffersOnlyInCaseResolvesToo` fails without it).
+3. "Begin cannot be called again" from its render loop, which catches and logs to
+   `IsolatedStorage/.../Log.txt`: the first logged error was a compiled-effect link failure on
+   OPENGLES3, "fragment shader input `io_10_0' has no matching output". `MESA_GLSL=dump` showed a
+   centroid/plain name mismatch, not an unmatched input: MojoShader's link-time centroid rule ignored
+   the pixel shader's Shader Model, so a ps_1_x pass reading COLOR0 met a vertex shader writing
+   `cna_centroid_10_0`. CNA FX-142 (`fb5cb3ba2`, a final pinned MojoShader patch); CNA's own
+   `EasyGLCompiledEffectTest.AuthenticXna4LegacyPassBindsSamplersAndSurvivesClone`, which loads this
+   game's normal-mapping effect, failed before it and passes after.
+
+Then it loads for about 40 s, switches to full screen (its saved default) and runs its attract mode --
+the city and mountain track flown with the car, shadows, "Press START to continue" -- with no error
+in its own log (`/rv/tmp/cs-samples/games-racing-final/`). **Not verified**: its menu and a race. Space
+(its continue key), a click and Enter did not reach it after the full-screen switch under
+capture-sample (SDL logs "Time out elapsed after mode switch ... no window becoming fullscreen;
+reverting" and the original window id disappears); focusing the window found by name did not help.
+Whether that is the harness (Xvfb without a window manager) or CNA's full-screen path is not known.
+Not compared with the C++ port's frames (its reference is OPENGL33) and not tried in a browser or on
+Android.
+
+Also found: CBIND-148's new test raised SDL references past the non-production budget and the next
+reconfigure failed; CNA `836b796ae` uses `IPlatformMouse::SetGlobalPosition` and budgets the rest.
+`ctest -R EasyGLCompiledEffect` on OPENGLES3: 679/686; the seven failures are identical with FX-142
+removed (five `sampler3D` without a precision qualifier, the two shared vertex-sampler contracts,
+`FlippedSourceRetainsFormatAndFullFloatPrecision` aborting).
 
 ### 2026-10-02 -- Spineless and Mahjong; CNA CBIND-146/147/148
 
