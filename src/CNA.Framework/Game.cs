@@ -1172,6 +1172,7 @@ public class Game : IDisposable
 
         try
         {
+            game.ThrowPendingEventFailure();
             GameThread.RunPending();
             game.Update(GameTime.FromNative(*gameTime));
             return CnaResult.Success;
@@ -1179,6 +1180,20 @@ public class Game : IDisposable
         catch (Exception ex)
         {
             return game.ReportCallbackFailure(outError, ex);
+        }
+    }
+
+    /// <summary>
+    /// A game event's handler that threw -- an <c>OnActivated</c>, raised as the run begins or as a
+    /// frame pumps window events -- fails the next Update with that exception, which then leaves
+    /// <see cref="Run"/> as XNA's did. The native callback it ran in cannot carry it, and keeping it
+    /// silent left a game half set up (CSX-125).
+    /// </summary>
+    private void ThrowPendingEventFailure()
+    {
+        foreach (NativeEventBridge? bridge in _eventBridges)
+        {
+            bridge?.ThrowPendingException();
         }
     }
 

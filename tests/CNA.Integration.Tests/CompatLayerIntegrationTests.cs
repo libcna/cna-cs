@@ -1261,6 +1261,81 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         Assert.True(game.ReadInputInUpdate);
     }
 
+    /// <summary>
+    /// A game is activated when its run starts, on the game thread with its device at hand: XNA's
+    /// form was activated as it was shown. Charles Petzold's PhreeCell deals its cards and sizes
+    /// its table from OnActivated, reading the viewport, and drew nothing while CNA refused the
+    /// device there (C ABI 0.44.0, cna-cs CSX-125).
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_IsActivatedWhenItsRunStarts_WithItsDevice()
+    {
+        using var game = new ActivationGame();
+        game.Run();
+
+        Assert.Equal(1, game.ActivatedBeforeFirstDraw);
+        Assert.True(game.DeviceWhenActivated);
+        Assert.Equal(240, game.ViewportHeightWhenActivated);
+    }
+
+    /// <summary>
+    /// What OnActivated throws leaves Run, as it did from XNA's; the native event's callback has no
+    /// error channel, and the failure used to vanish there (CSX-125).
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_AnOnActivatedThatThrows_FailsTheRun()
+    {
+        using var game = new ActivationGame { ThrowWhenActivated = true };
+        var thrown = Assert.ThrowsAny<Exception>(() => game.Run());
+        Assert.Contains("activation failed", thrown.ToString());
+    }
+
+    private sealed class ActivationGame : XnaGame
+    {
+        private int _activated;
+        private int _draws;
+
+        public ActivationGame()
+        {
+            var graphics = new GraphicsDeviceManager(this);
+            graphics.PreferredBackBufferWidth = 320;
+            graphics.PreferredBackBufferHeight = 240;
+        }
+
+        public int ActivatedBeforeFirstDraw { get; private set; } = -1;
+
+        public bool DeviceWhenActivated { get; private set; }
+
+        public int ViewportHeightWhenActivated { get; private set; }
+
+        public bool ThrowWhenActivated { get; init; }
+
+        protected override void OnActivated(object sender, EventArgs args)
+        {
+            _activated++;
+            DeviceWhenActivated = GraphicsDevice is not null;
+            if (ThrowWhenActivated)
+            {
+                throw new InvalidOperationException("activation failed");
+            }
+            ViewportHeightWhenActivated = GraphicsDevice!.Viewport.Height;
+            base.OnActivated(sender, args);
+        }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            if (_draws++ == 0)
+            {
+                ActivatedBeforeFirstDraw = _activated;
+            }
+            if (_draws > 3 || ThrowWhenActivated && _draws > 30)
+            {
+                Exit();
+            }
+            base.Draw(gameTime);
+        }
+    }
+
     private sealed class InputInFieldInitializerGame : XnaGame
     {
         public readonly KeyboardState KeyboardBeforeConstructor = Keyboard.GetState();

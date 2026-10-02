@@ -12,13 +12,13 @@ permissions:
 env:
   DOTNET_NOLOGO: "1"
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  # The CNA generation this binding is written against: ABI 0.43.0 on the `next` branch, at the
-  # commit whose sound effects play from any thread (CBIND-154); it also carries CBIND-128..153. Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails
+  # The CNA generation this binding is written against: ABI 0.44.0 on the `next` branch, at the
+  # commit whose activation handlers can use the device (CBIND-155); it also carries CBIND-128..154. Pin it. `next` moves, and a header tree ahead of the reviewed matrix fails
   # the ABI gates by design -- which is the gates working, and not something to fix by tracking the branch.
-  CNA_UPSTREAM_COMMIT: 23d7bad1e19793e3197ef3d20ff912d866ea6f4c
-  # The generation the reviewed matrix accepted immediately before this one (0.42.0). The upstream
+  CNA_UPSTREAM_COMMIT: ed885a8ae5175c65c9e2ad9fd0124d0b8332f3d5
+  # The generation the reviewed matrix accepted immediately before this one (0.43.0). The upstream
   # diff gate measures forward from here, which is what the ABI policy asks for.
-  CNA_PREVIOUS_ACCEPTED_COMMIT: 938a2206967eec5644ba9d8b327689061d7edbd7
+  CNA_PREVIOUS_ACCEPTED_COMMIT: 23d7bad1e19793e3197ef3d20ff912d866ea6f4c
   CNA_PACKAGE_VERSION: 0.1.0-ci.${{ github.run_number }}
 
 jobs:

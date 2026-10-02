@@ -143,6 +143,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-122 | `Assembly.LoadFile` as .NET Framework loaded a file, once, by compile-time interception: LoadFile of a file the application loaded, or would load for that name, is that assembly (measured on .NET Framework 4 under Wine, both orders); .NET loads a second copy | done: jacobdufault/forge-sample loads its own `GameLogic.dll` that way and then draws its paddles and balls |
 | CSX-123 | XNA's static `Keyboard`/`Mouse`/`GamePad.GetState` answer before a game exists (a field initializer runs before the `Game` constructor): nothing pressed, no controller connected, as XNA's thread key state had no window yet | done: dsplaisted/Disentanglement keeps its previous keyboard state that way and then shows its solver's puzzle |
 | CSX-124 | ABI 0.43.0: a game's own thread plays sound effects directly (CNA CBIND-154), as XNA's `SoundEffect.Play` answered on any thread -- a queued play waited forever for a game thread that spins on the worker | done: stpettersens/21's blackjack shuffles on its thread with the shuffle sound, then deals |
+| CSX-125 | ABI 0.44.0: `OnActivated` runs with the game's device usable (CNA CBIND-155: activation handlers inside a callback scope), and what a game event's handler throws leaves `Run` at the next Update instead of vanishing in the native callback | done: Charles Petzold's PhreeCell deals and sizes its table in `OnActivated` |
 
 ### P9 -- portability
 
