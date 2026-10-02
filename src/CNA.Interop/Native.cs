@@ -106,6 +106,12 @@ internal static partial class Native
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_set_foreign_thread_calls_ext(CnaHandle game, byte enabled);
 
+    /// <summary>Matches <c>cna_game_run_foreign_thread_calls_ext</c> (ABI 0.41.0): the game thread
+    /// runs the calls other threads queued for it now, while it waits for them, rather than at the
+    /// start of its next update or draw.</summary>
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_game_run_foreign_thread_calls_ext(CnaHandle game);
+
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_request_exit(CnaHandle game);
 

@@ -136,6 +136,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-115 | XNA `StorageDevice` in every browser bundle: CNA's IDBFS pre-js (`WebStoragePre.js`) is staged beside the archive and linked, which it never was -- every `OpenContainer` refused "Persistent browser storage is unavailable" | done; found by escape-from-enceladus |
 | CSX-116 | A game that starts threads, in a browser: a `WasmEnableThreads` bundle links CNA's shared-memory build (`Build-BrowserNative.sh --threads`), takes its frames from Emscripten's main loop on .NET's deputy thread (so the page's input reaches it between frames), and preloads 16 workers -- .NET 11 never starts a thread on a worker it creates after `Main` | done in headless Chromium: escape-from-enceladus, Missile Command, the Racing Game Kit (attract mode), AimingSample; CNA CBIND-151 |
 | CSX-117 | A threaded bundle's worker pool scales with the processors its game sees (3 per processor + 8): XNA games size their own threads by `Environment.ProcessorCount`, and Resonance's physics starts two per processor | done in headless Chromium: Resonance loads its level on its thread and plays (32 physics threads on a 16-core host) |
+| CSX-118 | ABI 0.41.0: a game thread that waits for a worker runs the calls the worker queued for it (CNA CBIND-152) -- XNA's loading screens join the thread that draws their animation from `Update` | done: Network Game State Management reaches its gameplay screen; integration `AGameThreadThatJoinsAWorkerFromUpdate_RunsTheWorkersDrawing` |
 
 ### P9 -- portability
 

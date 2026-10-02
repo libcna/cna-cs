@@ -10,8 +10,12 @@ namespace CNA;
 /// such calls here: the caller blocks while the game thread runs the call at the start of its next
 /// Update or Draw, and the frame goes on drawing the loading screen around it.
 ///
-/// A game thread that blocks waiting for that worker (a <c>Join</c> in <c>Update</c>) deadlocks,
-/// as it would under FNA's equivalent; XNA did not need the game thread for the load.
+/// A game thread that blocks waiting for that worker -- XNA's loading screens join the thread that
+/// draws their animation from <c>Update</c> -- runs the queued calls while it waits: the game
+/// thread's <see cref="SynchronizationContext"/> asks to be told of its waits, which .NET does for
+/// <c>Thread.Join</c>, wait handles, <c>Monitor.Wait</c> and <c>ManualResetEventSlim</c>, and runs
+/// this queue and native CNA's (<c>cna_game_run_foreign_thread_calls_ext</c>) between short waits.
+/// XNA ran the worker's calls concurrently; here they run while the game thread waits.
 /// </summary>
 internal static class GameThread
 {
@@ -22,6 +26,7 @@ internal static class GameThread
     private static readonly object Gate = new();
     private static readonly Queue<Call> Pending = new();
     private static int _ownerThreadId;
+    private static WaitingContext? _waitingContext;
 
     /// <summary>Whether the caller can use CNA's handles directly: it is the game thread, or no
     /// game exists to dispatch to.</summary>
@@ -82,8 +87,18 @@ internal static class GameThread
     internal static TResult Invoke<TState, TResult>(Func<TState, TResult> work, TState state) =>
         Invoke(() => work(state));
 
-    /// <summary>The calling thread created a game: from now on it is the game thread.</summary>
-    internal static void Enter() => Volatile.Write(ref _ownerThreadId, Environment.CurrentManagedThreadId);
+    /// <summary>The calling thread created a game: from now on it is the game thread. Its waits run
+    /// the queued calls, <paramref name="runNativeCalls"/> included. Not in a browser, whose
+    /// runtime owns the game thread's synchronization context.</summary>
+    internal static void Enter(Action runNativeCalls)
+    {
+        Volatile.Write(ref _ownerThreadId, Environment.CurrentManagedThreadId);
+        if (!OperatingSystem.IsBrowser())
+        {
+            _waitingContext = new WaitingContext(SynchronizationContext.Current, runNativeCalls);
+            SynchronizationContext.SetSynchronizationContext(_waitingContext);
+        }
+    }
 
     /// <summary>The game thread's game is gone: calls still waiting fail instead of waiting for a
     /// frame that will not come.</summary>
@@ -97,6 +112,16 @@ internal static class GameThread
             }
 
             Volatile.Write(ref _ownerThreadId, 0);
+            if (_waitingContext is { } waiting)
+            {
+                if (ReferenceEquals(SynchronizationContext.Current, waiting))
+                {
+                    SynchronizationContext.SetSynchronizationContext(waiting.Inner);
+                }
+
+                _waitingContext = null;
+            }
+
             while (Pending.TryDequeue(out Call? call))
             {
                 call.Fail(new InvalidOperationException("The game ended before the game thread could run this call."));
@@ -139,6 +164,86 @@ internal static class GameThread
             }
 
             call.Run();
+        }
+    }
+
+    /// <summary>The game thread's synchronization context: it posts and sends as the context it
+    /// replaced did, and runs the queued calls between short slices of every wait.</summary>
+    private sealed class WaitingContext : SynchronizationContext
+    {
+        private const int Slice = 2;
+        private const int WaitTimeout = 0x102;
+
+        [ThreadStatic]
+        private static bool t_running;
+
+        private readonly Action _runNativeCalls;
+
+        public WaitingContext(SynchronizationContext? inner, Action runNativeCalls)
+        {
+            Inner = inner;
+            _runNativeCalls = runNativeCalls;
+            SetWaitNotificationRequired();
+        }
+
+        public SynchronizationContext? Inner { get; }
+
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            if (Inner is not null)
+            {
+                Inner.Post(d, state);
+            }
+            else
+            {
+                base.Post(d, state);
+            }
+        }
+
+        public override void Send(SendOrPostCallback d, object? state)
+        {
+            if (Inner is not null)
+            {
+                Inner.Send(d, state);
+            }
+            else
+            {
+                base.Send(d, state);
+            }
+        }
+
+        public override SynchronizationContext CreateCopy() => this;
+
+        public override int Wait(IntPtr[] waitHandles, bool waitAll, int millisecondsTimeout)
+        {
+            // A call that waits while it runs waits plainly: the queue is already being run.
+            if (t_running || Environment.CurrentManagedThreadId != Volatile.Read(ref _ownerThreadId))
+            {
+                return WaitHelper(waitHandles, waitAll, millisecondsTimeout);
+            }
+
+            bool forever = millisecondsTimeout == Timeout.Infinite;
+            long deadline = Environment.TickCount64 + (forever ? 0 : millisecondsTimeout);
+            while (true)
+            {
+                t_running = true;
+                try
+                {
+                    RunPending();
+                    _runNativeCalls();
+                }
+                finally
+                {
+                    t_running = false;
+                }
+
+                int slice = forever ? Slice : (int)Math.Clamp(deadline - Environment.TickCount64, 0, Slice);
+                int result = WaitHelper(waitHandles, waitAll, slice);
+                if (result != WaitTimeout || (!forever && Environment.TickCount64 >= deadline))
+                {
+                    return result;
+                }
+            }
         }
     }
 

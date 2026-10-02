@@ -177,6 +177,80 @@ public class CompatWorkerThreadTests
     }
 
     /// <summary>
+    /// Microsoft's Network Game State Management sample: its LoadingScreen starts a thread that draws
+    /// the loading animation through the GraphicsDevice -- Clear, a SpriteBatch, Present -- and then
+    /// joins it from Update. The worker's calls wait for the game thread; before C ABI 0.41.0
+    /// (CSX-118) the game thread ran them only at its next Update, and the Join never returned.
+    /// </summary>
+    private sealed class JoiningGame : XnaGame
+    {
+        private bool _joined;
+
+        public JoiningGame()
+        {
+            _ = new GraphicsDeviceManager(this);
+        }
+
+        public bool Joined { get; private set; }
+
+        public Exception? WorkerFailure { get; private set; }
+
+        public int Frames { get; private set; }
+
+        protected override void Update(GameTime gameTime)
+        {
+            if (!_joined)
+            {
+                _joined = true;
+                GraphicsDevice device = GraphicsDevice;
+                var worker = new Thread(() =>
+                {
+                    try
+                    {
+                        using var batch = new SpriteBatch(device);
+                        using var white = new Texture2D(device, 1, 1);
+                        white.SetData(new[] { Color.White });
+                        for (int frame = 0; frame < 3; frame++)
+                        {
+                            device.Clear(Color.Black);
+                            batch.Begin();
+                            batch.Draw(white, new Rectangle(10 * frame, 10, 8, 8), Color.Red);
+                            batch.End();
+                            device.Present();
+                        }
+
+                        Frames = 3;
+                    }
+                    catch (Exception ex)
+                    {
+                        WorkerFailure = ex;
+                    }
+                }) { IsBackground = true };
+                worker.Start();
+                Joined = worker.Join(TimeSpan.FromSeconds(30));
+                Exit();
+            }
+
+            base.Update(gameTime);
+        }
+    }
+
+    [global::CNA.Integration.Tests.NativeFact]
+    public void AGameThreadThatJoinsAWorkerFromUpdate_RunsTheWorkersDrawing()
+    {
+        using var game = new JoiningGame();
+        game.Run();
+
+        Assert.True(game.Joined, "the game thread's Join did not run the worker's graphics calls");
+        if (game.WorkerFailure is not null)
+        {
+            throw new Xunit.Sdk.XunitException("the worker failed: " + game.WorkerFailure);
+        }
+
+        Assert.Equal(3, game.Frames);
+    }
+
+    /// <summary>
     /// escape-from-enceladus's title screen starts three threads at once, one per save slot; each
     /// selects the shared static StorageDevice under a lock if no thread has yet, then opens a
     /// container on it. Before CNA.NET selected the device on the game thread (CSX-109), the threads

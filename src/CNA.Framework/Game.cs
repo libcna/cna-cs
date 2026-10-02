@@ -151,7 +151,8 @@ public class Game : IDisposable
                 _lastDestroyFailure is { } previous ? $"cna_game_create ({previous})" : "cna_game_create");
         }
 
-        GameThread.Enter();
+        // The game thread's waits run what other threads queued for it (ABI 0.41.0).
+        GameThread.Enter(() => _ = Native.cna_game_run_foreign_thread_calls_ext(_nativeHandle));
 
         var hooks = new CnaGameFrameHooks
         {

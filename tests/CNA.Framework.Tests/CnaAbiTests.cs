@@ -34,8 +34,9 @@ public class CnaAbiTests
 
     /// <summary>
     /// The constant this binding compares against must be the version it was written for, now
-    /// 0.40.0, whose adapter routes take the game's own handle, as XNA's constructors need; 0.39.0
-    /// before it ran other threads' calls on the game thread; 0.38.0 before it added the
+    /// 0.41.0, which runs other threads' queued calls while the game thread waits for them, as XNA's
+    /// loading screens need; 0.40.0 before it let the adapter routes take the game's own handle, as
+    /// XNA's constructors need; 0.39.0 before it ran other threads' calls on the game thread; 0.38.0 before it added the
     /// host-driven run a browser's Game.Run needs, and 0.37.0 before that named the
     /// canonical exception behind a failure, and 0.36.0 before that added the
     /// packet-reader copy XNA's managed PacketReader receives through. Before that it was 0.35.0, reached by dropping the 44 engine-layer imports CNA removed in
@@ -52,7 +53,7 @@ public class CnaAbiTests
     [Fact]
     public void ExpectedVersion_IsTheAbiThisBindingWasWrittenAgainst()
     {
-        Assert.Equal((0, 40, 0), CnaAbi.Decode(CnaAbi.ExpectedVersion));
+        Assert.Equal((0, 41, 0), CnaAbi.Decode(CnaAbi.ExpectedVersion));
     }
 
     /// <summary>Round-trips every field independently, so a mask that swallowed a neighbouring
@@ -66,7 +67,7 @@ public class CnaAbiTests
     }
 
     [Theory]
-    [InlineData(0, 40, 0, "exact")]
+    [InlineData(0, 41, 0, "exact")]
     public void Policy_AcceptsOnlyReviewedAbiGenerations(int major, int minor, int patch, string classification)
     {
         uint version = ((uint)major << 16) | ((uint)minor << 8) | (uint)patch;
@@ -75,8 +76,8 @@ public class CnaAbiTests
     }
 
     /// <summary>
-    /// 0.6.0 through 0.39.0 are here rather than in the accepting theory above because they were
-    /// retired, not because they were never reviewed. 0.39.0 and 0.41.0 sit on either side of the
+    /// 0.6.0 through 0.40.0 are here rather than in the accepting theory above because they were
+    /// retired, not because they were never reviewed. 0.40.0 and 0.42.0 sit on either side of the
     /// accepted entry to keep the matrix a point list -- being newer than an audited generation is
     /// not evidence about an experimental 0.x ABI, and neither is having been audited once.
     ///
@@ -99,8 +100,9 @@ public class CnaAbiTests
     [InlineData(0, 37, 0)]
     [InlineData(0, 38, 0)]
     [InlineData(0, 39, 0)]
-    [InlineData(0, 40, 1)]
-    [InlineData(0, 41, 0)]
+    [InlineData(0, 40, 0)]
+    [InlineData(0, 41, 1)]
+    [InlineData(0, 42, 0)]
     [InlineData(1, 0, 0)]
     public void Policy_RejectsUnauditedVersions(int major, int minor, int patch)
     {
@@ -133,10 +135,11 @@ public class CnaAbiTests
         // plus the touch panel's mouse-as-touch bridge a phone title turns on (1412, CSX-098),
         // plus 0.39.0's cna_game_set_foreign_thread_calls_ext, for XNA's loading threads (1413),
         // plus 0.40.0's cna_game_window_get/set_is_borderless_ext, the border a Windows Forms game
-        // removes with FormBorderStyle.None (1415, CSX-114).
+        // removes with FormBorderStyle.None (1415, CSX-114), plus 0.41.0's
+        // cna_game_run_foreign_thread_calls_ext, which the game thread runs while it waits (1416, CSX-118).
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(1415, declared.Length);
+        Assert.Equal(1416, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 
@@ -148,7 +151,7 @@ public class CnaAbiTests
         JsonElement root = document.RootElement;
 
         Assert.Equal(CnaNativeAbiPolicy.PolicyVersion, root.GetProperty("policyVersion").GetString());
-        Assert.Equal("0.40.0", root.GetProperty("consumerAbi").GetString());
+        Assert.Equal("0.41.0", root.GetProperty("consumerAbi").GetString());
         JsonElement[] entries = root.GetProperty("acceptedVersions").EnumerateArray().ToArray();
         string[] versions = entries.Select(item => item.GetProperty("libraryAbi").GetString()!).ToArray();
         Assert.Equal(
