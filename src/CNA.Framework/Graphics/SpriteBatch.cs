@@ -360,7 +360,29 @@ public class SpriteBatch : IDisposable
             scale.ToNative(),
             (uint)effects,
             layerDepth));
+        if (!_queueingString)
+        {
+            DrawNowIfImmediate();
+        }
     }
+
+    /// <summary>
+    /// XNA's Immediate batch draws each sprite as it is given, applying a custom effect's pass for
+    /// it then (CSX-130). A game changes that effect's parameters, or the device's textures and
+    /// sampler states, between draws and expects each draw to use what was set before it: Asteria's
+    /// blend demo sets a second texture and a blend amount for each of three clouds. Buffering the
+    /// batch to <see cref="End"/> drew all three with the last values. A string is one draw here,
+    /// its glyphs submitted together, as nothing can change between them.
+    /// </summary>
+    private void DrawNowIfImmediate()
+    {
+        if (_sortMode == SpriteSortMode.Immediate)
+        {
+            FlushCommandBuffer();
+        }
+    }
+
+    private bool _queueingString;
 
     /// <summary>The destination-rectangle overloads' primitive: XNA specifies these by the
     /// screen-space rectangle the sprite should fill rather than by position+scale, so this
@@ -464,26 +486,37 @@ public class SpriteBatch : IDisposable
             _pendingText.Add(new PendingText(
                 _commandBuffer.Count, spriteFont, fontHandle, text,
                 position, color, rotation, origin, scale, effects, layerDepth));
+            DrawNowIfImmediate();
             return;
         }
 
         _glyphPlacementBuffer.Clear();
         spriteFont.AppendGlyphPlacements(text, _glyphPlacementBuffer);
 
-        foreach (SpriteFont.GlyphPlacement placement in _glyphPlacementBuffer)
+        _queueingString = true;
+        try
         {
-            DrawEx(
-                spriteFont.Texture,
-                position,
-                placement.SourceRectangle,
-                color,
-                rotation,
-                origin - placement.Anchor,
-                scale,
-                effects,
-                layerDepth,
-                nameof(DrawString));
+            foreach (SpriteFont.GlyphPlacement placement in _glyphPlacementBuffer)
+            {
+                DrawEx(
+                    spriteFont.Texture,
+                    position,
+                    placement.SourceRectangle,
+                    color,
+                    rotation,
+                    origin - placement.Anchor,
+                    scale,
+                    effects,
+                    layerDepth,
+                    nameof(DrawString));
+            }
         }
+        finally
+        {
+            _queueingString = false;
+        }
+
+        DrawNowIfImmediate();
     }
 
     /// <summary>XNA leaves the batch begun when setup or flushing throws; only a successful End
