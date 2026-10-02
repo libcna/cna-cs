@@ -141,6 +141,10 @@ compile time, each with an opt-out property in CNA.XnaCompat.targets:
   name was never shadowed or ambiguous: a project naming one compiles against reference copies in
   which it is internal (CSX-126, `CnaNetFxTypeNames`).
 
+And one at run time: the .NET Framework of XNA's Windows printed infinity as `Infinity` and a minus
+sign as `-`, where .NET's ICU data prints `∞` and, for some cultures, U+2212, characters a default
+SpriteFont cannot draw. A game's culture keeps the ASCII forms (CSX-128, `CnaNetFxNumberSymbols`).
+
 ## Behavior and content
 
 The managed suites currently pass 560 framework and 199 compat tests. The selected ABI 0.8.0 CNA

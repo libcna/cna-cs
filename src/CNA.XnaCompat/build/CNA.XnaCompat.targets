@@ -226,6 +226,13 @@ public sealed class CnaRetargetXnaReferences : Task
     </ItemGroup>
   </Target>
 
+  <!-- CSX-128: the game prints infinity and negative numbers as XNA's Windows did (see
+       Microsoft.Xna.Framework.NetFxNumberSymbols in CNA.XnaCompat); <CnaNetFxNumberSymbols>false</CnaNetFxNumberSymbols>
+       keeps .NET's ICU symbols. -->
+  <ItemGroup Condition="'$(CnaNetFxNumberSymbols)' == 'false'">
+    <RuntimeHostConfigurationOption Include="CNA.XnaCompat.NetFxNumberSymbols" Value="false" />
+  </ItemGroup>
+
   <!--
     A game's own type can lose to a framework type .NET Framework never had: Project Mercury writes
     `using System;` inside `namespace ProjectMercury.Emitters` and means its own ProjectMercury.Range,

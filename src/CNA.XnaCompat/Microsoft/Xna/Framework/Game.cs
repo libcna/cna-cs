@@ -16,6 +16,7 @@ public class Game : IDisposable
 
     public Game()
     {
+        NetFxNumberSymbols.Apply();
         PhoneTitle.Active = PhoneTitle.IsOffAPhone(GraphicsDeviceManager.ReadRuntimeProfileLine(GetType().Assembly));
         PhoneTitle.Title = PhoneTitle.Active ? this : null;
         PhoneTitle.PumpsGamerServices = false;

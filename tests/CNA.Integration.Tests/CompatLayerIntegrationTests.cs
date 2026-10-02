@@ -1290,6 +1290,60 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         Assert.Contains("activation failed", thrown.ToString());
     }
 
+    /// <summary>
+    /// CSX-128: a game prints infinity and negative numbers as XNA's Windows did, in characters a
+    /// default SpriteFont (32 to 126) holds. Project Mercury's test bench draws its frame rate as
+    /// <c>1 / ElapsedGameTime.TotalSeconds</c>, infinite on a frame of no elapsed time, and .NET's
+    /// ICU data printed "∞"; Swedish ICU data prints its minus sign as U+2212.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_PrintsInfinityAndMinusAsXnasWindowsDid()
+    {
+        System.Globalization.CultureInfo thread = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo? threads = System.Globalization.CultureInfo.DefaultThreadCurrentCulture;
+        try
+        {
+            foreach (string culture in new[] { "en-US", "sv-SE" })
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo(culture);
+                System.Globalization.CultureInfo.DefaultThreadCurrentCulture = null;
+                using var game = new NumberPrintingGame();
+                game.RunOneFrame();
+
+                string worker = "";
+                var thread2 = new Thread(() => worker = (-1.0 / 0.0).ToString());
+                thread2.Start();
+                thread2.Join();
+
+                Assert.Equal("Infinity", game.FrameRate);
+                Assert.Equal("-Infinity", worker);
+                Assert.Equal("-5", game.Negative);
+                Assert.Equal(culture, System.Globalization.CultureInfo.CurrentCulture.Name);
+            }
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = thread;
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = threads;
+        }
+    }
+
+    private sealed class NumberPrintingGame : XnaGame
+    {
+        public NumberPrintingGame() => new GraphicsDeviceManager(this);
+
+        public string FrameRate { get; private set; } = "";
+
+        public string Negative { get; private set; } = "";
+
+        protected override void Update(GameTime gameTime)
+        {
+            FrameRate = string.Format("{0:#.##}", 1f / TimeSpan.Zero.TotalSeconds);
+            Negative = (-5).ToString();
+            base.Update(gameTime);
+        }
+    }
+
     private sealed class ActivationGame : XnaGame
     {
         private int _activated;
