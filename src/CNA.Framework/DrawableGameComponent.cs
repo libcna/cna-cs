@@ -27,6 +27,14 @@ public class DrawableGameComponent : GameComponent, IDrawable
         }
         set
         {
+            // As Enabled: only an actual change is signalled (XNA IL; CSX-138). Marblets sets its
+            // already visible title screen visible in its game's constructor, and a handler that
+            // starts music there ran before the game had loaded any.
+            if (Visible == value)
+            {
+                return;
+            }
+
             CnaResult result = Native.cna_drawable_game_component_set_visible(NativeHandle, (byte)(value ? 1 : 0));
             CnaException.ThrowIfFailed(result, nameof(Visible));
             VisibleChanged?.Invoke(this, EventArgs.Empty);
@@ -43,6 +51,11 @@ public class DrawableGameComponent : GameComponent, IDrawable
         }
         set
         {
+            if (DrawOrder == value)
+            {
+                return;
+            }
+
             CnaResult result = Native.cna_drawable_game_component_set_draw_order(NativeHandle, value);
             CnaException.ThrowIfFailed(result, nameof(DrawOrder));
             DrawOrderChanged?.Invoke(this, EventArgs.Empty);
