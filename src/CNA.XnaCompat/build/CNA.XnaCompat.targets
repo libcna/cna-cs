@@ -416,6 +416,11 @@ public sealed class CnaHideNetCoreOnlyTypes : Task
     Likewise Assembly.LoadFile (NetFxAssemblyLoadFileGenerator): .NET Framework loaded a file once,
     so LoadFile of the game's own library is the assembly its references bind to; .NET loads a
     second copy. <CnaNetFxAssemblyLoadFile>false</CnaNetFxAssemblyLoadFile> turns it off.
+
+    And a using of a namespace .NET Framework 4 had and .NET does not (NetFxNamespacesGenerator,
+    CSX-131), such as the System.Runtime.Remoting.Messaging Visual Studio added on its own, binds to
+    an internal placeholder instead of failing the build. <CnaNetFxNamespaces>false</CnaNetFxNamespaces>
+    turns it off.
   -->
   <PropertyGroup Condition="'$(CnaNetFx40ListForEach)' != 'false' or '$(CnaNetFxAssemblyLoadFile)' != 'false'">
     <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);CNA.XnaCompat.NetFx40</InterceptorsPreviewNamespaces>
@@ -424,6 +429,7 @@ public sealed class CnaHideNetCoreOnlyTypes : Task
   <ItemGroup>
     <CompilerVisibleProperty Include="CnaNetFx40ListForEach" />
     <CompilerVisibleProperty Include="CnaNetFxAssemblyLoadFile" />
+    <CompilerVisibleProperty Include="CnaNetFxNamespaces" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../CNA.XnaCompat.Generators/CNA.XnaCompat.Generators.csproj"
                       Condition="Exists('$(MSBuildThisFileDirectory)../../CNA.XnaCompat.Generators/CNA.XnaCompat.Generators.csproj')"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

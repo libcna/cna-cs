@@ -129,7 +129,7 @@ What stops them is Windows Forms, Silverlight, a library their repositories do n
 change in .NET itself: since .NET 7, `BitConverter.GetBytes(sbyte)` is ambiguous, because `sbyte`
 converts implicitly to `Half` (`CAMPAIGN.md`, 2026-10-02).
 
-The runtime differs from the one XNA games were written for in three ways CNA.NET repairs at
+The runtime differs from the one XNA games were written for in four ways CNA.NET repairs at
 compile time, each with an opt-out property in CNA.XnaCompat.targets:
 
 - .NET Framework 4.0's `List<T>.ForEach` keeps walking when the action changes the list, where
@@ -140,6 +140,8 @@ compile time, each with an opt-out property in CNA.XnaCompat.targets:
 - `System.Range`, `System.Index` and `PriorityQueue<,>` did not exist, so a game's own type of that
   name was never shadowed or ambiguous: a project naming one compiles against reference copies in
   which it is internal (CSX-126, `CnaNetFxTypeNames`).
+- A `using` of a namespace .NET Framework 4 had and .NET does not (`System.Runtime.Remoting.Messaging`)
+  binds to an internal placeholder instead of failing the build (CSX-131, `CnaNetFxNamespaces`).
 
 And one at run time: the .NET Framework of XNA's Windows printed infinity as `Infinity` and a minus
 sign as `-`, where .NET's ICU data prints `∞` and, for some cultures, U+2212, characters a default
