@@ -143,6 +143,10 @@ compile time, each with an opt-out property in CNA.XnaCompat.targets:
 - A `using` of a namespace .NET Framework 4 had and .NET does not (`System.Runtime.Remoting.Messaging`)
   binds to an internal placeholder instead of failing the build (CSX-131, `CnaNetFxNamespaces`).
 
+XNA games also ran as 32-bit processes: a struct laid out explicitly with a reference at a 4-byte
+offset after its other fields (BEPUphysics' Windows build) gets that reference moved to an 8-byte slot
+in the compiled assembly (CSX-134, `CnaSixtyFourBitLayouts`).
+
 And one at run time: the .NET Framework of XNA's Windows printed infinity as `Infinity` and a minus
 sign as `-`, where .NET's ICU data prints `∞` and, for some cultures, U+2212, characters a default
 SpriteFont cannot draw. A game's culture keeps the ASCII forms (CSX-128, `CnaNetFxNumberSymbols`).

@@ -226,6 +226,194 @@ public sealed class CnaRetargetXnaReferences : Task
     </ItemGroup>
   </Target>
 
+  <!--
+    XNA 4.0 games ran in 32-bit processes, where an object reference is 4 bytes. A struct laid out
+    explicitly for that (BEPUphysics' EntityStateChange keeps its Entity at offset 20) does not
+    load in a 64-bit process ("an object field at offset 20 that is incorrectly aligned"). When the
+    misaligned references of such a type all come after its other fields, they are moved to the
+    next 8-byte slots in the compiled assembly, in order, which changes no field's meaning: nothing
+    can take the address of a struct holding references. Done for the game's own assembly after it
+    is compiled and for the XNA-compiled libraries CnaRetargetXnaReferences copies (CSX-134).
+    <CnaSixtyFourBitLayouts>false</CnaSixtyFourBitLayouts> turns it off.
+  -->
+  <UsingTask TaskName="CnaAlignReferenceFields" TaskFactory="RoslynCodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Assemblies ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Code Type="Class" Language="cs"><![CDATA[
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Microsoft.Build.Framework;
+using Microsoft.Build.Utilities;
+
+public sealed class CnaAlignReferenceFields : Task
+{
+    [Required] public ITaskItem[] Assemblies { get; set; }
+
+    public override bool Execute()
+    {
+        foreach (ITaskItem item in Assemblies)
+        {
+            string path = item.GetMetadata("FullPath");
+            if (!File.Exists(path)) continue;
+            byte[] image = File.ReadAllBytes(path);
+            int moved;
+            try { moved = Align(image); }
+            catch (Exception) { continue; }
+            if (moved == 0) continue;
+            File.WriteAllBytes(path, image);
+            Log.LogMessage(MessageImportance.Normal, "CNA.NET: " + path + ": " + moved + " reference field(s) of 32-bit explicit layouts moved to 8-byte slots");
+        }
+        return true;
+    }
+
+    static int U16(byte[] b, int at) { return b[at] | (b[at + 1] << 8); }
+    static int U32(byte[] b, int at) { return U16(b, at) | (U16(b, at + 2) << 16); }
+    static void W32(byte[] b, int at, int v) { b[at] = (byte)v; b[at + 1] = (byte)(v >> 8); b[at + 2] = (byte)(v >> 16); b[at + 3] = (byte)(v >> 24); }
+
+    static int Align(byte[] b)
+    {
+        int pe = U32(b, 0x3C);
+        if (U32(b, pe) != 0x00004550) return 0;
+        int sections = U16(b, pe + 6), optional = pe + 24;
+        int directories = optional + (U16(b, optional) == 0x20B ? 112 : 96);
+        int sectionTable = optional + U16(b, pe + 20);
+        Func<int, int> file = rva => {
+            for (int i = 0; i < sections; i++) {
+                int s = sectionTable + i * 40, va = U32(b, s + 12), size = Math.Max(U32(b, s + 8), U32(b, s + 16));
+                if (rva >= va && rva < va + size) return rva - va + U32(b, s + 20);
+            }
+            throw new InvalidDataException("RVA outside every section");
+        };
+        int cliRva = U32(b, directories + 14 * 8);
+        if (cliRva == 0) return 0;
+        int cli = file(cliRva), root = file(U32(b, cli + 8));
+        if (U32(b, root) != 0x424A5342) return 0;
+        int streamCount = U16(b, root + 16 + U32(b, root + 12) + 2), header = root + 16 + U32(b, root + 12) + 4;
+        int tables = -1, blobs = -1;
+        for (int i = 0; i < streamCount; i++) {
+            int offset = U32(b, header), end = header + 8;
+            while (b[end] != 0) end++;
+            string name = System.Text.Encoding.ASCII.GetString(b, header + 8, end - header - 8);
+            if (name == "#~" || name == "#-") tables = root + offset;
+            else if (name == "#Blob") blobs = root + offset;
+            header = (end + 4) & ~3;
+        }
+        if (tables < 0 || blobs < 0) return 0;
+        int heaps = b[tables + 6];
+        int str = (heaps & 1) != 0 ? 4 : 2, guid = (heaps & 2) != 0 ? 4 : 2, blob = (heaps & 4) != 0 ? 4 : 2;
+        long valid = (long)U32(b, tables + 8) | ((long)U32(b, tables + 12) << 32);
+        var rows = new int[64];
+        int at = tables + 24;
+        for (int t = 0; t < 64; t++) if ((valid >> t & 1) != 0) { rows[t] = U32(b, at); at += 4; }
+        if ((heaps & 0x40) != 0) at += 4;
+        Func<int, int> idx = t => rows[t] < 0x10000 ? 2 : 4;
+        Func<int, int[], int> coded = (bits, ts) => ts.Max(t => rows[t]) < (1 << (16 - bits)) ? 2 : 4;
+        int typeDefOrRef = coded(2, new[] { 0x02, 0x01, 0x1B });
+        int resolutionScope = coded(2, new[] { 0x00, 0x1A, 0x23, 0x01 });
+        int hasConstant = coded(2, new[] { 0x04, 0x08, 0x17 });
+        int hasCustomAttribute = coded(5, new[] { 0x06, 0x04, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x00, 0x0E, 0x17, 0x14, 0x11, 0x1A, 0x1B, 0x20, 0x23, 0x26, 0x27, 0x28, 0x2A, 0x2C, 0x2B });
+        int customAttributeType = coded(3, new[] { 0x06, 0x0A });
+        int hasFieldMarshal = coded(1, new[] { 0x04, 0x08 });
+        int hasDeclSecurity = coded(2, new[] { 0x02, 0x06, 0x20 });
+        int memberRefParent = coded(3, new[] { 0x02, 0x01, 0x1A, 0x06, 0x1B });
+        var size = new int[0x11];
+        size[0x00] = 2 + str + 3 * guid;
+        size[0x01] = resolutionScope + 2 * str;
+        size[0x02] = 4 + 2 * str + typeDefOrRef + idx(0x04) + idx(0x06);
+        size[0x03] = idx(0x04);
+        size[0x04] = 2 + str + blob;
+        size[0x05] = idx(0x06);
+        size[0x06] = 4 + 2 + 2 + str + blob + idx(0x08);
+        size[0x07] = idx(0x08);
+        size[0x08] = 2 + 2 + str;
+        size[0x09] = idx(0x02) + typeDefOrRef;
+        size[0x0A] = memberRefParent + str + blob;
+        size[0x0B] = 2 + hasConstant + blob;
+        size[0x0C] = hasCustomAttribute + customAttributeType + blob;
+        size[0x0D] = hasFieldMarshal + blob;
+        size[0x0E] = 2 + hasDeclSecurity + blob;
+        size[0x0F] = 2 + 4 + idx(0x02);
+        size[0x10] = 4 + idx(0x04);
+        var start = new int[0x11];
+        for (int t = 0; t <= 0x10; t++) { start[t] = at; at += rows[t] * size[t]; }
+        if (rows[0x03] != 0 || rows[0x10] == 0) return 0;   // FieldPtr indirection: not handled
+        Func<int, int, int> read = (o, n) => n == 2 ? U16(b, o) : U32(b, o);
+
+        // A field's type is a reference when its signature names a class, object, string or array.
+        Func<int, bool?> isReference = field => {
+            int sig = blobs + read(start[0x04] + (field - 1) * size[0x04] + 2 + str, blob);
+            int len = b[sig];
+            int p = sig + ((len & 0x80) == 0 ? 1 : (len & 0x40) == 0 ? 2 : 4);
+            if (b[p++] != 0x06) return null;
+            while (b[p] == 0x1F || b[p] == 0x20) { p++; p += (b[p] & 0x80) == 0 ? 1 : (b[p] & 0x40) == 0 ? 2 : 4; }
+            byte e = b[p];
+            if (e == 0x12 || e == 0x1C || e == 0x0E || e == 0x1D || e == 0x14) return true;
+            if (e == 0x15) return b[p + 1] == 0x12;
+            if (e == 0x13 || e == 0x1E) return null;
+            return false;
+        };
+
+        var layoutRow = new Dictionary<int, int>();   // field -> FieldLayout row offset
+        for (int r = 0; r < rows[0x10]; r++) {
+            int o = start[0x10] + r * size[0x10];
+            layoutRow[read(o + 4, idx(0x04))] = o;
+        }
+        int moved = 0;
+        for (int t = 0; t < rows[0x02]; t++) {
+            int o = start[0x02] + t * size[0x02];
+            if ((U32(b, o) & 0x18) != 0x10) continue;                 // ExplicitLayout only
+            int first = read(o + 4 + 2 * str + typeDefOrRef, idx(0x04));
+            int last = t + 1 < rows[0x02] ? read(o + size[0x02] + 4 + 2 * str + typeDefOrRef, idx(0x04)) : rows[0x04] + 1;
+            var fields = new List<int[]>();                           // {field, offset, isRef}
+            bool unknown = false;
+            for (int f = first; f < last; f++) {
+                int row;
+                if (!layoutRow.TryGetValue(f, out row)) continue;    // static
+                bool? reference = isReference(f);
+                if (reference == null) { unknown = true; break; }
+                fields.Add(new[] { f, U32(b, row), reference.Value ? 1 : 0 });
+            }
+            if (unknown) continue;
+            var misaligned = fields.Where(x => x[2] == 1 && x[1] % 8 != 0).ToList();
+            if (misaligned.Count == 0) continue;
+            int from = misaligned.Min(x => x[1]);
+            if (fields.Any(x => x[1] >= from && x[2] == 0)) continue;  // a value field after them
+            var slots = fields.Where(x => x[1] >= from).Select(x => x[1]).Distinct().OrderBy(x => x).ToList();
+            int next = (from + 7) & ~7;
+            var target = new Dictionary<int, int>();
+            foreach (int old in slots) { target[old] = next; next += 8; }
+            foreach (int[] x in fields.Where(x => x[1] >= from)) {
+                W32(b, layoutRow[x[0]], target[x[1]]);
+                moved++;
+            }
+            for (int r = 0; r < rows[0x0F]; r++) {                    // an explicit size must hold them
+                int c = start[0x0F] + r * size[0x0F];
+                if (read(c + 6, idx(0x02)) == t + 1 && U32(b, c + 2) != 0 && U32(b, c + 2) < next)
+                    W32(b, c + 2, next);
+            }
+        }
+        return moved;
+    }
+}
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="CnaAlignReferenceFieldsOfTheGame" AfterTargets="CoreCompile"
+          Condition="'$(CnaSixtyFourBitLayouts)' != 'false' and '@(IntermediateAssembly)' != ''">
+    <CnaAlignReferenceFields Assemblies="@(IntermediateAssembly)" />
+  </Target>
+
+  <Target Name="CnaAlignReferenceFieldsOfXnaLibraries" AfterTargets="CnaRetargetXnaReferences"
+          Condition="'$(CnaSixtyFourBitLayouts)' != 'false' and '@(_CnaXnaRetargetedReference)' != ''">
+    <CnaAlignReferenceFields Assemblies="@(_CnaXnaRetargetedReference->'%(HintPath)')" />
+  </Target>
+
   <!-- CSX-128: the game prints infinity and negative numbers as XNA's Windows did (see
        Microsoft.Xna.Framework.NetFxNumberSymbols in CNA.XnaCompat); <CnaNetFxNumberSymbols>false</CnaNetFxNumberSymbols>
        keeps .NET's ICU symbols. -->
