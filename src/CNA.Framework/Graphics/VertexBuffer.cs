@@ -113,16 +113,12 @@ public class VertexBuffer : IDisposable
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentOutOfRangeException.ThrowIfNegative(offsetInBytes);
-        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
         if (data.Length == 0)
         {
             throw new ArgumentNullException(nameof(data));
         }
 
-        if (elementCount <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(elementCount));
-        }
+        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
 
         if (System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
@@ -355,19 +351,12 @@ public class VertexBuffer : IDisposable
         where T : struct
     {
         ArgumentNullException.ThrowIfNull(data);
-        ArgumentOutOfRangeException.ThrowIfNegative(startIndex);
-        ArgumentOutOfRangeException.ThrowIfNegative(elementCount);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(elementCount, data.Length - startIndex);
         if (data.Length == 0)
         {
             throw new ArgumentNullException(nameof(data));
         }
 
-        if (elementCount <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(elementCount));
-        }
-
+        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
         ArgumentOutOfRangeException.ThrowIfNegative(offsetInBytes);
         ArgumentOutOfRangeException.ThrowIfNegative(vertexStride);
         if (System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<T>())

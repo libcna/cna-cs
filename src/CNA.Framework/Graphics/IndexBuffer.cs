@@ -113,16 +113,12 @@ public class IndexBuffer : IDisposable
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentOutOfRangeException.ThrowIfNegative(offsetInBytes);
-        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
         if (data.Length == 0)
         {
             throw new ArgumentNullException(nameof(data));
         }
 
-        if (elementCount <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(elementCount));
-        }
+        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
 
         if (System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
@@ -211,16 +207,12 @@ public class IndexBuffer : IDisposable
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentOutOfRangeException.ThrowIfNegative(offsetInBytes);
-        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
         if (data.Length == 0)
         {
             throw new ArgumentNullException(nameof(data));
         }
 
-        if (elementCount <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(elementCount));
-        }
+        BufferRangeValidation.ValidateRange(data.Length, startIndex, elementCount);
 
         if (System.Runtime.CompilerServices.RuntimeHelpers.IsReferenceOrContainsReferences<T>())
         {
