@@ -22,6 +22,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)CnaGameApplication.cs" />
     <!-- Content readers are created by reflection; see eng/browser/CNA.Browser.targets. -->
     <TrimmerRootAssembly Include="CNA.Interop;CNA.Framework;CNA.XnaCompat" />
+    <!-- CSX-140, as in a browser: XNA's games and libraries reach .NET Framework's types by
+         reflection (BoneAnimation's protobuf-net over KeyValuePair<string, Skin>), so CoreLib is
+         kept whole. -->
+    <TrimmerRootAssembly Include="System.Private.CoreLib" />
   </ItemGroup>
 
   <Target Name="CnaAndroidRequireNativeLibraries" BeforeTargets="Build">
