@@ -414,6 +414,23 @@ public sealed class CnaAlignReferenceFields : Task
     <CnaAlignReferenceFields Assemblies="@(_CnaXnaRetargetedReference->'%(HintPath)')" />
   </Target>
 
+  <!-- CSX-141: BinaryFormatter was an ordinary .NET Framework 4 API, and XNA's games and libraries
+       read their maps and saves with it (XNA 4.0 Game Development by Example's Tile Engine). .NET 8
+       makes it a compile error (SYSLIB0011) and refuses it at run time; a game compiled for XNA has
+       both back, as on Windows. <CnaBinaryFormatter>false</CnaBinaryFormatter> keeps .NET's refusal. -->
+  <PropertyGroup Condition="'$(CnaBinaryFormatter)' != 'false'">
+    <NoWarn>$(NoWarn);SYSLIB0011</NoWarn>
+  </PropertyGroup>
+  <!-- The SDK writes its own `false` for the switch; this replaces it just before the runtime
+       configuration is generated. -->
+  <Target Name="CnaEnableBinaryFormatter" BeforeTargets="GenerateBuildRuntimeConfigurationFiles;GenerateRuntimeConfigurationFiles"
+          Condition="'$(CnaBinaryFormatter)' != 'false'">
+    <ItemGroup>
+      <RuntimeHostConfigurationOption Remove="System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization" />
+      <RuntimeHostConfigurationOption Include="System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization" Value="true" />
+    </ItemGroup>
+  </Target>
+
   <!-- CSX-128: the game prints infinity and negative numbers as XNA's Windows did (see
        Microsoft.Xna.Framework.NetFxNumberSymbols in CNA.XnaCompat); <CnaNetFxNumberSymbols>false</CnaNetFxNumberSymbols>
        keeps .NET's ICU symbols. -->
