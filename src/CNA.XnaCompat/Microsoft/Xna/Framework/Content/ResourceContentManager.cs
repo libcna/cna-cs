@@ -22,9 +22,8 @@ public class ResourceContentManager : ContentManager
         return resource switch
         {
             byte[] bytes => new MemoryStream(bytes, writable: false),
-            null => throw new ContentLoadException($"Resource '{assetName}' was not found."),
-            _ => throw new ContentLoadException(
-                $"Resource '{assetName}' is not stored in binary format."),
+            null => throw new ContentLoadException($"Error loading \"{assetName}\". Resource not found."),
+            _ => throw new ContentLoadException($"Error loading \"{assetName}\". Not a binary resource."),
         };
     }
 }

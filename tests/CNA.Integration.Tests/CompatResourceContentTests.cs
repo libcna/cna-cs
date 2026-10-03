@@ -64,6 +64,26 @@ public class CompatResourceContentTests
         });
     }
 
+    /// <summary>
+    /// CSX-133: XNA reported every failed load as ContentLoadException -- "File not found." for a
+    /// missing asset -- and games catch it: AlexMeuer's City Shooter loads building1, building2, ...
+    /// until the missing one throws. CNA's own loader threw CnaException for the types it loads.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void AMissingAsset_IsContentLoadException_WhateverLoadsIt()
+    {
+        RunInAFrame(game =>
+        {
+            game.Content.RootDirectory = Assets;
+            ContentLoadException texture = Assert.Throws<ContentLoadException>(() => game.Content.Load<Texture2D>("building9"));
+            Assert.Equal("Error loading \"building9\". File not found.", texture.Message);
+            Assert.Throws<ContentLoadException>(() => game.Content.Load<SpriteFont>("no-such-font"));
+            Assert.Throws<ContentLoadException>(() => game.Content.Load<Microsoft.Xna.Framework.Audio.SoundEffect>("no-such-sound"));
+            ContentLoadException managed = Assert.Throws<ContentLoadException>(() => game.Content.Load<string>("no-such-text"));
+            Assert.Equal("Error loading \"no-such-text\". File not found.", managed.Message);
+        });
+    }
+
     private static byte[] TextureXnb(Color[] texels)
     {
         using var payload = new MemoryStream();

@@ -188,10 +188,13 @@ public class ContentManager : IDisposable
                 ? new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)
                 : TitleContainer.OpenStream(path);
         }
-        catch (Exception exception) when (
-            exception is FileNotFoundException or DirectoryNotFoundException or IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
         {
-            throw new ContentLoadException($"Could not open content asset '{assetName}'.", exception);
+            throw new ContentLoadException($"Error loading \"{assetName}\". File not found.", exception);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            throw new ContentLoadException($"Error loading \"{assetName}\". Cannot open file.", exception);
         }
     }
 
@@ -222,6 +225,18 @@ public class ContentManager : IDisposable
         catch (CNA.Content.ContentLoadException exception)
         {
             throw new ContentLoadException(exception.Message, exception);
+        }
+        catch (CNA.CnaException exception)
+        {
+            // CNA's own loader failed. XNA reported every load failure as ContentLoadException, and
+            // games rely on it: AlexMeuer's City Shooter loads building1, building2, ... until the
+            // missing one throws (CSX-133).
+            string path = CNA.Content.XnaContentPath.ToFilePath(RootDirectory, assetName, ".xnb");
+            bool exists = File.Exists(CNA.TitleContainer.IsPathAbsolute(RootDirectory)
+                ? path
+                : Path.Combine(AppContext.BaseDirectory, path));
+            throw new ContentLoadException(
+                exists ? $"Error loading \"{assetName}\"." : $"Error loading \"{assetName}\". File not found.", exception);
         }
     }
 
