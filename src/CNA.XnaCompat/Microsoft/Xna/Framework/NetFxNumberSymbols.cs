@@ -9,11 +9,15 @@ namespace Microsoft.Xna.Framework;
 /// "-Infinity" and an ASCII hyphen. A default XNA SpriteFont holds characters 32 to 126, so a game
 /// drawing a frame rate or a coordinate drew the ASCII forms and now meets a character its font
 /// lacks: Project Mercury's test bench prints <c>1 / ElapsedGameTime.TotalSeconds</c>, infinite
-/// on a frame of no elapsed time. Only those symbols change; the culture is otherwise the user's.
-/// <c>&lt;CnaNetFxNumberSymbols&gt;false&lt;/CnaNetFxNumberSymbols&gt;</c> keeps ICU's.
+/// on a frame of no elapsed time. Times too (CSX-139): ICU's en-US and other cultures put a narrow
+/// no-break space (U+202F) before AM/PM, where Windows' patterns had a space, and ExEn's timing test
+/// draws <c>DateTime.ToLongTimeString()</c>. Only those symbols change; the culture is otherwise
+/// the user's. <c>&lt;CnaNetFxNumberSymbols&gt;false&lt;/CnaNetFxNumberSymbols&gt;</c> keeps ICU's.
 /// </summary>
 internal static class NetFxNumberSymbols
 {
+    private const char NarrowNoBreakSpace = '\u202F';
+
     internal static void Apply()
     {
         if (AppContext.TryGetSwitch("CNA.XnaCompat.NetFxNumberSymbols", out bool enabled) && !enabled)
@@ -34,14 +38,21 @@ internal static class NetFxNumberSymbols
     private static CultureInfo? WithNetFxSymbols(CultureInfo culture)
     {
         NumberFormatInfo format = culture.NumberFormat;
+        DateTimeFormatInfo times = culture.DateTimeFormat;
         bool icuOnly = format.PositiveInfinitySymbol.Contains('∞') || format.NegativeInfinitySymbol.Contains('∞') ||
-                       format.NegativeSign == "−";
+                       format.NegativeSign == "−" ||
+                       times.LongTimePattern.Contains(NarrowNoBreakSpace) || times.ShortTimePattern.Contains(NarrowNoBreakSpace) ||
+                       times.FullDateTimePattern.Contains(NarrowNoBreakSpace);
         if (!icuOnly)
         {
             return null;
         }
 
         var patched = (CultureInfo)culture.Clone();
+        DateTimeFormatInfo patterns = patched.DateTimeFormat;
+        patterns.LongTimePattern = patterns.LongTimePattern.Replace(NarrowNoBreakSpace, ' ');
+        patterns.ShortTimePattern = patterns.ShortTimePattern.Replace(NarrowNoBreakSpace, ' ');
+        patterns.FullDateTimePattern = patterns.FullDateTimePattern.Replace(NarrowNoBreakSpace, ' ');
         NumberFormatInfo symbols = patched.NumberFormat;
         if (symbols.PositiveInfinitySymbol.Contains('∞'))
         {

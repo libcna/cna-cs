@@ -1292,7 +1292,7 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
 
     /// <summary>
     /// CSX-128: a game prints infinity and negative numbers as XNA's Windows did, in characters a
-    /// default SpriteFont (32 to 126) holds. Project Mercury's test bench draws its frame rate as
+    /// default SpriteFont (32 to 126) holds (CSX-128; CSX-139 for times). Project Mercury's test bench draws its frame rate as
     /// <c>1 / ElapsedGameTime.TotalSeconds</c>, infinite on a frame of no elapsed time, and .NET's
     /// ICU data printed "∞"; Swedish ICU data prints its minus sign as U+2212.
     /// </summary>
@@ -1309,6 +1309,11 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
                 System.Globalization.CultureInfo.DefaultThreadCurrentCulture = null;
                 using var game = new NumberPrintingGame();
                 game.RunOneFrame();
+                if (culture == "en-US")
+                {
+                    // CSX-139: Windows' en-US long time had a space before AM/PM; ICU's has U+202F.
+                    Assert.Equal("1:05:07 PM", game.LongTime);
+                }
 
                 string worker = "";
                 var thread2 = new Thread(() => worker = (-1.0 / 0.0).ToString());
@@ -1318,6 +1323,7 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
                 Assert.Equal("Infinity", game.FrameRate);
                 Assert.Equal("-Infinity", worker);
                 Assert.Equal("-5", game.Negative);
+                Assert.DoesNotContain('\u202F', game.LongTime);
                 Assert.Equal(culture, System.Globalization.CultureInfo.CurrentCulture.Name);
             }
         }
@@ -1336,10 +1342,13 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
 
         public string Negative { get; private set; } = "";
 
+        public string LongTime { get; private set; } = "";
+
         protected override void Update(GameTime gameTime)
         {
             FrameRate = string.Format("{0:#.##}", 1f / TimeSpan.Zero.TotalSeconds);
             Negative = (-5).ToString();
+            LongTime = new DateTime(2026, 1, 1, 13, 5, 7).ToLongTimeString();
             base.Update(gameTime);
         }
     }
