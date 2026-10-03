@@ -842,7 +842,9 @@ public class Game : IDisposable
     /// .NET guideline, doubly true here since disposal can run during exception unwinding in a
     /// <see langword="using"/> block), so a destroy failure is deliberately swallowed rather than
     /// surfaced, matching this method's behavior before this migration (which ignored the native
-    /// call's return value entirely, since the prior guessed shape had none to check).
+    /// call's return value entirely, since the prior guessed shape had none to check). What the
+    /// game's own <c>UnloadContent</c> throws is the exception: XNA's <c>Dispose</c> lets it out,
+    /// once the native game has been released.
     /// </summary>
     protected virtual void Dispose(bool disposing)
     {
@@ -952,12 +954,17 @@ public class Game : IDisposable
 
         NativeResourceHandle.DrainPendingReleasesForCurrentThread();
 
+        // Content is unloaded by the graphics device manager's disposal (XnaCompat's, just before
+        // this) or else by cna_game_destroy. What UnloadContent throws is reported through the
+        // callback, and native's destroy answers Callback once the game has been released.
         CnaResult destroyResult = Native.cna_game_destroy(_nativeHandle);
+        Exception? unloadFailure = _pendingCallbackException;
+        _pendingCallbackException = null;
 
         // Recorded rather than thrown -- disposal must not throw -- and read by the constructor,
         // which is where the information is finally actionable. Discarding it is what made the
         // failure baffling in the first place.
-        if (destroyResult.IsFailure())
+        if (destroyResult.IsFailure() && destroyResult != CnaResult.Callback)
         {
             Interlocked.Increment(ref _destroyRefusals);
             _undestroyedGame = _nativeHandle;
@@ -986,10 +993,20 @@ public class Game : IDisposable
         // must be, since they name the game -- so the native one never reached a handler: no game's
         // Disposed ever fired. Raised here once teardown is complete, so a handler that throws
         // cannot leave the native game behind.
-        if (disposing)
+        if (!disposing)
         {
-            _disposedEvent?.Invoke(this, EventArgs.Empty);
+            return;
         }
+
+        // XNA's UnloadContent runs from the device's Disposing event inside Dispose, and nothing on
+        // that path catches (XNA IL: Game::Dispose(bool) is a try/finally around its lock), so what
+        // it throws leaves Dispose before Disposed is raised (CSX-142). The game is released first.
+        if (unloadFailure is not null)
+        {
+            ExceptionDispatchInfo.Capture(unloadFailure).Throw();
+        }
+
+        _disposedEvent?.Invoke(this, EventArgs.Empty);
     }
 
     private static bool TryResolve(nint context, out Game game)
