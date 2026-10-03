@@ -41,10 +41,13 @@ public static class Guide
     }
 
     /// <summary>XNA's internal setter is its licence check's; CNA answers from its own license state
-    /// and <see cref="SimulateTrialMode"/>, so nothing in this facade sets it.</summary>
+    /// and <see cref="SimulateTrialMode"/>, so nothing in this facade sets it. A Windows Phone title
+    /// answers the phone's license check instead, which needed no gamer services: a title its
+    /// developer deployed is no trial unless <see cref="SimulateTrialMode"/> makes it one (CSX-137).
+    /// On Windows, XNA's answer starts true and the dispatcher's first update sets it.</summary>
     public static bool IsTrialMode
     {
-        get => Flag(Native.cna_guide_get_is_trial_mode, nameof(IsTrialMode));
+        get => PhoneTitle.Active ? SimulateTrialMode : Flag(Native.cna_guide_get_is_trial_mode, nameof(IsTrialMode));
         internal set => throw new InvalidOperationException("Trial mode is CNA's own license state.");
     }
 

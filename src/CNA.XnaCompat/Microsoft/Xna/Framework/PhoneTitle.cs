@@ -7,7 +7,7 @@ namespace Microsoft.Xna.Framework;
 /// counterpart, and the facade stands in for them: full screen is the status bar, not a display
 /// mode (cna-cs CSX-094), player one's pad is the phone, with its Back button (CSX-095), the
 /// mouse is the finger, as in the emulator (CSX-098), and the Guide's keyboard prompt and message box
-/// need no GamerServicesComponent (CSX-119).
+/// need no GamerServicesComponent (CSX-119), nor does its trial mode (CSX-137).
 /// On Android and iOS the host is a phone and none of this applies.
 /// </summary>
 internal static class PhoneTitle
