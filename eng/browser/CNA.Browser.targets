@@ -48,6 +48,11 @@
          trimming off altogether leaves .NET 11's relinked runtime out of step with its CoreLib.)
          A game whose content names its own readers roots its own assembly the same way. -->
     <TrimmerRootAssembly Include="CNA.Interop;CNA.Framework;CNA.XnaCompat" />
+    <!-- CSX-140: .NET Framework, which XNA's games and libraries were written for, was never
+         trimmed, and they reach its types by reflection: imeteora/BoneAnimation's protobuf-net
+         builds its serializers over KeyValuePair<string, Skin>, whose members the trimmer had
+         removed. CoreLib is kept whole (about 5 MB); the rest of the framework is still trimmed. -->
+    <TrimmerRootAssembly Include="System.Private.CoreLib" />
     <!-- The .NET APIs the browser runtime leaves unimplemented (System.IO.IsolatedStorage). -->
     <ProjectReference Include="$(MSBuildThisFileDirectory)../../src/CNA.BrowserCompat/CNA.BrowserCompat.csproj" />
     <StaticWebAssetFingerprintPattern Include="CnaBrowserScripts" Pattern="*.js" Expression="#[.{fingerprint}]!" />
