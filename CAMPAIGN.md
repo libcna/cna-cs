@@ -168,6 +168,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-147 | Finish the high-value Windows Forms subset without growing a general WinForms implementation | done 2026-10-04: `MessageBox.Show` now uses CNA's existing native dialog service while a game is alive, maps all six button sets and the WinForms icon aliases, and returns the actual selected button. The prior stderr/first-button behavior remains only as a fallback before a native game exists or where the platform reports no message-box service. `Opacity` remains stored and clamped but unapplied: the current CNA runtime-window/C ABI contract has no window-opacity operation, so this is classified as a platform/API limitation rather than approximated with visibility or game-specific behavior. 13 focused managed tests and 2 private-runner native integration tests pass; abi-verify compiles 1419/1419 imports with 0 mismatches. |
 | CSX-148 | Bound the investigation of slow WebGL proxying in multithreaded browser bundles | done/classified 2026-10-04: the concrete case remains the Racing Game Kit at about 0.65 fps under headless Chromium/SwiftShader. Emscripten 6's `OFFSCREENCANVAS_SUPPORT` transfers a canvas only at `pthread_create` when `_a_transferredcanvases` is populated, or through the `PROXY_TO_PTHREAD` C-main stub. .NET owns creation of its managed deputy thread, CNA has no C `main`, and the host exposes no supported hook that can attach the canvas to that thread's attributes. Transferring after WebGL context creation is not legal. CNA therefore retains the correct `OFFSCREEN_FRAMEBUFFER` proxy path. This is future .NET/browser-host platform work, not a correctness defect or an invitation to patch the runtime. |
 | CSX-149 | Differentially qualify the XNA 4.0 Racing Game Kit against the strongest available oracles | done/classified 2026-10-04: unchanged C# source built without warnings against CNA.NET `55ecb16` and ran through attract mode, main menu, car and Advanced-track selection, then a real race at 1024x768 on CNA `16dce8d5a`/C ABI 0.44.0. A retained C++ port over CNA OPENGL33 ran the same six stages at the same size; both show the same content, models/materials, menus, track, shadow/post effects and HUD, with expected time/camera differences. The authentic XNA-built executable was also tried unchanged under the XNA 4.0 Wine prefix: without `XnaLiveProxy.exe` it reports that missing file; with the authentic proxy retained from Microsoft's RolePlayingGame sample it fails initialization of the defunct Games for Windows - LIVE service, exactly as that independent sample already records. This is an external Wine/GFWL limitation, not a CNA defect; no game source or runtime was patched. Evidence: `/rv/tmp/cs-samples/final-racing-differential-20261004/`. No new general compatibility defect was found. |
+| CSX-150 | Requalify representative multithreaded browser behavior against a current CNA archive | done 2026-10-04: the shared-memory archive was rebuilt from CNA `28f8312f0` with Emscripten 6.0.3 (SHA-256 `ce8db116c3d9100f363864d355ad205c7334e5c5b630167c4fee1641c588b6c2`). AimingSample accepted held keyboard movement, rendered the changed view and ended cleanly on Escape. Unchanged Resonance, with its 282 assets rebuilt through XNA 4.0 BuildContent/XACT, loaded its level on its game thread, initialized the shipped x86 BEPUphysics, entered its 3D arena and reacted to movement in headless Chromium/SwiftShader. An initial missing-asset failure was traced to the absent disposable content-output directory and disappeared after rebuilding the documented content, not after a code change. No new CNA/CNA.NET defect was found. Evidence: `/rv/tmp/cs-samples/final-threaded-20261004/`. |
 
 ### P9 -- portability
 
@@ -177,6 +178,21 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-150: current threaded browser qualification
+
+The shared-memory WebGL2 archive was rebuilt from CNA `28f8312f0` with Emscripten 6.0.3; its
+SHA-256 is `ce8db116c3d9100f363864d355ad205c7334e5c5b630167c4fee1641c588b6c2`.
+AimingSample accepted a held ArrowRight, visibly moved its cat/aim cone and ended cleanly on Escape.
+
+Resonance's first run correctly threw `ContentLoadException` because its disposable compiled-content
+directory was absent. Its unchanged 282-asset project was rebuilt with the documented XNA 4.0
+BuildContent/XACT workflow (the four songs remain labelled stand-ins). The repeated run entered from
+the menu, loaded the level on its own thread, initialized the shipped x86 BEPUphysics, displayed the
+instructions and then rendered the live 3D arena; a held ArrowUp changed the running scene. There was
+no CNA/CNA.NET exception and no code change. Captures and logs are under
+`/rv/tmp/cs-samples/final-threaded-20261004/`. The known .NET 11 thread-start ceiling and proxied
+WebGL performance boundary remain separately classified; this run exposed no new general defect.
 
 ### 2026-10-04 -- CSX-149: Racing Game Kit differential qualification
 
