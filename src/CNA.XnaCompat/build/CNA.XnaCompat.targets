@@ -414,13 +414,24 @@ public sealed class CnaAlignReferenceFields : Task
     <CnaAlignReferenceFields Assemblies="@(_CnaXnaRetargetedReference->'%(HintPath)')" />
   </Target>
 
-  <!-- CSX-141: BinaryFormatter was an ordinary .NET Framework 4 API, and XNA's games and libraries
-       read their maps and saves with it (XNA 4.0 Game Development by Example's Tile Engine). .NET 8
-       makes it a compile error (SYSLIB0011) and refuses it at run time; a game compiled for XNA has
-       both back, as on Windows. <CnaBinaryFormatter>false</CnaBinaryFormatter> keeps .NET's refusal. -->
+  <!-- CSX-141/144: BinaryFormatter was an ordinary .NET Framework 4 API, and XNA's games and
+       libraries read their maps and saves with it (XNA 4.0 Game Development by Example's Tile
+       Engine). .NET 8 makes it a compile error (SYSLIB0011) and refuses it by default; .NET 9+
+       removed the implementation and requires Microsoft's out-of-band compatibility package.
+       A game compiled for XNA gets both back, as on Windows. The package is intentionally confined
+       to application projects that opt into this compatibility behavior; it is unsupported and
+       retains BinaryFormatter's security risks. <CnaBinaryFormatter>false</CnaBinaryFormatter>
+       keeps .NET's refusal. -->
   <PropertyGroup Condition="'$(CnaBinaryFormatter)' != 'false'">
     <NoWarn>$(NoWarn);SYSLIB0011</NoWarn>
+    <CnaBinaryFormatterPackageVersion Condition="'$(CnaBinaryFormatterPackageVersion)' == ''">10.0.12</CnaBinaryFormatterPackageVersion>
   </PropertyGroup>
+  <ItemGroup Condition="'$(CnaBinaryFormatter)' != 'false' and
+                        '$(TargetFrameworkIdentifier)' == '.NETCoreApp' and
+                        $([MSBuild]::VersionGreaterThanOrEquals('$(TargetFrameworkVersion)', 'v9.0'))">
+    <PackageReference Include="System.Runtime.Serialization.Formatters"
+                      Version="$(CnaBinaryFormatterPackageVersion)" />
+  </ItemGroup>
   <!-- The SDK writes its own `false` for the switch; this replaces it just before the runtime
        configuration is generated. -->
   <Target Name="CnaEnableBinaryFormatter" BeforeTargets="GenerateBuildRuntimeConfigurationFiles;GenerateRuntimeConfigurationFiles"
