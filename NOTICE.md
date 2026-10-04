@@ -1,6 +1,6 @@
 CNA.NET (`cna-dotnet`) is licensed under the Microsoft Public License (Ms-PL).
 
-CNA.NET is a C#/.NET language binding for [CNA](https://github.com/openeggbert/cna),
+CNA.NET is a C#/.NET language binding for [CNA](https://github.com/libcna/cna),
 a native C++ implementation of an XNA-inspired game framework. CNA.NET is
 distributed separately from CNA and communicates with it only through CNA's
 stable native interoperability boundary (see `docs/architecture.md`).
@@ -22,7 +22,7 @@ source-compatibility facade implemented independently by the CNA project.
 ## Relationship to Sharp Runtime
 
 CNA (the native C++ engine this project binds to) may use
-[Sharp Runtime](https://github.com/openeggbert/sharp-runtime) internally as a
+[Sharp Runtime](https://github.com/libcna/sharp-runtime) internally as a
 C++ implementation dependency. Sharp Runtime is a C++23 library that provides
 .NET-like APIs in native code — it is not the .NET CLR and does not execute
 CNA.NET applications. CNA.NET applications run on a normal, unmodified .NET

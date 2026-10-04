@@ -4,7 +4,7 @@
 > behaviorally complete or release-ready.** The strict comparison reports 256/256 types, zero
 > differences, zero CNA leaks, and an empty allowlist. The binding targets CNA C ABI 0.44.0.
 
-CNA.NET is the C#/.NET binding for [CNA](https://github.com/openeggbert/cna), a native C++ game
+CNA.NET is the C#/.NET binding for [CNA](https://github.com/libcna/cna), a native C++ game
 framework. Its intended path is:
 
 ```text

@@ -14,7 +14,7 @@ could not work at all.
 ## Running
 
 The native library is not part of this repository. Point at a build of
-`openeggbert/cna`:
+`libcna/cna`:
 
 ```
 CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so dotnet test tests/CNA.Integration.Tests

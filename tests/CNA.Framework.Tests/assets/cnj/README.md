@@ -1,6 +1,6 @@
 # `.cnj` test fixtures
 
-`quad.cnj`/`quad_verts.bin`/`quad_idx.bin` reproduce the real openeggbert/cna C++ engine's own gtest
+`quad.cnj`/`quad_verts.bin`/`quad_idx.bin` reproduce the real libcna/cna C++ engine's own gtest
 fixture (`modules/content/tests/Microsoft/Xna/Framework/Content/CnjModelTests.cpp`,
 `WriteQuadModelFixture`/`LoadsRealCnjFixture`) byte-for-byte: a single-mesh, `BasicEffect`,
 no-bones `.cnj` document referencing a `VertexPositionNormalTexture`-layout (stride 32) vertex

@@ -16,7 +16,7 @@
 > landed, and 3 before the song reader did.
 
 These legacy sweeps answer native-binding questions mechanically against the
-`openeggbert/cna` headers. CNA headers are authoritative for native capability and the C ABI;
+`libcna/cna` headers. CNA headers are authoritative for native capability and the C ABI;
 they are **not** authoritative for the Microsoft XNA managed contract. Use
 `tools/api-compat` with XNA reference assemblies for strict XNA metadata comparison. They exist
 because prose could not be trusted: a header audit

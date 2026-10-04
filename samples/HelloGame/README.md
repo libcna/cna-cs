@@ -3,7 +3,7 @@
 The minimal end-to-end CNA.NET game: clear the screen, load a texture, draw
 it with `SpriteBatch`, read the keyboard, exit on <kbd>Escape</kbd>.
 Reproduces the reference example from
-`openeggbert/cna`'s `analysis_binding.md` §38/§140 exactly.
+`libcna/cna`'s `analysis_binding.md` §38/§140 exactly.
 
 ## Status
 
@@ -19,7 +19,7 @@ names never matched, so the loader failed, and the failure was attributed to a
 missing upstream rather than to a lookup that could not succeed.
 `CNA.Interop.NativeLibraryResolver` now bridges the two names.
 
-To run it, point at a build of `openeggbert/cna`:
+To run it, point at a build of `libcna/cna`:
 
 ```
 CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so dotnet run
@@ -39,4 +39,4 @@ directory (matching `Content.RootDirectory = "Content";` in `Game1`'s
 constructor). No content pipeline exists yet in this repository (see
 `plan.md` Phase 4) — for now, `ContentManager.Load<Texture2D>` simply asks
 native CNA to load `Content/eggbert` by whatever asset-loading convention
-`openeggbert/cna` implements first.
+`libcna/cna` implements first.

@@ -1,8 +1,8 @@
 # Architecture
 
 This document summarizes the architecture defined by
-`openeggbert/cna`'s `analysis_binding.md` and
-`openeggbert/cna`'s `analysis_binding_sharp_runtime.md`, as applied to this
+`libcna/cna`'s `analysis_binding.md` and
+`libcna/cna`'s `analysis_binding_sharp_runtime.md`, as applied to this
 repository specifically. Read those two documents for the full reasoning;
 this page is the "what it means for the code in `src/`" version.
 
@@ -17,7 +17,7 @@ CNA.Framework   (project) → CNA[.Graphics|.Input|.Content]                    
         ↓
 CNA.Interop     (project, internal) → CnaHandle, CnaResult, raw P/Invoke
         ↓
-CNA stable C ABI                                    ← in openeggbert/cna
+CNA stable C ABI                                    ← in libcna/cna
         ↓
 CNA C++ core
         ↓
@@ -137,7 +137,7 @@ wrappers" are exactly the kind of thing a future codegen tool
 
 The CNA C ABI — `CNA_Result`, opaque generation-checked handles, UTF-8
 string conventions, struct versioning, ABI version checks — is designed and
-implemented in `openeggbert/cna` (`modules/c-api/`), not here. This
+implemented in `libcna/cna` (`modules/c-api/`), not here. This
 repository only *consumes* that ABI from `CNA.Interop`. See
 `analysis_binding.md` §3–§16 for the ABI design itself; this repository
 treats it as an external contract, not something to redesign locally.
@@ -211,7 +211,7 @@ Callbacks from native CNA into managed code (`Update`, `Draw`, etc.) arrive
 through `[UnmanagedCallersOnly]` static methods that resolve a `GCHandle`
 back to the managed `Game` instance, on the thread that called `cna_game_run`
 (or `cna_game_run_one_frame`/`cna_game_tick`). The real, shipped
-`openeggbert/cna` C API does document a thread-affinity contract now (unlike
+`libcna/cna` C API does document a thread-affinity contract now (unlike
 when this note was first written): most `cna_game_*` routes are refused with
 `CNA_RESULT_THREAD` when called from any thread other than the one that
 created the game — confirmed directly against a real test
