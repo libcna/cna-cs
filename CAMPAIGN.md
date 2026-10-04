@@ -171,6 +171,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-150 | Requalify representative multithreaded browser behavior against a current CNA archive | done 2026-10-04: the shared-memory archive was rebuilt from CNA `28f8312f0` with Emscripten 6.0.3 (SHA-256 `ce8db116c3d9100f363864d355ad205c7334e5c5b630167c4fee1641c588b6c2`). AimingSample accepted held keyboard movement, rendered the changed view and ended cleanly on Escape. Unchanged Resonance, with its 282 assets rebuilt through XNA 4.0 BuildContent/XACT, loaded its level on its game thread, initialized the shipped x86 BEPUphysics, entered its 3D arena and reacted to movement in headless Chromium/SwiftShader. An initial missing-asset failure was traced to the absent disposable content-output directory and disappeared after rebuilding the documented content, not after a code change. No new CNA/CNA.NET defect was found. Evidence: `/rv/tmp/cs-samples/final-threaded-20261004/`. |
 | CSX-151 | Perform the final bounded external-application sweep, then stop discovery at the owner's saturation rule | done/classified 2026-10-04: exactly ten preselected projects were investigated without replacement. Unchanged Project Babsang ran from its shipped XNA content and prebuilt Farseer/DebugView libraries. Unchanged Ronald the Snake ran through arcade gameplay with its custom readers, tiled maps and four effects after all 56 assets were rebuilt by XNA 4.0 BuildContent; only its unavailable Palatino Linotype sprite font used the documented Liberation Serif substitution. Bamboozled, Voodoo Boy and Hunted are incomplete published source snapshots. Project Heist and Adventure Time are MonoGame applications with non-XNA middleware; Pixel Blast is a Silverlight/Windows Phone XAML host; Engine Nine's mandatory graph requires System.Xaml/WPF/WinForms/Win32; MunchKlone requires System.Drawing and a hard-coded external MySQL database whose card data is not published. No general CNA/CNA.NET defect was exposed. Saturation condition B is reached; do not select replacement applications or begin another discovery batch. Evidence: `/rv/tmp/cs-samples/final-sweep-20261004/`, `/rv/tmp/xna-games-content/final-ronald-complete/`, and `cna-cs-samples/games/README.md`. |
 | CSX-152 | Perform the final finite CNA.NET XNA compatibility-surface audit | done/classified 2026-10-04: both measured profiles remain metadata-exact (Windows runtime 256/256, GamerServices/Avatar/Net 75/75, zero diagnostics). The shipped source has zero executable `NotImplementedException` sites; the strict facade has zero TODO/FIXME sites, and all 24 static `NotSupportedException` sites were reviewed. `docs/final-compatibility-audit.md` classifies every genuine remainder as intentionally unsupported, platform limitation, extension/non-XNA, obsolete tooling, future work, or needing separate physical/native platform qualification. The native blocker table now matches C ABI 0.44.0 and its route/ABI check passes. No new compatibility defect was found and no new application was selected. |
+| CSX-153 | Run the final bounded regression and stability matrix | done 2026-10-04: Release and Debug each pass 653 Framework, 319 XnaCompat, 5 BrowserCompat, 260 native Integration and 24 GamerServices tests (1,261 per configuration). ABI verification passes 1,137 values, 1,419 imports/prototypes, 23 callbacks, 604 constants and 12 negative controls; both metadata profiles remain exact. On the isolated OPENGLES3 runner, CNA passes 107/107 C API tests, 710/710 compiled-effect tests, and 208 Runtime/Game tests with two expected platform skips for Headless/Terminal on an EasyGL build. The 100-cycle ownership gate completes with 3,000/3,000 releases and 100/100 game recreations. Three C audio smoke tests initially depended on a host audio server; CNA `8a7e13ff5` assigns SDL's dummy driver for every renderer, after which the full C API set passes at `-j4`. Unchanged Project Babsang and Ronald the Snake complete bounded Linux runs; Gemstone Hunter rebuilds and runs in headless Chromium/WebGL2/SwiftShader and on the x86_64 Android emulator. No compatibility regression or new general defect was found. |
 
 ### P9 -- portability
 
@@ -180,6 +181,32 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-153: final regression and stability matrix
+
+Both managed configurations pass the same five suites: Framework 653/653, XnaCompat 319/319,
+BrowserCompat 5/5, native Integration 260/260, and isolated GamerServices 24/24. That is 1,261
+tests per configuration, 2,522 executions total. The Release solution build has the one existing
+xUnit analyzer warning in `IsolatedStorageSettingsTests`; Debug has the same warning and no errors.
+The strict Windows runtime and GamerServices/Avatar/Net metadata profiles remain 256/256 and 75/75
+with zero diagnostics. `Verify-Abi.sh` passes 1,137 values, 1,419 imports/prototypes, 23 callbacks,
+604 constants and all 12 negative controls against C ABI 0.44.0.
+
+The isolated OPENGLES3 native selection passes C API 107/107, compiled effects 710/710, and the
+Runtime/Game binary with 208 passes plus the two expected Headless/Terminal skips: EasyGL cannot be
+backed by those platform implementations. The 100-cycle managed ownership process reports 100/100
+game recreations, 3,000/3,000 successful releases, and no retry, pending release, refused destroy,
+or native crash. The first C API run exposed a test-environment defect rather than a runtime one:
+three audio smoke tests failed without a host sound server and passed with `SDL_AUDIODRIVER=dummy`.
+CNA `8a7e13ff5` now supplies that deterministic backend for all renderers, and the complete set
+passes at `-j4`; the initial failure is retained here rather than disguised.
+
+Unchanged Project Babsang and Ronald the Snake each sustained a bounded private-display Linux run.
+Gemstone Hunter was rebuilt from its unchanged source and ran again in headless Chromium/WebGL2 via
+SwiftShader and on the x86_64 Android emulator, including its BinaryFormatter-authored maps. Browser
+evidence is in `/rv/tmp/cs-samples/final-stability-browser-20261004/`; Android evidence is in
+`/rv/tmp/cs-samples/final-stability-android-20261004/`. No compatibility regression or new general
+CNA/CNA.NET defect was found.
 
 ### 2026-10-04 -- CSX-152: final compatibility-surface audit
 

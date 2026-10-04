@@ -161,9 +161,13 @@ SpriteFont cannot draw. A game's culture keeps the ASCII forms (CSX-128, `CnaNet
 
 ## Behavior and content
 
-The managed suites currently pass 560 framework and 199 compat tests. The selected ABI 0.8.0 CNA
-library passes all 119 native integration tests in both Debug and Release on Linux x64. The
-isolated ownership runner also passes 100 game teardown/recreation cycles in both configurations.
+The final 2026-10-04 stability matrix passes in both Debug and Release: 653 Framework, 319
+XnaCompat, 5 BrowserCompat, 260 native Integration, and 24 GamerServices tests (1,261 per
+configuration). Against C ABI 0.44.0, the selected native matrix passes 107 C API and 710
+compiled-effect tests; the Runtime/Game binary passes 208 tests and skips the two Headless/Terminal
+variants that cannot back this OPENGLES3 build. The isolated ownership runner also passes 100 game
+teardown/recreation cycles, with 3,000 successful releases and no failure, retry, refused destroy,
+or native crash.
 The optional Release deep mode passes 1000 cycles: 500 explicit, 500 finalizer, and 100
 throwing-handler cycles, with 15,000 queued releases, 29,000 successful release attempts, and zero
 release failures/retries/pending releases, refused game destroys, or native crashes. That proves
