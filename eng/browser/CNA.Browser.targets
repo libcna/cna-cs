@@ -18,7 +18,11 @@
     <EmccExtraLDFlags>$(EmccExtraLDFlags) -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2</EmccExtraLDFlags>
     <!-- Threaded .NET runs Main on a worker (its deputy thread), where there is no DOM canvas: the
          WebGL context is created on the page's thread and the GL calls proxied to it, as CNA's own
-         threaded Emscripten builds do. -->
+         threaded Emscripten builds do. Emscripten's OFFSCREENCANVAS_SUPPORT does not by itself
+         change this: ownership is transferred only when pthread_create receives a canvas-bearing
+         pthread_attr_t (or its PROXY_TO_PTHREAD main stub creates the thread). The .NET host owns
+         deputy-thread creation, has no C main for that stub, and provides no supported hook for CNA
+         to add the canvas to the deputy's attributes. See CSX-148. -->
     <EmccExtraLDFlags Condition="'$(WasmEnableThreads)' == 'true'">$(EmccExtraLDFlags) -sOFFSCREEN_FRAMEBUFFER=1</EmccExtraLDFlags>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     <!-- A game that starts threads is built with WasmEnableThreads: it links CNA's shared-memory build

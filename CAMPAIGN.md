@@ -166,6 +166,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-145 | Preserve XNA `Mouse.SetPosition` semantics in a browser closely enough for recentering mouse-look loops, without pretending that JavaScript can move the operating-system cursor | done 2026-10-04 in CNA's SDL3 browser input: the requested window coordinate becomes a virtual anchor and subsequent physical pointer deltas are mapped from it; native platforms retain SDL's real warp. Four pure native regression tests cover persistence and movement, repeated recentering, reset and invalid coordinates. The previously clear-only TerrainDemo was reduced to input rather than WebGL: forced clip-space output proved its compiled effect, instancing, vertex texture, attributes, uniforms and draw all executed, while instrumentation showed the browser had culled to one root node after repeated unfulfilled recentering. Unchanged original source now draws its instanced terrain in headless Chromium/WebAssembly with SwiftShader when the harness sends `move:600,350@2000`, which also exercises the new virtual recenter. A no-action Playwright page starts at raw `(0,0)`, and TerrainDemo never centres the cursor before its first update, so that run can still rotate away once; the runner does not invent a global auto-centre. Interactive browser input and hardware GPU remain unqualified. |
 | CSX-146 | Do not let an earlier game callback failure suppress `UnloadContent` during disposal | done 2026-10-04 with CNA CBIND-158: the suspicion was first tested against the real XNA 4.0 runtime under Wine/DXVK. An Update exception leaves `Run`; a following `Dispose` still invokes `UnloadContent` exactly once, after `Content.Unload`. CNA's cleanup callback alone may now run despite the recorded callback failure, while all later frame/event callbacks remain suppressed. Native `LifecycleSmoke.c` failed at check 15 before the fix and passes after it; `AnUpdateFailure_DoesNotSkipUnloadContentDuringDispose` verifies that CNA.NET rethrows the original Update exception, then disposes with the same one-call and ordering behavior. The C ABI remains 0.44.0. |
 | CSX-147 | Finish the high-value Windows Forms subset without growing a general WinForms implementation | done 2026-10-04: `MessageBox.Show` now uses CNA's existing native dialog service while a game is alive, maps all six button sets and the WinForms icon aliases, and returns the actual selected button. The prior stderr/first-button behavior remains only as a fallback before a native game exists or where the platform reports no message-box service. `Opacity` remains stored and clamped but unapplied: the current CNA runtime-window/C ABI contract has no window-opacity operation, so this is classified as a platform/API limitation rather than approximated with visibility or game-specific behavior. 13 focused managed tests and 2 private-runner native integration tests pass; abi-verify compiles 1419/1419 imports with 0 mismatches. |
+| CSX-148 | Bound the investigation of slow WebGL proxying in multithreaded browser bundles | done/classified 2026-10-04: the concrete case remains the Racing Game Kit at about 0.65 fps under headless Chromium/SwiftShader. Emscripten 6's `OFFSCREENCANVAS_SUPPORT` transfers a canvas only at `pthread_create` when `_a_transferredcanvases` is populated, or through the `PROXY_TO_PTHREAD` C-main stub. .NET owns creation of its managed deputy thread, CNA has no C `main`, and the host exposes no supported hook that can attach the canvas to that thread's attributes. Transferring after WebGL context creation is not legal. CNA therefore retains the correct `OFFSCREEN_FRAMEBUFFER` proxy path. This is future .NET/browser-host platform work, not a correctness defect or an invitation to patch the runtime. |
 
 ### P9 -- portability
 
@@ -175,6 +176,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-148: bounded browser multithreading performance review
+
+Only the demonstrated high-impact case was investigated: the Racing Game Kit's threaded browser
+bundle renders at about 0.65 fps under headless Chromium/SwiftShader because every worker WebGL call
+is synchronously proxied to the page thread. The current target deliberately enables Emscripten's
+`OFFSCREEN_FRAMEBUFFER` fallback.
+
+The Emscripten 6 source gives a finite boundary. `OFFSCREENCANVAS_SUPPORT` does not automatically
+move `Module.canvas` to an arbitrary pthread: `libpthread.js` reads
+`pthread_attr_t._a_transferredcanvases` while creating that thread. The only automatic path is the
+`PROXY_TO_PTHREAD` startup stub (`crt1_proxy_main.c`), which creates the program's C `main` thread
+with the special canvas selector. A CNA.NET app has no C `main`; .NET creates and schedules the
+managed deputy thread and exposes no supported canvas-bearing pthread-attribute hook. The canvas
+also cannot be transferred after the page thread has created its WebGL context.
+
+No runtime patch or game-specific workaround was added. The proxy path remains correct and is
+already qualified; a direct OffscreenCanvas path belongs to a future .NET/browser-host platform
+campaign if the host gains an ownership-transfer hook. Correctness remains higher priority than
+this optimization.
 
 ### 2026-10-04 -- CSX-147: native Windows Forms message boxes; opacity classified
 
