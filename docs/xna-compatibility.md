@@ -11,6 +11,11 @@ Compatibility claims in this repository are evidence-based:
 4. selected FNA/MonoGame/Kni portability;
 5. binary compatibility, which is not a primary goal.
 
+The current finite remainder and its classifications are in
+[`final-compatibility-audit.md`](final-compatibility-audit.md). The final bounded application sweep
+has reached saturation condition B; broad application discovery is closed and this document must
+not be read as an instruction to keep finding more games.
+
 The CNA C/C++ API determines what the backend can do. It is not the authority for Microsoft's
 managed type system.
 
@@ -28,7 +33,7 @@ XNA_REFERENCE_PATH=/path/to/xna-reference-assemblies \
   dotnet run --project tools/api-compat -c Release --no-build -- --format json
 ```
 
-As measured on 2026-10-01 (on 2026-08-23 the same profile counted 257 types; the one difference
+As re-measured on 2026-10-04 (on 2026-08-23 the same profile counted 257 types; the one difference
 is `GamerServicesComponent`, which XNA declares in `Game.dll` and which is now measured with the
 rest of GamerServices -- see *Profile boundaries*):
 
@@ -72,22 +77,25 @@ effects/vertex/viewport contracts, and exact packed-vector metadata. Modifiers, 
 accessors, constants, parameter defaults and parameter names are all exact. These changes use
 composition, internal adapters, and single-owner backends.
 
-## Remaining compatibility work
+## Finite maintenance backlog
 
 - preserve strict metadata, CNA-leak, base-hierarchy, interface, unexpected-member, and allowlist
   counts at zero as hard regression gates;
-- execute the combined 470-observation snapshot on a Windows XNA runtime. CNA executes all 470 on
-  Linux. FNA completes the 199-line pure snapshot before its own `SoundEffect` finalizer aborts;
-  MonoGame builds the pure source but aborts during audio initialization and omits the Storage/XACT
-  runtime surface. Direct XNA source/IL resolves implemented strict behavior, but the installed XNA
-  C++/CLI assemblies cannot run on Linux;
+- execute the combined 470-observation snapshot on a Windows XNA runtime only when a Windows
+  qualification campaign is deliberately opened. CNA executes all 470 on Linux. FNA completes
+  the 199-line pure snapshot before its own `SoundEffect` finalizer aborts; MonoGame builds the pure
+  source but aborts during audio initialization and omits the Storage/XACT runtime surface. Direct
+  XNA source/IL resolves implemented strict behavior, but the installed XNA C++/CLI assemblies
+  cannot run on Linux;
 - obtain legal authored XACT, Song, and Video fixtures for success/lifetime/event observations;
-  continue device-loss work only when the C ABI exposes a deterministic route, and cross-device work
-  only once caller-created device creation stops taking the GL context away from a running game;
-- adjudicate the current 46 malformed/error XNB observations on Windows XNA and add further legal
-  fixture breadth only for distinct reader/graph/ownership routes;
+  continue device-loss work only when the C ABI exposes a deterministic route;
+- adjudicate the current 46 malformed/error XNB observations on Windows XNA only as a focused
+  differential task, and add legal fixture breadth only for a distinct reader/graph/ownership route;
 - keep the measured GamerServices/Avatar, Net, and Content Pipeline inventories separate from the
   runtime baseline; Xbox and Phone remain pending authoritative legal reference packs.
+
+This is a maintenance list, not a discovery queue. Reopen an item only for a reproducible defect,
+an explicit owner request, or a deliberate subsystem/platform qualification.
 
 ## Source compatibility corpus
 

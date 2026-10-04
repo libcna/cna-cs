@@ -170,6 +170,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-149 | Differentially qualify the XNA 4.0 Racing Game Kit against the strongest available oracles | done/classified 2026-10-04: unchanged C# source built without warnings against CNA.NET `55ecb16` and ran through attract mode, main menu, car and Advanced-track selection, then a real race at 1024x768 on CNA `16dce8d5a`/C ABI 0.44.0. A retained C++ port over CNA OPENGL33 ran the same six stages at the same size; both show the same content, models/materials, menus, track, shadow/post effects and HUD, with expected time/camera differences. The authentic XNA-built executable was also tried unchanged under the XNA 4.0 Wine prefix: without `XnaLiveProxy.exe` it reports that missing file; with the authentic proxy retained from Microsoft's RolePlayingGame sample it fails initialization of the defunct Games for Windows - LIVE service, exactly as that independent sample already records. This is an external Wine/GFWL limitation, not a CNA defect; no game source or runtime was patched. Evidence: `/rv/tmp/cs-samples/final-racing-differential-20261004/`. No new general compatibility defect was found. |
 | CSX-150 | Requalify representative multithreaded browser behavior against a current CNA archive | done 2026-10-04: the shared-memory archive was rebuilt from CNA `28f8312f0` with Emscripten 6.0.3 (SHA-256 `ce8db116c3d9100f363864d355ad205c7334e5c5b630167c4fee1641c588b6c2`). AimingSample accepted held keyboard movement, rendered the changed view and ended cleanly on Escape. Unchanged Resonance, with its 282 assets rebuilt through XNA 4.0 BuildContent/XACT, loaded its level on its game thread, initialized the shipped x86 BEPUphysics, entered its 3D arena and reacted to movement in headless Chromium/SwiftShader. An initial missing-asset failure was traced to the absent disposable content-output directory and disappeared after rebuilding the documented content, not after a code change. No new CNA/CNA.NET defect was found. Evidence: `/rv/tmp/cs-samples/final-threaded-20261004/`. |
 | CSX-151 | Perform the final bounded external-application sweep, then stop discovery at the owner's saturation rule | done/classified 2026-10-04: exactly ten preselected projects were investigated without replacement. Unchanged Project Babsang ran from its shipped XNA content and prebuilt Farseer/DebugView libraries. Unchanged Ronald the Snake ran through arcade gameplay with its custom readers, tiled maps and four effects after all 56 assets were rebuilt by XNA 4.0 BuildContent; only its unavailable Palatino Linotype sprite font used the documented Liberation Serif substitution. Bamboozled, Voodoo Boy and Hunted are incomplete published source snapshots. Project Heist and Adventure Time are MonoGame applications with non-XNA middleware; Pixel Blast is a Silverlight/Windows Phone XAML host; Engine Nine's mandatory graph requires System.Xaml/WPF/WinForms/Win32; MunchKlone requires System.Drawing and a hard-coded external MySQL database whose card data is not published. No general CNA/CNA.NET defect was exposed. Saturation condition B is reached; do not select replacement applications or begin another discovery batch. Evidence: `/rv/tmp/cs-samples/final-sweep-20261004/`, `/rv/tmp/xna-games-content/final-ronald-complete/`, and `cna-cs-samples/games/README.md`. |
+| CSX-152 | Perform the final finite CNA.NET XNA compatibility-surface audit | done/classified 2026-10-04: both measured profiles remain metadata-exact (Windows runtime 256/256, GamerServices/Avatar/Net 75/75, zero diagnostics). The shipped source has zero executable `NotImplementedException` sites; the strict facade has zero TODO/FIXME sites, and all 24 static `NotSupportedException` sites were reviewed. `docs/final-compatibility-audit.md` classifies every genuine remainder as intentionally unsupported, platform limitation, extension/non-XNA, obsolete tooling, future work, or needing separate physical/native platform qualification. The native blocker table now matches C ABI 0.44.0 and its route/ABI check passes. No new compatibility defect was found and no new application was selected. |
 
 ### P9 -- portability
 
@@ -179,6 +180,24 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-152: final compatibility-surface audit
+
+The strict facade was audited as a finite API rather than by another application search. The XNA
+4.0 Windows runtime profile is still 256/256 and the GamerServices/Avatar/Net profile 75/75, both
+with zero unallowlisted diagnostics. Source inspection found no executable
+`NotImplementedException` anywhere under `src`, no TODO/FIXME in `CNA.XnaCompat`, and 24 static
+`NotSupportedException` sites. Each site is now accounted for: most are XNA's own read-only,
+validation or unreachable-reader semantics; the true remainder is listed in
+`docs/final-compatibility-audit.md` with one of the owner's required classifications.
+
+The current C ABI headers re-confirm the material native limits: parameterless-only `Present`,
+payload-insufficient resource events, one transient video texture, ignored XACT renderer/look-ahead
+arguments, and no stream-property byte route. The old blocker document was moved from its stale
+0.35 header claim to 0.44, corrected for CABI-38's non-finite SpriteBatch fix and the current touch
+injection routes, and `scripts/Verify-BlockerTable.sh` passes with all 15 named routes present.
+The planned binding generator is explicitly obsolete as a campaign task. No code defect or new
+application task emerged; Phase 4 is the final regression/stability matrix.
 
 ### 2026-10-04 -- CSX-151: final bounded application sweep; saturation B
 

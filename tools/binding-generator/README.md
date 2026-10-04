@@ -1,9 +1,9 @@
-# binding-generator (planned, not implemented)
+# binding-generator (deferred maintenance tooling)
 
-This directory is a placeholder for the codegen tool referenced throughout
-`docs/architecture.md` and `plan.md`: something that generates the
-repetitive, mechanical parts of `CNA.XnaCompat` from `CNA.Framework` (and
-possibly from `CNA.Interop`'s ABI declarations) instead of hand-writing them.
+This directory records a tooling idea, not an unfinished XNA compatibility feature. The strict
+`CNA.XnaCompat` facade reached exact metadata for the selected XNA 4.0 profiles without a generator,
+and the broad compatibility campaign is now bounded. No generator is planned merely to replace
+working hand-written code.
 
 Per `openeggbert/cna`'s `analysis_binding.md` §74, automation is a good fit for:
 
@@ -18,10 +18,9 @@ and a poor fit for anything involving actual API/behavior design (the `Game`
 callback bridge, `ContentManager.Load<T>` dispatch, ownership rules) — those
 stay hand-written.
 
-## Why this doesn't exist yet
+## Maintenance disposition
 
-Building a generator before there is enough real, hand-written surface to
-generalize from would be premature abstraction. The current plan (see
-`../../plan.md` Phase 4-5) is: keep growing `CNA.Framework`/`CNA.XnaCompat`
-by hand for now, and revisit this tool once the duplicated-value-type and
-enum-mirroring pattern shows up often enough to be worth automating.
+Classification: **obsolete as a campaign task; possible future tooling**. Reconsider it only when a
+specific repetitive maintenance change has enough examples, tests, and stable inputs to make
+generation safer than editing the existing facade. Do not grow `CNA.Framework` or
+`CNA.XnaCompat` merely to create work for this tool.
