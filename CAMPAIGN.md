@@ -169,6 +169,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-148 | Bound the investigation of slow WebGL proxying in multithreaded browser bundles | done/classified 2026-10-04: the concrete case remains the Racing Game Kit at about 0.65 fps under headless Chromium/SwiftShader. Emscripten 6's `OFFSCREENCANVAS_SUPPORT` transfers a canvas only at `pthread_create` when `_a_transferredcanvases` is populated, or through the `PROXY_TO_PTHREAD` C-main stub. .NET owns creation of its managed deputy thread, CNA has no C `main`, and the host exposes no supported hook that can attach the canvas to that thread's attributes. Transferring after WebGL context creation is not legal. CNA therefore retains the correct `OFFSCREEN_FRAMEBUFFER` proxy path. This is future .NET/browser-host platform work, not a correctness defect or an invitation to patch the runtime. |
 | CSX-149 | Differentially qualify the XNA 4.0 Racing Game Kit against the strongest available oracles | done/classified 2026-10-04: unchanged C# source built without warnings against CNA.NET `55ecb16` and ran through attract mode, main menu, car and Advanced-track selection, then a real race at 1024x768 on CNA `16dce8d5a`/C ABI 0.44.0. A retained C++ port over CNA OPENGL33 ran the same six stages at the same size; both show the same content, models/materials, menus, track, shadow/post effects and HUD, with expected time/camera differences. The authentic XNA-built executable was also tried unchanged under the XNA 4.0 Wine prefix: without `XnaLiveProxy.exe` it reports that missing file; with the authentic proxy retained from Microsoft's RolePlayingGame sample it fails initialization of the defunct Games for Windows - LIVE service, exactly as that independent sample already records. This is an external Wine/GFWL limitation, not a CNA defect; no game source or runtime was patched. Evidence: `/rv/tmp/cs-samples/final-racing-differential-20261004/`. No new general compatibility defect was found. |
 | CSX-150 | Requalify representative multithreaded browser behavior against a current CNA archive | done 2026-10-04: the shared-memory archive was rebuilt from CNA `28f8312f0` with Emscripten 6.0.3 (SHA-256 `ce8db116c3d9100f363864d355ad205c7334e5c5b630167c4fee1641c588b6c2`). AimingSample accepted held keyboard movement, rendered the changed view and ended cleanly on Escape. Unchanged Resonance, with its 282 assets rebuilt through XNA 4.0 BuildContent/XACT, loaded its level on its game thread, initialized the shipped x86 BEPUphysics, entered its 3D arena and reacted to movement in headless Chromium/SwiftShader. An initial missing-asset failure was traced to the absent disposable content-output directory and disappeared after rebuilding the documented content, not after a code change. No new CNA/CNA.NET defect was found. Evidence: `/rv/tmp/cs-samples/final-threaded-20261004/`. |
+| CSX-151 | Perform the final bounded external-application sweep, then stop discovery at the owner's saturation rule | done/classified 2026-10-04: exactly ten preselected projects were investigated without replacement. Unchanged Project Babsang ran from its shipped XNA content and prebuilt Farseer/DebugView libraries. Unchanged Ronald the Snake ran through arcade gameplay with its custom readers, tiled maps and four effects after all 56 assets were rebuilt by XNA 4.0 BuildContent; only its unavailable Palatino Linotype sprite font used the documented Liberation Serif substitution. Bamboozled, Voodoo Boy and Hunted are incomplete published source snapshots. Project Heist and Adventure Time are MonoGame applications with non-XNA middleware; Pixel Blast is a Silverlight/Windows Phone XAML host; Engine Nine's mandatory graph requires System.Xaml/WPF/WinForms/Win32; MunchKlone requires System.Drawing and a hard-coded external MySQL database whose card data is not published. No general CNA/CNA.NET defect was exposed. Saturation condition B is reached; do not select replacement applications or begin another discovery batch. Evidence: `/rv/tmp/cs-samples/final-sweep-20261004/`, `/rv/tmp/xna-games-content/final-ronald-complete/`, and `cna-cs-samples/games/README.md`. |
 
 ### P9 -- portability
 
@@ -178,6 +179,34 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-151: final bounded application sweep; saturation B
+
+The batch was fixed at ten before testing and was not replenished: Project Babsang, Ronald the
+Snake, Bamboozled, Voodoo Boy, Hunted, Project Heist, Adventure Time, Pixel Blast, Engine Nine
+samples and MunchKlone. Project Babsang compiled from its exact XNA project source list and ran its
+800x600 Korean title/start state using all shipped XNBs plus its original XNA-built Farseer and
+DebugView assemblies.
+
+Ronald the Snake compiled unchanged together with its CustomDataTypes and XTiled runtime projects.
+Its own three content-pipeline extensions compiled under the authentic XNA 4.0 pipeline and built
+all 56 assets, including tiled maps and four compiled effects. The repository does not include
+Palatino Linotype, so a disposable content-tree copy names the open Liberation Serif family for
+`gamescore.spritefont`; the substitution affects content only and is recorded. The resulting game
+rendered its animated menu and entered the live arcade map with its snake, obstacles, food and HUD.
+
+The other eight candidates stopped only for evidence outside the CNA/XNA layer: three repositories
+omit files their own projects compile; two are MonoGame applications with third-party middleware;
+one is a Silverlight phone XAML host; Engine Nine's required engine graph is built around
+System.Xaml/WPF/WinForms/Win32; and MunchKlone requires both System.Drawing.Common and unpublished
+card data from a hard-coded historical MySQL service. These were not papered over with source
+rewrites, application-name checks, or new non-XNA compatibility layers.
+
+No new general CNA or CNA.NET compatibility defect was found. The selected ten are all resolved as
+running or as external/non-XNA constraints, so the owner's saturation condition B is met. Broad
+application discovery stops here. Evidence is in `/rv/tmp/cs-samples/final-sweep-20261004/` and
+`/rv/tmp/xna-games-content/final-ronald-complete/`; the per-candidate record is in the samples
+repository's `games/README.md`.
 
 ### 2026-10-04 -- CSX-150: current threaded browser qualification
 
