@@ -18,6 +18,40 @@ namespace CNA.Integration.Tests;
 [Collection(global::CNA.Integration.Tests.OwnGameCollection.Name)]
 public class CompatUnloadContentFailureTests
 {
+    private sealed class TrackingContentManager(
+        IServiceProvider services,
+        List<string> events) : Microsoft.Xna.Framework.Content.ContentManager(services)
+    {
+        public override void Unload()
+        {
+            events.Add("Content.Unload");
+            base.Unload();
+        }
+    }
+
+    private sealed class ThrowingUpdateGame : Microsoft.Xna.Framework.Game
+    {
+        public ThrowingUpdateGame()
+        {
+            _ = new Microsoft.Xna.Framework.GraphicsDeviceManager(this);
+            Content = new TrackingContentManager(Services, Events);
+        }
+
+        public int UnloadContentCalls { get; private set; }
+
+        public List<string> Events { get; } = [];
+
+        protected override void Update(Microsoft.Xna.Framework.GameTime gameTime) =>
+            throw new InvalidOperationException("update failure");
+
+        protected override void UnloadContent()
+        {
+            UnloadContentCalls++;
+            Events.Add("Game.UnloadContent");
+            base.UnloadContent();
+        }
+    }
+
     private sealed class ThrowingUnloadGame : Microsoft.Xna.Framework.Game
     {
         public ThrowingUnloadGame()
@@ -66,6 +100,27 @@ public class CompatUnloadContentFailureTests
         Assert.Equal(1, game.UnloadContentCalls);
         game.Dispose();
         Assert.Equal(1, game.UnloadContentCalls);
+    }
+
+    [NativeFact]
+    public void AnUpdateFailure_DoesNotSkipUnloadContentDuringDispose()
+    {
+        var game = new ThrowingUpdateGame();
+        try
+        {
+            InvalidOperationException thrown = Assert.Throws<InvalidOperationException>(game.Run);
+            Assert.Equal("update failure", thrown.Message);
+            Assert.Equal(0, game.UnloadContentCalls);
+
+            game.Dispose();
+
+            Assert.Equal(1, game.UnloadContentCalls);
+            Assert.Equal(["Content.Unload", "Game.UnloadContent"], game.Events);
+        }
+        finally
+        {
+            game.Dispose();
+        }
     }
 
     [NativeFact]
