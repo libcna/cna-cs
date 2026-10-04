@@ -167,6 +167,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-146 | Do not let an earlier game callback failure suppress `UnloadContent` during disposal | done 2026-10-04 with CNA CBIND-158: the suspicion was first tested against the real XNA 4.0 runtime under Wine/DXVK. An Update exception leaves `Run`; a following `Dispose` still invokes `UnloadContent` exactly once, after `Content.Unload`. CNA's cleanup callback alone may now run despite the recorded callback failure, while all later frame/event callbacks remain suppressed. Native `LifecycleSmoke.c` failed at check 15 before the fix and passes after it; `AnUpdateFailure_DoesNotSkipUnloadContentDuringDispose` verifies that CNA.NET rethrows the original Update exception, then disposes with the same one-call and ordering behavior. The C ABI remains 0.44.0. |
 | CSX-147 | Finish the high-value Windows Forms subset without growing a general WinForms implementation | done 2026-10-04: `MessageBox.Show` now uses CNA's existing native dialog service while a game is alive, maps all six button sets and the WinForms icon aliases, and returns the actual selected button. The prior stderr/first-button behavior remains only as a fallback before a native game exists or where the platform reports no message-box service. `Opacity` remains stored and clamped but unapplied: the current CNA runtime-window/C ABI contract has no window-opacity operation, so this is classified as a platform/API limitation rather than approximated with visibility or game-specific behavior. 13 focused managed tests and 2 private-runner native integration tests pass; abi-verify compiles 1419/1419 imports with 0 mismatches. |
 | CSX-148 | Bound the investigation of slow WebGL proxying in multithreaded browser bundles | done/classified 2026-10-04: the concrete case remains the Racing Game Kit at about 0.65 fps under headless Chromium/SwiftShader. Emscripten 6's `OFFSCREENCANVAS_SUPPORT` transfers a canvas only at `pthread_create` when `_a_transferredcanvases` is populated, or through the `PROXY_TO_PTHREAD` C-main stub. .NET owns creation of its managed deputy thread, CNA has no C `main`, and the host exposes no supported hook that can attach the canvas to that thread's attributes. Transferring after WebGL context creation is not legal. CNA therefore retains the correct `OFFSCREEN_FRAMEBUFFER` proxy path. This is future .NET/browser-host platform work, not a correctness defect or an invitation to patch the runtime. |
+| CSX-149 | Differentially qualify the XNA 4.0 Racing Game Kit against the strongest available oracles | done/classified 2026-10-04: unchanged C# source built without warnings against CNA.NET `55ecb16` and ran through attract mode, main menu, car and Advanced-track selection, then a real race at 1024x768 on CNA `16dce8d5a`/C ABI 0.44.0. A retained C++ port over CNA OPENGL33 ran the same six stages at the same size; both show the same content, models/materials, menus, track, shadow/post effects and HUD, with expected time/camera differences. The authentic XNA-built executable was also tried unchanged under the XNA 4.0 Wine prefix: without `XnaLiveProxy.exe` it reports that missing file; with the authentic proxy retained from Microsoft's RolePlayingGame sample it fails initialization of the defunct Games for Windows - LIVE service, exactly as that independent sample already records. This is an external Wine/GFWL limitation, not a CNA defect; no game source or runtime was patched. Evidence: `/rv/tmp/cs-samples/final-racing-differential-20261004/`. No new general compatibility defect was found. |
 
 ### P9 -- portability
 
@@ -176,6 +177,28 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-149: Racing Game Kit differential qualification
+
+The unchanged XNA 4.0 C# source built Release with zero warnings against CNA.NET `55ecb16`. With a
+private home, dummy audio and a current OPENGLES3 C API built from CNA `16dce8d5a`, it ran at
+1024x768 through attract mode, the main menu, car selection, Advanced-track selection and a race.
+The race rendered the authentic XNA-built models and effects, shadow/post-processing passes, lap
+and timing panels, tachometer and speed/gear HUD. The retained C++ port over CNA OPENGL33 ran the
+same six stages at the same resolution. Its captures agree on the scene and UI structure; animated
+backgrounds, camera position, rotating car and elapsed race time deliberately prevent a pixel
+identity claim.
+
+The corresponding authentic `RacingGame.exe` was then run unchanged in
+`~/.wine-cna-xna40`. The first run failed because the XNA redistributable does not carry
+`XnaLiveProxy.exe`. Supplying the authentic proxy retained with Microsoft's RolePlayingGame build
+advanced initialization but ended in `GamerServicesNotAvailableException: Error initializing Games
+for Windows - LIVE.` RolePlayingGame independently records the same failure under Wine. The dead
+GFWL dependency therefore makes an unchanged Wine rendering comparison unavailable on this host;
+removing `GamerServicesComponent` would modify the application and was not used as evidence. This
+is an external oracle limitation, not a CNA/CNA.NET failure. The two complete six-frame capture
+sets and both Wine logs are under
+`/rv/tmp/cs-samples/final-racing-differential-20261004/`. No general defect was exposed.
 
 ### 2026-10-04 -- CSX-148: bounded browser multithreading performance review
 
