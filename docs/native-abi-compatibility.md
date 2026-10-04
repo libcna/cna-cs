@@ -71,10 +71,10 @@ changed; a game's activated and deactivated handlers run inside a callback scope
 
 | Measurement | Result |
 | --- | --- |
-| Consumed entry points | 1416, as 0.43.0 |
+| Consumed entry points | 1419; CSX-147 newly consumes three message-box routes already present in 0.44.0 |
 | Consumed entry points absent / changed prototype | 0 / 0 |
 | Upstream exports | 3210 -> 3210; 0 struct, scalar, constant or string differences; the upstream allowlist holds no entries |
-| `tools/abi-verify` | 1137 native and 1137 managed layout/type values, 0 mismatches; 1416 of 1416 prototypes compiled; 23 callbacks; 604 constants |
+| `tools/abi-verify` | 1137 native and 1137 managed layout/type values, 0 mismatches; 1419 of 1419 prototypes compiled; 23 callbacks; 604 constants |
 | Fixtures | 2 accepted, 10 rejected (`retired-0.43.0` and `unreviewed-0.45.0` on either side) |
 | Native integration (Release, OPENGLES3 with compiled effects) | 239 of 239, GamerServices/Avatar/Net 24 of 24, framework 653 of 653, XnaCompat 304 of 304; package acceptance not rerun |
 

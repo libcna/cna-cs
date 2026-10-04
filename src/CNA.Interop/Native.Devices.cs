@@ -3,13 +3,30 @@ using System.Runtime.InteropServices;
 namespace CNA.Interop;
 
 /// <summary>
-/// P/Invoke surface of devices.h and sensors.h that the opt-in phone compatibility assembly
-/// (CNA.PhoneCompat) is built on: the device environment, the vibration controller and the
-/// accelerometer. Prototypes and ownership are documented in those headers; tools/abi-verify proves
-/// each declaration against them.
+/// P/Invoke surface of devices.h and sensors.h used by the opt-in phone and Windows Forms
+/// compatibility assemblies: native dialogs, the device environment, vibration and sensors.
+/// Prototypes and ownership are documented in those headers; tools/abi-verify proves each
+/// declaration against them.
 /// </summary>
 internal static partial class Native
 {
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_message_box_get_is_supported_ext(CnaHandle game, out byte outSupported);
+
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_message_box_show_ext(
+        CnaHandle game,
+        uint type,
+        CnaStringView title,
+        CnaStringView message,
+        in CnaStringView buttonLabels,
+        ulong buttonCount,
+        out int outChosen);
+
+    [LibraryImport(LibraryName)]
+    internal static partial CnaResult cna_message_box_set_test_backend_ext(
+        CnaHandle game, byte installed, int chosenButton);
+
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_environment_get_device_type(out uint outDeviceType);
 

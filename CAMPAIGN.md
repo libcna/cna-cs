@@ -132,7 +132,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-111 | ABI 0.40.0: the graphics adapters answer in a game's constructor (CNA CBIND-145) | done |
 | CSX-112 | `GraphicsDeviceManager.GraphicsDevice` (and `Game.GraphicsDevice` with a device service) is null until the device exists, as in XNA | done |
 | CSX-113 | A content asset's directories resolve ignoring case, as CNA's native loader does (`models\Cube` for `Models/Cube.xnb`) | done (cna-cs `7780921`); found by the Racing Game Kit |
-| CSX-114 | Opt-in `CNA.WindowsFormsCompat`: `Control`/`Form.FromHandle(Window.Handle)` (the game window's form, null otherwise), `FormBorderStyle` applied through CNA's borderless window route (`137f954`, imports 1413 -> 1415), `Opacity` kept but not applied (no window-opacity service), `MessageBox` to stderr answering with its first button (CNA's native dialog needs a live game, and XNA games show it once theirs failed to start); games opt in with `<CnaWindowsFormsCompat>` | done (cna-cs `ff08b93`, `137f954`); found by the Racing Game Kit |
+| CSX-114 | Opt-in `CNA.WindowsFormsCompat`: `Control`/`Form.FromHandle(Window.Handle)` (the game window's form, null otherwise), `FormBorderStyle` applied through CNA's borderless window route (`137f954`, imports 1413 -> 1415), `Opacity` retained, and a stderr `MessageBox` fallback; games opt in with `<CnaWindowsFormsCompat>` | done (cna-cs `ff08b93`, `137f954`); found by the Racing Game Kit; native dialog completed by CSX-147 |
 | CSX-115 | XNA `StorageDevice` in every browser bundle: CNA's IDBFS pre-js (`WebStoragePre.js`) is staged beside the archive and linked, which it never was -- every `OpenContainer` refused "Persistent browser storage is unavailable" | done; found by escape-from-enceladus |
 | CSX-116 | A game that starts threads, in a browser: a `WasmEnableThreads` bundle links CNA's shared-memory build (`Build-BrowserNative.sh --threads`), takes its frames from Emscripten's main loop on .NET's deputy thread (so the page's input reaches it between frames), and preloads 16 workers -- .NET 11 never starts a thread on a worker it creates after `Main` | done in headless Chromium: escape-from-enceladus, Missile Command, the Racing Game Kit (attract mode), AimingSample; CNA CBIND-151 |
 | CSX-117 | A threaded bundle's worker pool scales with the processors its game sees (3 per processor + 8): XNA games size their own threads by `Environment.ProcessorCount`, and Resonance's physics starts two per processor | done in headless Chromium: Resonance loads its level on its thread and plays (32 physics threads on a 16-core host) |
@@ -165,6 +165,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-144 | Restore XNA-era `BinaryFormatter` compatibility on .NET 9+ through Microsoft's out-of-band `System.Runtime.Serialization.Formatters` package, while retaining the existing explicit opt-out | done 2026-10-04: `CNA.XnaCompat.targets` adds stable package 10.0.12 only to .NETCoreApp 9+ application projects when `CnaBinaryFormatter` is not false, and retains the required runtime switch. The package is unsupported and preserves BinaryFormatter's security risks; it is compatibility for trusted legacy XNA data, not a safe serialization recommendation. The existing net8 `BinaryFormatterTests` passes. Unchanged Gemstone Hunter, using its XNA-built content and serialized maps, reaches its title in headless Chromium/WebAssembly (.NET 11, SwiftShader) and on the x86_64 Android emulator (.NET 11) |
 | CSX-145 | Preserve XNA `Mouse.SetPosition` semantics in a browser closely enough for recentering mouse-look loops, without pretending that JavaScript can move the operating-system cursor | done 2026-10-04 in CNA's SDL3 browser input: the requested window coordinate becomes a virtual anchor and subsequent physical pointer deltas are mapped from it; native platforms retain SDL's real warp. Four pure native regression tests cover persistence and movement, repeated recentering, reset and invalid coordinates. The previously clear-only TerrainDemo was reduced to input rather than WebGL: forced clip-space output proved its compiled effect, instancing, vertex texture, attributes, uniforms and draw all executed, while instrumentation showed the browser had culled to one root node after repeated unfulfilled recentering. Unchanged original source now draws its instanced terrain in headless Chromium/WebAssembly with SwiftShader when the harness sends `move:600,350@2000`, which also exercises the new virtual recenter. A no-action Playwright page starts at raw `(0,0)`, and TerrainDemo never centres the cursor before its first update, so that run can still rotate away once; the runner does not invent a global auto-centre. Interactive browser input and hardware GPU remain unqualified. |
 | CSX-146 | Do not let an earlier game callback failure suppress `UnloadContent` during disposal | done 2026-10-04 with CNA CBIND-158: the suspicion was first tested against the real XNA 4.0 runtime under Wine/DXVK. An Update exception leaves `Run`; a following `Dispose` still invokes `UnloadContent` exactly once, after `Content.Unload`. CNA's cleanup callback alone may now run despite the recorded callback failure, while all later frame/event callbacks remain suppressed. Native `LifecycleSmoke.c` failed at check 15 before the fix and passes after it; `AnUpdateFailure_DoesNotSkipUnloadContentDuringDispose` verifies that CNA.NET rethrows the original Update exception, then disposes with the same one-call and ordering behavior. The C ABI remains 0.44.0. |
+| CSX-147 | Finish the high-value Windows Forms subset without growing a general WinForms implementation | done 2026-10-04: `MessageBox.Show` now uses CNA's existing native dialog service while a game is alive, maps all six button sets and the WinForms icon aliases, and returns the actual selected button. The prior stderr/first-button behavior remains only as a fallback before a native game exists or where the platform reports no message-box service. `Opacity` remains stored and clamped but unapplied: the current CNA runtime-window/C ABI contract has no window-opacity operation, so this is classified as a platform/API limitation rather than approximated with visibility or game-specific behavior. 13 focused managed tests and 2 private-runner native integration tests pass; abi-verify compiles 1419/1419 imports with 0 mismatches. |
 
 ### P9 -- portability
 
@@ -174,6 +175,24 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-147: native Windows Forms message boxes; opacity classified
+
+The opt-in compatibility assembly now routes `System.Windows.Forms.MessageBox.Show` through
+`cna_message_box_show_ext` when a live CNA game and a platform dialog service are available. Button
+labels, error/warning/information severity and the selected result cross the ABI; closing a dialog
+returns Cancel where the button set has one. A native test backend proves that the managed call
+really crosses the ABI and returns its second button. Calls made before native game creation, and
+platforms without dialogs, retain the diagnostic stderr fallback.
+
+`Form.Opacity` is not faked. CNA's current platform-window and C ABI surfaces expose no opacity
+operation; mapping zero to hidden and one to visible would not implement the continuous WinForms
+contract and could change lifecycle/input behavior. The property therefore stays clamped and
+readable, with its lack of native effect documented as a platform/API limitation.
+
+Verification: `WindowsFormsCompatTests` 13/13; the two `WindowsForms_*` integration tests 2/2 on
+the private GPU/window runner against OPENGLES3 `build-probe`; `Verify-Abi.sh` 1419/1419 prototypes,
+1137 layout values, 23 callbacks and 604 constants, 0 mismatches.
 
 ### 2026-10-03 (night) -- a second GitHub search: 15 games, two books' samples; CSX-131..134
 

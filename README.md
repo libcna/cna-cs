@@ -35,8 +35,8 @@ As of 2026-10-02, against CNA `next` `ed885a8ae` (C ABI 0.44.0), OPENGLES3 with
 - strict metadata profile: 256 reference types versus 256 target types, 0 differences, 0
   allowlisted; GamerServices/Avatar/Net profile: 75 reference versus 75 target types, 0
   differences;
-- ABI: 1416 imports, all resolving; `tools/abi-verify` measures 1137 native/managed layout values
-  with 0 mismatches, compiles all 1416 prototypes, checks 23 callback shapes and asserts 604
+- ABI: 1419 imports, all resolving; `tools/abi-verify` measures 1137 native/managed layout values
+  with 0 mismatches, compiles all 1419 prototypes, checks 23 callback shapes and asserts 604
   constants; the
   `cna-cs-native-abi/1` matrix accepts exactly 0.44.0 and 12 isolated fixtures pass (2 accepted, 10
   rejected). See [`docs/native-abi-compatibility.md`](docs/native-abi-compatibility.md).
@@ -66,7 +66,7 @@ CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so \
 The loader also accepts `CNA_NATIVE_DIR`. Explicit configuration is fail-fast and takes precedence
 over package-native lookup. Admission follows
 [`cna-cs-native-abi/1`](docs/native-abi-compatibility.md), not a same-major range: the version must
-have a reviewed matrix entry, all 1416 imports must exist, and signature/shape canaries must pass.
+have a reviewed matrix entry, all 1419 imports must exist, and signature/shape canaries must pass.
 The one accepted entry today is C ABI 0.44.0.
 Wrong ABI, missing symbols, conflicts, wrong architecture/load failure, and missing-library cases
 report the attempted configuration, consumer/detected ABI where available, RID, and remediation;

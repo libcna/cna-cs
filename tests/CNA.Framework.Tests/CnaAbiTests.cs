@@ -141,10 +141,11 @@ public class CnaAbiTests
         // plus 0.39.0's cna_game_set_foreign_thread_calls_ext, for XNA's loading threads (1413),
         // plus 0.40.0's cna_game_window_get/set_is_borderless_ext, the border a Windows Forms game
         // removes with FormBorderStyle.None (1415, CSX-114), plus 0.41.0's
-        // cna_game_run_foreign_thread_calls_ext, which the game thread runs while it waits (1416, CSX-118).
+        // cna_game_run_foreign_thread_calls_ext, which the game thread runs while it waits (1416, CSX-118),
+        // plus the three native message-box routes CNA.WindowsFormsCompat uses (1419, CSX-147).
         // The literal is a tripwire, not a fact about CNA -- it exists so that adding an import is
         // a deliberate act rather than something that happens on the way to something else.
-        Assert.Equal(1416, declared.Length);
+        Assert.Equal(1419, declared.Length);
         Assert.Equal(declared, CnaNativeAbiPolicy.RequiredSymbols);
     }
 

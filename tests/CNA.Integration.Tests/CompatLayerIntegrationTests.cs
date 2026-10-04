@@ -1159,6 +1159,27 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
         game.RunOneFrame();
     }
 
+    [Fact]
+    public void WindowsForms_MessageBoxUsesTheNativeDialogService()
+    {
+        using var game = new FormInConstructorGame();
+        CNA.NativeMessageBox.SetTestBackendForTests(true, 1);
+        try
+        {
+            Assert.Equal(
+                System.Windows.Forms.DialogResult.Cancel,
+                System.Windows.Forms.MessageBox.Show(
+                    "Body",
+                    "Title",
+                    System.Windows.Forms.MessageBoxButtons.OKCancel,
+                    System.Windows.Forms.MessageBoxIcon.Warning));
+        }
+        finally
+        {
+            CNA.NativeMessageBox.SetTestBackendForTests(false, 0);
+        }
+    }
+
     private sealed class FormInConstructorGame : XnaGame
     {
         public FormInConstructorGame()
