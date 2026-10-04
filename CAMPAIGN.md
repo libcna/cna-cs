@@ -1,5 +1,11 @@
 # CNA.NET compatibility campaign (started 2026-10-01)
 
+**Closed 2026-10-04.** The bounded broad compatibility campaign reached saturation condition B
+and CNA.NET is now in maintenance/stabilization mode. Do not proactively search for more games or
+start another corpus-expansion batch. Reopen compatibility work only for a concrete reported
+defect, an owner-requested application, a regression, a deliberate subsystem/platform
+qualification, or unusually strong differential evidence against real XNA.
+
 Goal: existing XNA 4.0 C# source runs on CNA with no `.cs` changes -- same product category as
 MonoGame/FNA. Source code, headers, tests, real builds and runtime behaviour are the authority;
 `plan.md`, `NEXT.md`, `docs/native-behavior-blockers.md` and the sibling repos' reports are
@@ -66,7 +72,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-041 | `Microsoft.Xna.Framework.GamerServices` runtime profile (Gamer, SignedInGamer, Guide, GamerServicesComponent, profiles, achievements, leaderboards) | done: 55/75 of the GS/Net profile exact; rest is CSX-042/043 |
 | CSX-042 | Avatar types (AvatarDescription, AvatarAnimation, AvatarRenderer, ...) | done: 58/75 exact, renderer reaches Ready and draws |
 | CSX-043 | `Microsoft.Xna.Framework.Net` (NetworkSession, AvailableNetworkSession, NetworkGamer, LocalNetworkGamer, PacketReader/Writer) | done: GS/Net profile 75/75, SystemLink loopback measured |
-| CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | doing: packet-reader copy done (CNA 402c1aaa9, ABI 0.36.0); LeaderboardWriter session route and PropertyDictionary stream contents open (Windows XNA throws for the writer too) |
+| CSX-044 | Missing C API routes added to CNA with pure-C tests where native C++ already has behaviour | classified at closure: packet-reader copy is done (CNA 402c1aaa9, ABI 0.36.0); the session LeaderboardWriter is intentionally unsupported because ordinary/non-Pro Windows XNA also refuses and the service is obsolete; non-empty PropertyDictionary stream bytes are finite future work requiring a versioned C copy/read route |
 | CSX-045 | Separate opt-in phone compatibility assembly (`Microsoft.Devices` etc.) only where samples need it | done: `CNA.PhoneCompat` (Devices + Sensors.Accelerometer); 6 of 7 gallery phone samples compile unchanged; Phone.Shell/Notification for Yacht open |
 
 ### P6 -- samples (`cna-cs-samples`)
@@ -173,6 +179,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-152 | Perform the final finite CNA.NET XNA compatibility-surface audit | done/classified 2026-10-04: both measured profiles remain metadata-exact (Windows runtime 256/256, GamerServices/Avatar/Net 75/75, zero diagnostics). The shipped source has zero executable `NotImplementedException` sites; the strict facade has zero TODO/FIXME sites, and all 24 static `NotSupportedException` sites were reviewed. `docs/final-compatibility-audit.md` classifies every genuine remainder as intentionally unsupported, platform limitation, extension/non-XNA, obsolete tooling, future work, or needing separate physical/native platform qualification. The native blocker table now matches C ABI 0.44.0 and its route/ABI check passes. No new compatibility defect was found and no new application was selected. |
 | CSX-153 | Run the final bounded regression and stability matrix | done 2026-10-04: Release and Debug each pass 653 Framework, 319 XnaCompat, 5 BrowserCompat, 260 native Integration and 24 GamerServices tests (1,261 per configuration). ABI verification passes 1,137 values, 1,419 imports/prototypes, 23 callbacks, 604 constants and 12 negative controls; both metadata profiles remain exact. On the isolated OPENGLES3 runner, CNA passes 107/107 C API tests, 710/710 compiled-effect tests, and 208 Runtime/Game tests with two expected platform skips for Headless/Terminal on an EasyGL build. The 100-cycle ownership gate completes with 3,000/3,000 releases and 100/100 game recreations. Three C audio smoke tests initially depended on a host audio server; CNA `8a7e13ff5` assigns SDL's dummy driver for every renderer, after which the full C API set passes at `-j4`. Unchanged Project Babsang and Ronald the Snake complete bounded Linux runs; Gemstone Hunter rebuilds and runs in headless Chromium/WebGL2/SwiftShader and on the x86_64 Android emulator. No compatibility regression or new general defect was found. |
 | CSX-154 | Publish an English source-build and migration guide for XNA 4.0, FNA and MonoGame C# games | done 2026-10-04: `docs/migrating-xna-games.md` covers the source-first beta state, CNA/CNA.NET desktop builds, an unchanged-source SDK wrapper, authentic XNA content, XNA binary forwarders, the strict XNA boundary for FNA/MonoGame ports, Visual Studio and VS Code, and the maintained browser and Android heads with evidence-based platform caveats. The template links the guide and identifies itself as a C# project for template hosts. Its development verifier built the repository project, installed the local `cna-game` template, generated a clean consumer without repository-only infrastructure or hidden source paths, and built it with zero warnings or errors. The guide states that no official binaries or packages exist yet and that the expected January 2027 stabilization phase is a roadmap expectation, not a promised release date. |
+| CSX-155 | Complete and qualify `cna-multi-language-3d-demo` in only C++, C and C# | done 2026-10-04 in demo `16bde3c`: the current C++ reference builds against CNA; a C99 port uses the public CNA C ABI for lifecycle, input, BasicEffect 3D drawing, audio and media; one unchanged `StarfieldGame.cs` builds against both CNA.NET and FNA with engine selection confined to MSBuild. The isolated native suite passes 11/11 (7 C++, 4 C). CNA.NET and FNA application/test builds have zero warnings/errors, both gameplay executables pass, and both engines report `frame_valid=true` for all three sectors. Placeholder languages and their expansion plan were removed; the demo is closed at exactly these three languages. |
 
 ### P9 -- portability
 
@@ -182,6 +189,26 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-155: C++/C/C# multi-language 3D demo
+
+`cna-multi-language-3d-demo` `16bde3c` closes its scope at C++, C and C#. The existing
+`StarfieldGame` C++ reference was updated for the current pointer-valued effect technique/pass
+collections. The new C99 implementation uses only CNA's public C ABI and owns the real lifecycle,
+input, gameplay state, procedural BasicEffect scene, audio/media resources and framebuffer
+validation. The root build enables the C API and builds both native language ports.
+
+The C# port keeps one `StarfieldGame.cs` with no CNA/FNA conditional source. Its projects select
+either `CNA.XnaCompat` or `FNA.dll` only at the reference/build layer. Both configurations build the
+application and gameplay executable with zero warnings and errors. On CNA's private real-GPU
+Weston/Xwayland runner, both gameplay executables pass and the graphical application reports
+`frame_valid=true` for sectors 1, 2 and 3 on both CNA.NET and FNA. The native private-runner suite
+passes 11/11: seven C++ checks (gameplay plus three sectors on OpenGL 3.3 and OpenGL ES 3) and four
+C checks (gameplay plus three sectors). Documentation now contains only the requested three-language
+scope and reproducible native/CNA.NET/FNA commands.
+
+This task added no CNA.NET compatibility defect. It is the final implementation task of the broad
+campaign; campaign closure and maintenance policy are recorded in CNA's `handoff.md`.
 
 ### 2026-10-04 -- CSX-154: source-build and migration guide
 
