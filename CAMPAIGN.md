@@ -172,6 +172,7 @@ Status: `todo`, `doing`, `done`, `blocked(<reason>)`.
 | CSX-151 | Perform the final bounded external-application sweep, then stop discovery at the owner's saturation rule | done/classified 2026-10-04: exactly ten preselected projects were investigated without replacement. Unchanged Project Babsang ran from its shipped XNA content and prebuilt Farseer/DebugView libraries. Unchanged Ronald the Snake ran through arcade gameplay with its custom readers, tiled maps and four effects after all 56 assets were rebuilt by XNA 4.0 BuildContent; only its unavailable Palatino Linotype sprite font used the documented Liberation Serif substitution. Bamboozled, Voodoo Boy and Hunted are incomplete published source snapshots. Project Heist and Adventure Time are MonoGame applications with non-XNA middleware; Pixel Blast is a Silverlight/Windows Phone XAML host; Engine Nine's mandatory graph requires System.Xaml/WPF/WinForms/Win32; MunchKlone requires System.Drawing and a hard-coded external MySQL database whose card data is not published. No general CNA/CNA.NET defect was exposed. Saturation condition B is reached; do not select replacement applications or begin another discovery batch. Evidence: `/rv/tmp/cs-samples/final-sweep-20261004/`, `/rv/tmp/xna-games-content/final-ronald-complete/`, and `cna-cs-samples/games/README.md`. |
 | CSX-152 | Perform the final finite CNA.NET XNA compatibility-surface audit | done/classified 2026-10-04: both measured profiles remain metadata-exact (Windows runtime 256/256, GamerServices/Avatar/Net 75/75, zero diagnostics). The shipped source has zero executable `NotImplementedException` sites; the strict facade has zero TODO/FIXME sites, and all 24 static `NotSupportedException` sites were reviewed. `docs/final-compatibility-audit.md` classifies every genuine remainder as intentionally unsupported, platform limitation, extension/non-XNA, obsolete tooling, future work, or needing separate physical/native platform qualification. The native blocker table now matches C ABI 0.44.0 and its route/ABI check passes. No new compatibility defect was found and no new application was selected. |
 | CSX-153 | Run the final bounded regression and stability matrix | done 2026-10-04: Release and Debug each pass 653 Framework, 319 XnaCompat, 5 BrowserCompat, 260 native Integration and 24 GamerServices tests (1,261 per configuration). ABI verification passes 1,137 values, 1,419 imports/prototypes, 23 callbacks, 604 constants and 12 negative controls; both metadata profiles remain exact. On the isolated OPENGLES3 runner, CNA passes 107/107 C API tests, 710/710 compiled-effect tests, and 208 Runtime/Game tests with two expected platform skips for Headless/Terminal on an EasyGL build. The 100-cycle ownership gate completes with 3,000/3,000 releases and 100/100 game recreations. Three C audio smoke tests initially depended on a host audio server; CNA `8a7e13ff5` assigns SDL's dummy driver for every renderer, after which the full C API set passes at `-j4`. Unchanged Project Babsang and Ronald the Snake complete bounded Linux runs; Gemstone Hunter rebuilds and runs in headless Chromium/WebGL2/SwiftShader and on the x86_64 Android emulator. No compatibility regression or new general defect was found. |
+| CSX-154 | Publish an English source-build and migration guide for XNA 4.0, FNA and MonoGame C# games | done 2026-10-04: `docs/migrating-xna-games.md` covers the source-first beta state, CNA/CNA.NET desktop builds, an unchanged-source SDK wrapper, authentic XNA content, XNA binary forwarders, the strict XNA boundary for FNA/MonoGame ports, Visual Studio and VS Code, and the maintained browser and Android heads with evidence-based platform caveats. The template links the guide and identifies itself as a C# project for template hosts. Its development verifier built the repository project, installed the local `cna-game` template, generated a clean consumer without repository-only infrastructure or hidden source paths, and built it with zero warnings or errors. The guide states that no official binaries or packages exist yet and that the expected January 2027 stabilization phase is a roadmap expectation, not a promised release date. |
 
 ### P9 -- portability
 
@@ -181,6 +182,27 @@ Windows/macOS/iOS: architecture only (resolver keeps `.dylib`/`.dll`; iOS planne
 ## Ledger
 
 Newest first. Each entry: repos+HEAD, reproduced, root cause, files, tests, commands, results.
+
+### 2026-10-04 -- CSX-154: source-build and migration guide
+
+Added `docs/migrating-xna-games.md` as the user-facing path from source checkout to a CNA-backed
+C# game. It covers Linux and Windows native/managed builds, a minimal SDK-style wrapper that keeps
+the original XNA source list intact, original XNA 4.0 content and pure-IL XNA library forwarding,
+FNA and MonoGame migration boundaries, Visual Studio and Visual Studio Code, and the maintained
+.NET 11 browser and Android heads. Platform wording follows the measured matrix: Linux x86_64 is
+the strongest qualification, the browser result is headless Chromium/SwiftShader, Android is the
+x86_64 emulator, and Windows, hardware-browser/audio, physical Android/ARM, macOS and iOS remain
+runtime-unqualified. The guide also makes the beta/source-first state explicit: no official binary
+downloads or published packages yet, and January 2027 is an expected stabilization start rather
+than a release promise.
+
+`cna-cs-template` links the guide from its README and adds the standard C# project tags to its
+template metadata. `python3 -m json.tool .template.config/template.json` and both repositories'
+`git diff --check` pass. `scripts/verify-template.sh --mode development` built the checked-in
+template, installed it locally, generated `GeneratedCnaGame`, verified that repository-only
+infrastructure and hidden source paths were absent, and built the consumer: zero warnings and zero
+errors. No browser or Android claim was inferred from this documentation-only task; their current
+runtime evidence remains CSX-063/070/071/144/153.
 
 ### 2026-10-04 -- CSX-153: final regression and stability matrix
 

@@ -25,12 +25,14 @@ Binary compatibility with Microsoft's strong-named assemblies is not the primary
 
 ## Measured state
 
-As of 2026-10-02, against CNA `next` `ed885a8ae` (C ABI 0.44.0), OPENGLES3 with
+As of 2026-10-04, against CNA `next` `8a7e13ff5` (C ABI 0.44.0), OPENGLES3 with
 `CNA_EASYGL_COMPILED_EFFECTS=ON`, Linux x64:
 
-- Debug and Release solution builds: 0 warnings, 0 errors;
-- managed tests: 653/653 framework and 304/304 XNA-compat;
-- native integration tests: 239/239, plus 24/24 GamerServices, Avatar and Net integration tests
+- Debug and Release solution builds: success with one existing xUnit analyzer warning, 0 errors;
+- managed tests in each configuration: 653/653 Framework, 319/319 XNA-compat, and 5/5
+  BrowserCompat;
+- native integration tests in each configuration: 260/260, plus 24/24 GamerServices, Avatar and
+  Net integration tests
   (their own process: the native dispatcher is process-wide, as XNA's is);
 - strict metadata profile: 256 reference types versus 256 target types, 0 differences, 0
   allowlisted; GamerServices/Avatar/Net profile: 75 reference versus 75 target types, 0
@@ -117,6 +119,8 @@ composition and internal adapters so one native resource has one owner. The sele
 profile now has no public `CNA.*` base types or public/protected CNA-type signature leaks.
 
 - [`docs/architecture.md`](docs/architecture.md) — layer and ownership rules.
+- [`docs/migrating-xna-games.md`](docs/migrating-xna-games.md) — source-build, editor, migration,
+  browser, and Android guide for XNA/FNA/MonoGame C# games.
 - [`docs/xna-compatibility.md`](docs/xna-compatibility.md) — measured profile and extension boundaries.
 - [`docs/packaging.md`](docs/packaging.md) — proposed package/RID graph and measured local acceptance harness.
 - [`plan.md`](plan.md) — current measurable roadmap.
