@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Xunit;
 
-namespace CnaCs.XnaCompat.Tests;
+namespace CnaDotnet.XnaCompat.Tests;
 
 /// <summary>
 /// Player one of a Windows Phone title off a phone is the phone (cna-cs CSX-095): connected, as

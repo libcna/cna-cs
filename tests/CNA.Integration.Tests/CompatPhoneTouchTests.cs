@@ -4,7 +4,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// The phone emulator made the mouse the finger, so a Windows Phone title off a phone gets CNA's

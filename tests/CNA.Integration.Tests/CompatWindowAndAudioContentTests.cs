@@ -7,7 +7,7 @@ using XnaGame = Microsoft.Xna.Framework.Game;
 // NOT under CNA, for the reason CompatLayerIntegrationTests records: an enclosing namespace's
 // members shadow a using directive's imports, so inside `namespace CNA.*` the names below would
 // bind to CNA's own types rather than the compat ones under test.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// Two things a real game depends on that no unit test can reach: the window's default title, which

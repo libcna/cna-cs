@@ -1,5 +1,5 @@
 #!/bin/bash
-# Records what a cna-cs game actually sends to the audio device, and the device's own view of the
+# Records what a cna-dotnet game actually sends to the audio device, and the device's own view of the
 # stream, so a "no sound" report can be resolved from evidence instead of from listening.
 #
 # Run it INSTEAD of launching the game yourself, and reproduce the silence while it runs:

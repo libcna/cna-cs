@@ -18,6 +18,6 @@ XDG_DATA_HOME=/tmp/cna-runtime-probe-data \
 dotnet run -c Release --project tests/CNA.XnaCompat.RuntimeProbe
 ```
 
-The probe deletes its named `cna-cs-runtime-probe` storage container in `finally`. The Windows XNA
+The probe deletes its named `cna-dotnet-runtime-probe` storage container in `finally`. The Windows XNA
 build and capture are integrated into `scripts/Capture-XnaSnapshots.ps1`; reference/runtime
 assemblies remain external to this repository.

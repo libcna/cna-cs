@@ -8,7 +8,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA: see CompatWindowAndAudioContentTests.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// CSX-129: XNA reads every asset through <c>ContentManager.OpenStream</c>, so a manager that

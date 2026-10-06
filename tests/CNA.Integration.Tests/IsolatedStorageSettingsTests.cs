@@ -1,7 +1,7 @@
 using System.IO.IsolatedStorage;
 using Xunit;
 
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// CSX-132: Windows Phone's IsolatedStorageSettings, which Windows Phone 7 Game Development's

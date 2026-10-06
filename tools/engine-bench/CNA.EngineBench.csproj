@@ -10,10 +10,10 @@
     <!-- Which XNA implementation this build compiles the one shared Program.cs against. The
          whole point of the tool is that the source is identical for all three. -->
     <Engine Condition="'$(Engine)' == ''">CNA</Engine>
-    <CnaCsRoot Condition="'$(CnaCsRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../..'))</CnaCsRoot>
+    <CnaDotnetRoot Condition="'$(CnaDotnetRoot)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)../..'))</CnaDotnetRoot>
   </PropertyGroup>
   <ItemGroup Condition="'$(Engine)' == 'CNA'">
-    <ProjectReference Include="$(CnaCsRoot)/src/CNA.XnaCompat/CNA.XnaCompat.csproj" />
+    <ProjectReference Include="$(CnaDotnetRoot)/src/CNA.XnaCompat/CNA.XnaCompat.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(Engine)' == 'MonoGame'">
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />

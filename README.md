@@ -109,7 +109,7 @@ tools/profile-inventory/          separate future-XNA-profile inventory generato
 samples/HelloGame/                small managed sample
 ```
 
-The sibling `cna-cs-template` is the richer CNA-first demonstration and installable `dotnet new`
+The sibling `cna-dotnet-template` is the richer CNA-first demonstration and installable `dotnet new`
 template (`cna-game`).
 
 ## Architecture and packaging

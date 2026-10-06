@@ -8,7 +8,7 @@
 #
 #   scripts/Reproduce-SigtermShutdown.sh software
 #
-# Needs the template built at ../cna-cs-template/bin/Debug/net8.0/CnaCsTemplate and a CNA build at
+# Needs the template built at ../cna-dotnet-template/bin/Debug/net8.0/CnaDotnetTemplate and a CNA build at
 # ../cna/cmake-build-<renderer> (or CNA_UPSTREAM_ROOT). Prints PURE_VIRTUAL_HITS and ABORT_HITS; anything above zero
 # is the defect. A normal exit is clean on every renderer, so run the template's --smoke-test first
 # if a result looks like something other than the signal path.
@@ -19,14 +19,14 @@ echo "LOG $renderer=$log"
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
 upstream=${CNA_UPSTREAM_ROOT:-"$repo_root/../cna"}
-template=${CNA_TEMPLATE_ROOT:-"$repo_root/../cna-cs-template"}
+template=${CNA_TEMPLATE_ROOT:-"$repo_root/../cna-dotnet-template"}
 export CNA_NATIVE_LIBRARY="$upstream/cmake-build-$renderer/modules/c-api/libcna_c_api.so"
 cd "$template"
-xvfb-run -a ./bin/Debug/net8.0/CnaCsTemplate --frames 100000 > "$log" 2>&1 &
+xvfb-run -a ./bin/Debug/net8.0/CnaDotnetTemplate --frames 100000 > "$log" 2>&1 &
 runner=$!
 sleep 10
 # The game is a descendant of xvfb-run; find it by its own executable name only.
-game=$(pgrep -x CnaCsTemplate | head -1)
+game=$(pgrep -x CnaDotnetTemplate | head -1)
 if [ -z "$game" ]; then echo "RESULT $renderer: game process not found"; kill -KILL $runner 2>/dev/null; exit 0; fi
 kill -TERM "$game"
 for _ in $(seq 1 40); do kill -0 "$game" 2>/dev/null || break; sleep 0.25; done

@@ -94,16 +94,16 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
         {
             const uint CustomRangeFirst = 0x80000000;
 
-            uint first = CnbLoaderRegistration.AssetTypeIdFromName("CnaCs.Tests.StableName");
-            uint again = CnbLoaderRegistration.AssetTypeIdFromName("CnaCs.Tests.StableName");
-            uint other = CnbLoaderRegistration.AssetTypeIdFromName("CnaCs.Tests.OtherName");
+            uint first = CnbLoaderRegistration.AssetTypeIdFromName("CnaDotnet.Tests.StableName");
+            uint again = CnbLoaderRegistration.AssetTypeIdFromName("CnaDotnet.Tests.StableName");
+            uint other = CnbLoaderRegistration.AssetTypeIdFromName("CnaDotnet.Tests.OtherName");
 
             Assert.Equal(first, again);
             Assert.NotEqual(first, other);
             Assert.True(first >= CustomRangeFirst, $"0x{first:X8} is outside CNA's custom range.");
             Assert.True(other >= CustomRangeFirst, $"0x{other:X8} is outside CNA's custom range.");
 
-            output.WriteLine($"'CnaCs.Tests.StableName' -> 0x{first:X8}, 'CnaCs.Tests.OtherName' -> 0x{other:X8}");
+            output.WriteLine($"'CnaDotnet.Tests.StableName' -> 0x{first:X8}, 'CnaDotnet.Tests.OtherName' -> 0x{other:X8}");
         });
     }
 
@@ -120,7 +120,7 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
     {
         fixture.InsideAFrame(game =>
         {
-            const string TypeName = "CnaCs.Tests.RoundTripLevel";
+            const string TypeName = "CnaDotnet.Tests.RoundTripLevel";
             byte[] payload = [9, 8, 7, 6, 5];
             string path = WriteCustomAsset(TypeName, payload, out uint assetTypeId);
 
@@ -167,7 +167,7 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
     {
         fixture.InsideAFrame(_ =>
         {
-            const string TypeName = "CnaCs.Tests.WithdrawnLevel";
+            const string TypeName = "CnaDotnet.Tests.WithdrawnLevel";
             string path = WriteCustomAsset(TypeName, [1, 2, 3], out uint assetTypeId);
 
             try
@@ -212,7 +212,7 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
     {
         fixture.InsideAFrame(_ =>
         {
-            const string TypeName = "CnaCs.Tests.ReplacedLevel";
+            const string TypeName = "CnaDotnet.Tests.ReplacedLevel";
 
             var first = CnbLoaderRegistration.Register(TypeName, new LevelLoader());
             try
@@ -252,13 +252,13 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
     {
         fixture.InsideAFrame(_ =>
         {
-            uint honest = CnbLoaderRegistration.AssetTypeIdFromName("CnaCs.Tests.HonestLevel");
+            uint honest = CnbLoaderRegistration.AssetTypeIdFromName("CnaDotnet.Tests.HonestLevel");
             string path = Path.Combine(Path.GetTempPath(), $"cna-cnb-liar-{Guid.NewGuid():N}.cnb");
 
             try
             {
                 using var writer = new CnbTestWriter(honest, 1);
-                writer.SetMetadata("CnaCs.Tests.SomeOtherType", "levels/liar");
+                writer.SetMetadata("CnaDotnet.Tests.SomeOtherType", "levels/liar");
                 writer.AddChunk(CnbTestWriter.ChunkId(LevelChunk), [1]);
 
                 CnaException failure = Assert.Throws<CnaException>(() => writer.WriteToFile(path));
@@ -294,7 +294,7 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
     {
         fixture.InsideAFrame(game =>
         {
-            const string TypeName = "CnaCs.Tests.ThrowingLevel";
+            const string TypeName = "CnaDotnet.Tests.ThrowingLevel";
             string path = WriteCustomAsset(TypeName, [4, 4, 4], out uint _);
 
             try
@@ -354,7 +354,7 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
 
                 // The document is irrelevant: the refusal happens before anything is invoked,
                 // because there is no safe way to proceed.
-                string path = WriteCustomAsset("CnaCs.Tests.UnusedForThisTest", [1], out uint _);
+                string path = WriteCustomAsset("CnaDotnet.Tests.UnusedForThisTest", [1], out uint _);
                 try
                 {
                     using CnbDocument document = CnbDocument.Open(path);
@@ -370,7 +370,7 @@ public class CnbLoaderRegistryTests(ITestOutputHelper output, NativeGameFixture 
 
             // And a loader this binding did register is still reported as managed, so the guard
             // separates the two rather than refusing everything.
-            using var mine = CnbLoaderRegistration.Register("CnaCs.Tests.ManagedFlagLevel", new LevelLoader());
+            using var mine = CnbLoaderRegistration.Register("CnaDotnet.Tests.ManagedFlagLevel", new LevelLoader());
             using CnbLoader? found = CnbLoader.Find(mine.AssetTypeId);
             Assert.NotNull(found);
             Assert.True(found.IsManaged);

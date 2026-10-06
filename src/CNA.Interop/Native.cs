@@ -134,7 +134,7 @@ internal static partial class Native
     /// <summary>Matches <c>cna_game_set_window_title</c> exactly (<c>runtime.h:246</c>) -- takes an
     /// owned game handle, safe to call any time (not callback-scoped), which is why
     /// <c>CNA.GameWindow.Title</c>'s setter can run from a game's own constructor, the same way
-    /// <c>HelloGame</c> in cna-cs-template does.</summary>
+    /// <c>HelloGame</c> in cna-dotnet-template does.</summary>
     [LibraryImport(LibraryName)]
     internal static partial CnaResult cna_game_set_window_title(CnaHandle game, CnaStringView title);
 

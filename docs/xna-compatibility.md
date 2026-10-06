@@ -131,7 +131,7 @@ The same representative template source currently compiles against:
 
 A build is not a runtime claim.
 
-Beyond the games that run (cna-cs-samples `games/`), ten real XNA 4.0 codebases that cannot run on
+Beyond the games that run (cna-dotnet-samples `games/`), ten real XNA 4.0 codebases that cannot run on
 Linux were compiled from their own project files: none uses an XNA type or member CNA.NET lacks.
 What stops them is Windows Forms, Silverlight, a library their repositories do not ship, or one
 change in .NET itself: since .NET 7, `BitConverter.GetBytes(sbyte)` is ambiguous, because `sbyte`

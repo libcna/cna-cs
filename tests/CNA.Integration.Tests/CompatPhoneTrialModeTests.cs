@@ -5,7 +5,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// CSX-137: a Windows Phone title's <c>Guide.IsTrialMode</c> is the phone's license check, which

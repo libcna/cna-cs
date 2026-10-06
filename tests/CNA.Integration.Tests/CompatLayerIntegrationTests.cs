@@ -15,11 +15,11 @@ using XnaGame = Microsoft.Xna.Framework.Game;
 // overriding the compat Game's Update fails with "cannot override inherited member because it is
 // sealed" -- an error naming neither the namespace nor the shadowing.
 //
-// cna-cs-template hit the same thing and works around it in its csproj (`<RootNamespace>
-// CnaCsTemplate</RootNamespace>`, with a comment). It is a real constraint on consumers: a ported
+// cna-dotnet-template hit the same thing and works around it in its csproj (`<RootNamespace>
+// CnaDotnetTemplate</RootNamespace>`, with a comment). It is a real constraint on consumers: a ported
 // XNA game cannot live under a CNA namespace. Recorded in docs rather than only in a csproj comment
 // now, because the symptom points nowhere near the cause.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// The compat layer, against the real library. <b>Nothing here had ever run.</b>

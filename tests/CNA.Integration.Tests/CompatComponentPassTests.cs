@@ -3,7 +3,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// XNA's <c>Game.Update</c> and <c>Game.Draw</c> run the components at the call (cna-cs CSX-090):

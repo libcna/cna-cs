@@ -243,7 +243,7 @@ public class GraphicsDevice : IDisposable
     /// <summary>
     /// Whether the active renderer supports <paramref name="capability"/>.
     ///
-    /// <b>Added because a template got the wrong answer by guessing.</b> <c>cna-cs-template</c>
+    /// <b>Added because a template got the wrong answer by guessing.</b> <c>cna-dotnet-template</c>
     /// probed for this method through <c>dynamic</c>, caught the resulting binder failure, and fell
     /// back to <c>true</c> -- so on SDL_RENDERER, a renderer that prints "2D-only" during startup,
     /// it reported "3D pipeline: yes", built a <see cref="BasicEffect"/>, and died in

@@ -7,7 +7,7 @@ using Xunit.Abstractions;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Content;
+namespace CnaDotnet.Integration.Tests.Content;
 
 /// <summary>
 /// The four stock effects beyond <c>BasicEffect</c>, read through the public

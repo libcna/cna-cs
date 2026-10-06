@@ -5,7 +5,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// XNA 4.0 let a game create graphics resources, move their data and load content on a thread of
@@ -323,7 +323,7 @@ public class CompatWorkerThreadTests
     /// </summary>
     private sealed class SavingGame : XnaGame
     {
-        private const string ContainerName = "cna-cs CompatWorkerThreadTests";
+        private const string ContainerName = "cna-dotnet CompatWorkerThreadTests";
         private static readonly object Lock = new();
         private StorageDevice? _device;
         private Thread[]? _workers;

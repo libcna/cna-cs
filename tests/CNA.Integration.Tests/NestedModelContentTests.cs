@@ -9,7 +9,7 @@ using XnaGame = Microsoft.Xna.Framework.Game;
 // NOT under CNA: an enclosing CNA namespace shadows the `using Microsoft.Xna.Framework` imports, so
 // `Vector3` and friends would bind to the CNA types. CompatLayerIntegrationTests records the same
 // constraint at length; a ported game lives under it too.
-namespace CnaCs.Integration.Tests.Content;
+namespace CnaDotnet.Integration.Tests.Content;
 
 /// <summary>
 /// A model nested inside another asset, loaded through the public <see cref="ContentReader"/>

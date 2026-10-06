@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using XnaBinaryLibrary;
 using Xunit;
 
-namespace CnaCs.XnaCompat.Tests;
+namespace CnaDotnet.XnaCompat.Tests;
 
 /// <summary>
 /// A library compiled against XNA 4.0 itself (tests/fixtures/xna-binary-library, a checked-in

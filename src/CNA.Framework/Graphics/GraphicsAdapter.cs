@@ -17,7 +17,7 @@ namespace CNA.Graphics;
 /// impossible here since enumerating needs a device. <see cref="GetAdapters"/> and
 /// <see cref="GetDefaultAdapter"/> take one instead. Game code that only reads
 /// <c>GraphicsDevice.Adapter</c> -- by far the common case, and what
-/// <c>cna-cs-template</c>'s own renderer probe does -- is unaffected.
+/// <c>cna-dotnet-template</c>'s own renderer probe does -- is unaffected.
 /// </summary>
 public class GraphicsAdapter
 {

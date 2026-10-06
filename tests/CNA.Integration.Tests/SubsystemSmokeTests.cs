@@ -462,8 +462,8 @@ public class SubsystemSmokeTests(ITestOutputHelper output, NativeGameFixture fix
     {
         fixture.InsideAFrame(game =>
         {
-            game.Window.Title = "cna-cs integration";
-            Assert.Equal("cna-cs integration", game.Window.Title);
+            game.Window.Title = "cna-dotnet integration";
+            Assert.Equal("cna-dotnet integration", game.Window.Title);
 
             output.WriteLine($"client bounds {game.Window.ClientBounds}, handle 0x{game.Window.Handle:x}");
         });

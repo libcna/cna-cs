@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Media;
 
-namespace CnaCs.ContentSurvey;
+namespace CnaDotnet.ContentSurvey;
 
 /// <summary>
 /// Loads the assets the resolution survey says are readable, and reports what actually happened.

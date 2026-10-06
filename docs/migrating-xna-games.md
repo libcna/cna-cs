@@ -22,14 +22,14 @@ platform campaigns. A successful build alone is not a runtime-support claim.
 
 ## Choose a starting point
 
-For a new game, use `cna-cs-template`. It is an installable `dotnet new` C# project with one shared
+For a new game, use `cna-dotnet-template`. It is an installable `dotnet new` C# project with one shared
 game source set and optional browser and Android heads.
 
 For an existing XNA game, keep the original `.cs` files and create a small SDK-style wrapper
 project. The wrapper selects the original source files, references CNA.NET, and copies the original
 XNA-built content. This keeps application logic unchanged and makes the migration easy to review.
 
-For a complex port, use the projects under `cna-cs-samples/games/` as working examples. They cover
+For a complex port, use the projects under `cna-dotnet-samples/games/` as working examples. They cover
 custom content readers, compiled effects, XACT, prebuilt XNA libraries, Windows Phone projects,
 threading, storage, GamerServices, and old project layouts.
 
@@ -40,8 +40,8 @@ CNA's source build expects its native dependencies as sibling repositories. A co
 ```text
 workspace/
   cna/
-  cna-cs/
-  cna-cs-template/
+  cna-dotnet/
+  cna-dotnet-template/
   sharp-runtime/
   easy-gl/
   meta-gl/
@@ -66,7 +66,7 @@ The qualified Linux configuration uses the OPENGLES3 renderer and the C ABI shar
 
 ```bash
 export CNA_ROOT=/path/to/workspace/cna
-export CNA_CS_ROOT=/path/to/workspace/cna-cs
+export CNA_DOTNET_ROOT=/path/to/workspace/cna-dotnet
 
 cmake -S "$CNA_ROOT" -B "$CNA_ROOT/build" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
@@ -75,7 +75,7 @@ cmake -S "$CNA_ROOT" -B "$CNA_ROOT/build" -G Ninja \
   -DCNA_EASYGL_COMPILED_EFFECTS=ON
 cmake --build "$CNA_ROOT/build" --target cna_c_api --parallel
 
-dotnet build "$CNA_CS_ROOT/CNA.sln" -c Release
+dotnet build "$CNA_DOTNET_ROOT/CNA.sln" -c Release
 ```
 
 The native library is normally:
@@ -100,14 +100,14 @@ the conservative desktop choice for a first source build:
 
 ```powershell
 $CnaRoot = "C:\src\cna"
-$CnaCsRoot = "C:\src\cna-cs"
+$CnaDotnetRoot = "C:\src\cna-dotnet"
 
 cmake -S $CnaRoot -B "$CnaRoot\build" -G "Visual Studio 17 2022" -A x64 `
   -DCNA_GRAPHICS_RENDERER=SDL_RENDERER `
   -DCNA_BUILD_C_API=ON
 cmake --build "$CnaRoot\build" --config Release --target cna_c_api
 
-dotnet build "$CnaCsRoot\CNA.sln" -c Release
+dotnet build "$CnaDotnetRoot\CNA.sln" -c Release
 ```
 
 Find the generated `cna_c_api.dll` under the CMake build tree and set its absolute path before
@@ -126,12 +126,12 @@ source-build workflow rather than a final platform-support promise.
 Install the local template and generate a development consumer:
 
 ```bash
-dotnet new install /path/to/workspace/cna-cs-template
+dotnet new install /path/to/workspace/cna-dotnet-template
 dotnet new cna-game --name MyGame
 cd MyGame
 
-CNA_CS_ROOT=/path/to/workspace/cna-cs dotnet build
-CNA_CS_ROOT=/path/to/workspace/cna-cs \
+CNA_DOTNET_ROOT=/path/to/workspace/cna-dotnet dotnet build
+CNA_DOTNET_ROOT=/path/to/workspace/cna-dotnet \
 CNA_NATIVE_LIBRARY=/path/to/workspace/cna/build/modules/c-api/libcna_c_api.so \
 dotnet run
 ```
@@ -139,7 +139,7 @@ dotnet run
 On PowerShell:
 
 ```powershell
-$env:CNA_CS_ROOT = "C:\src\cna-cs"
+$env:CNA_DOTNET_ROOT = "C:\src\cna-dotnet"
 $env:CNA_NATIVE_LIBRARY = "C:\src\cna\build\modules\c-api\Release\cna_c_api.dll"
 dotnet build
 dotnet run
@@ -185,25 +185,25 @@ This minimal development-mode wrapper illustrates the important pieces:
     <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <CnaCsRoot Condition="'$(CnaCsRoot)' == '' and '$(CNA_CS_ROOT)' != ''">$(CNA_CS_ROOT)</CnaCsRoot>
+    <CnaDotnetRoot Condition="'$(CnaDotnetRoot)' == '' and '$(CNA_DOTNET_ROOT)' != ''">$(CNA_DOTNET_ROOT)</CnaDotnetRoot>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="../OriginalGame/Game1.cs" />
     <Compile Include="../OriginalGame/Program.cs" />
     <Compile Include="../OriginalGame/Properties/AssemblyInfo.cs" />
-    <ProjectReference Include="$(CnaCsRoot)/src/CNA.XnaCompat/CNA.XnaCompat.csproj" />
+    <ProjectReference Include="$(CnaDotnetRoot)/src/CNA.XnaCompat/CNA.XnaCompat.csproj" />
     <None Include="../OriginalGame/bin/x86/Release/Content/**/*"
           LinkBase="Content"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Import Project="$(CnaCsRoot)/src/CNA.XnaCompat/build/CNA.XnaCompat.targets"
-          Condition="'$(CnaCsRoot)' != ''" />
+  <Import Project="$(CnaDotnetRoot)/src/CNA.XnaCompat/build/CNA.XnaCompat.targets"
+          Condition="'$(CnaDotnetRoot)' != ''" />
 
   <Target Name="ValidateCnaReference" BeforeTargets="ResolveProjectReferences">
-    <Error Condition="'$(CnaCsRoot)' == ''"
-           Text="Set CNA_CS_ROOT or pass -p:CnaCsRoot=/path/to/cna-cs." />
+    <Error Condition="'$(CnaDotnetRoot)' == ''"
+           Text="Set CNA_DOTNET_ROOT or pass -p:CnaDotnetRoot=/path/to/cna-dotnet." />
   </Target>
 </Project>
 ```
@@ -221,7 +221,7 @@ shared game source merely because the new host runs there.
 
 Prefer the game's original XNA 4.0 `.xnb`, `.xgs`, `.xwb`, and `.xsb` files. If the repository does
 not ship compiled content, build its original `.contentproj` with XNA 4.0's BuildContent tooling.
-The `cna-cs-samples/scripts/build-xna-content.sh` workflow is a maintained example for Linux/Wine.
+The `cna-dotnet-samples/scripts/build-xna-content.sh` workflow is a maintained example for Linux/Wine.
 
 Keep content at the same path below `Content/` and preserve `Content.RootDirectory`. Watch for:
 
@@ -244,9 +244,9 @@ the library actually references, for example:
 ```xml
 <ItemGroup>
   <Reference Include="GameLibrary" HintPath="../OriginalGame/GameLibrary.dll" />
-  <ProjectReference Include="$(CnaCsRoot)/src/XnaAssemblies/Microsoft.Xna.Framework/Microsoft.Xna.Framework.csproj" />
-  <ProjectReference Include="$(CnaCsRoot)/src/XnaAssemblies/Microsoft.Xna.Framework.Game/Microsoft.Xna.Framework.Game.csproj" />
-  <ProjectReference Include="$(CnaCsRoot)/src/XnaAssemblies/Microsoft.Xna.Framework.Graphics/Microsoft.Xna.Framework.Graphics.csproj" />
+  <ProjectReference Include="$(CnaDotnetRoot)/src/XnaAssemblies/Microsoft.Xna.Framework/Microsoft.Xna.Framework.csproj" />
+  <ProjectReference Include="$(CnaDotnetRoot)/src/XnaAssemblies/Microsoft.Xna.Framework.Game/Microsoft.Xna.Framework.Game.csproj" />
+  <ProjectReference Include="$(CnaDotnetRoot)/src/XnaAssemblies/Microsoft.Xna.Framework.Graphics/Microsoft.Xna.Framework.Graphics.csproj" />
 </ItemGroup>
 ```
 
@@ -256,7 +256,7 @@ CNA.NET cannot make an arbitrary native dependency portable.
 ### 5. Build and run
 
 ```bash
-CNA_CS_ROOT=/path/to/cna-cs dotnet build OriginalGame.CNA.csproj -c Release
+CNA_DOTNET_ROOT=/path/to/cna-dotnet dotnet build OriginalGame.CNA.csproj -c Release
 CNA_NATIVE_LIBRARY=/absolute/path/to/libcna_c_api.so \
   dotnet run --project OriginalGame.CNA.csproj -c Release
 ```
@@ -302,7 +302,7 @@ as an adapter example:
 ```bash
 dotnet build -p:Engine=MonoGame
 FNA_FRAMEWORK_PATH=/path/to/FNA.dll dotnet build -p:Engine=FNA
-CNA_CS_ROOT=/path/to/cna-cs dotnet build -p:Engine=CNA
+CNA_DOTNET_ROOT=/path/to/cna-dotnet dotnet build -p:Engine=CNA
 ```
 
 ## Visual Studio
@@ -310,7 +310,7 @@ CNA_CS_ROOT=/path/to/cna-cs dotnet build -p:Engine=CNA
 Install the template from a Developer PowerShell and generate a project:
 
 ```powershell
-dotnet new install C:\src\cna-cs-template
+dotnet new install C:\src\cna-dotnet-template
 dotnet new cna-game --name MyGame
 ```
 
@@ -318,7 +318,7 @@ Open `MyGame.csproj` or its containing folder in Visual Studio. The template is 
 project so Visual Studio versions that surface locally installed `dotnet new` templates can also
 show it in the New Project dialog. The CLI path remains authoritative.
 
-Set `CNA_CS_ROOT` and `CNA_NATIVE_LIBRARY` in the shell that starts Visual Studio, or configure them
+Set `CNA_DOTNET_ROOT` and `CNA_NATIVE_LIBRARY` in the shell that starts Visual Studio, or configure them
 as debug environment variables for the project. Build the native `cna_c_api.dll` first; Visual
 Studio building the C# project does not build CNA automatically.
 
@@ -332,8 +332,8 @@ Open the generated game or wrapper folder and use the integrated terminal:
 
 ```bash
 code MyGame
-CNA_CS_ROOT=/path/to/cna-cs dotnet build
-CNA_CS_ROOT=/path/to/cna-cs \
+CNA_DOTNET_ROOT=/path/to/cna-dotnet dotnet build
+CNA_DOTNET_ROOT=/path/to/cna-dotnet \
 CNA_NATIVE_LIBRARY=/absolute/path/to/libcna_c_api.so \
 dotnet run
 ```
@@ -352,7 +352,7 @@ pass the native library to the debugger without committing a machine-specific ab
       "program": "${workspaceFolder}/bin/Debug/net8.0/MyGame.dll",
       "cwd": "${workspaceFolder}",
       "env": {
-        "CNA_CS_ROOT": "/path/to/cna-cs",
+        "CNA_DOTNET_ROOT": "/path/to/cna-dotnet",
         "CNA_NATIVE_LIBRARY": "/absolute/path/to/libcna_c_api.so"
       }
     }
@@ -373,7 +373,7 @@ Install a .NET 11 SDK and its WebAssembly workload, then stage CNA's static WebG
 export DOTNET_ROOT_BROWSER=/path/to/dotnet11
 "$DOTNET_ROOT_BROWSER/dotnet" workload install wasm-tools
 
-cd /path/to/cna-cs
+cd /path/to/cna-dotnet
 ./scripts/Build-BrowserNative.sh --dotnet-root "$DOTNET_ROOT_BROWSER" --configure
 ```
 
@@ -382,7 +382,7 @@ Publish the template's browser head with the same shared source:
 
 ```bash
 cd /path/to/MyGame
-CNA_CS_ROOT=/path/to/cna-cs \
+CNA_DOTNET_ROOT=/path/to/cna-dotnet \
   "$DOTNET_ROOT_BROWSER/dotnet" publish Platforms/Browser -c Release
 
 cd Platforms/Browser/bin/Release/net11.0/publish/wwwroot
@@ -394,7 +394,7 @@ Open `http://localhost:8080/`. Do not open `index.html` as a `file:` URL.
 A game that creates managed threads needs the shared-memory native build:
 
 ```bash
-cd /path/to/cna-cs
+cd /path/to/cna-dotnet
 ./scripts/Build-BrowserNative.sh --dotnet-root "$DOTNET_ROOT_BROWSER" --threads --configure
 ```
 
@@ -415,7 +415,7 @@ export ANDROID_NDK_ROOT="$ANDROID_SDK_ROOT/ndk/your-ndk-version"
 
 "$DOTNET_ROOT_ANDROID/dotnet" workload install android
 
-cd /path/to/cna-cs
+cd /path/to/cna-dotnet
 ./scripts/Build-AndroidNative.sh --abi x86_64 --ndk "$ANDROID_NDK_ROOT" --configure
 ```
 
@@ -423,18 +423,18 @@ With an x86_64 emulator running, build and install the template head:
 
 ```bash
 cd /path/to/MyGame
-CNA_CS_ROOT=/path/to/cna-cs \
+CNA_DOTNET_ROOT=/path/to/cna-dotnet \
   "$DOTNET_ROOT_ANDROID/dotnet" build Platforms/Android -c Release -t:Install
 ```
 
 For an ARM64 package, stage `arm64-v8a` and select the matching .NET runtime identifier:
 
 ```bash
-cd /path/to/cna-cs
+cd /path/to/cna-dotnet
 ./scripts/Build-AndroidNative.sh --abi arm64-v8a --ndk "$ANDROID_NDK_ROOT" --configure
 
 cd /path/to/MyGame
-CNA_CS_ROOT=/path/to/cna-cs \
+CNA_DOTNET_ROOT=/path/to/cna-dotnet \
   "$DOTNET_ROOT_ANDROID/dotnet" build Platforms/Android -c Release \
   -p:RuntimeIdentifier=android-arm64
 ```
@@ -484,12 +484,12 @@ XNA APIs and are not automatically supplied by CNA.NET.
 
 ### The browser build says no native archive exists
 
-Run `cna-cs/scripts/Build-BrowserNative.sh` with the same .NET SDK/workload used to publish the
+Run `cna-dotnet/scripts/Build-BrowserNative.sh` with the same .NET SDK/workload used to publish the
 application. A static archive built by an unrelated Emscripten version is not a safe substitute.
 
 ### The Android build says no staged libraries exist
 
-Run `cna-cs/scripts/Build-AndroidNative.sh` for every ABI the package targets. Keep the Android
+Run `cna-dotnet/scripts/Build-AndroidNative.sh` for every ABI the package targets. Keep the Android
 project's `RuntimeIdentifier` aligned with the staged ABI.
 
 ## What to report with a compatibility problem

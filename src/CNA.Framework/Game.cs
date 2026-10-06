@@ -231,7 +231,7 @@ public class Game : IDisposable
     /// <summary>Matches <c>cna_game_get_is_mouse_visible</c>/<c>_set_is_mouse_visible</c> exactly
     /// (<c>runtime.h:300,309</c>) -- both take "Active owned or callback-borrowed" handles, so this
     /// is safe to call any time, including from a game's own constructor (see
-    /// <c>HelloGame</c> in cna-cs-template, which does exactly that).</summary>
+    /// <c>HelloGame</c> in cna-dotnet-template, which does exactly that).</summary>
     public bool IsMouseVisible
     {
         get

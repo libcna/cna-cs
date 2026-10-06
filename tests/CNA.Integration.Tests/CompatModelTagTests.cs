@@ -6,7 +6,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>A game-defined tag, read by the game's own reader -- what HeightmapCollision's
 /// <c>HeightMapInfo</c> is to its terrain.</summary>
@@ -65,7 +65,7 @@ public class CompatModelTagTests
     [global::CNA.Integration.Tests.NativeFact]
     public void Model_WhoseTagIsOfTheGamesOwnType_LoadsThroughTheGamesReader()
     {
-        string root = Path.Combine(Path.GetTempPath(), "cna-cs-model-tag-" + Guid.NewGuid().ToString("N"));
+        string root = Path.Combine(Path.GetTempPath(), "cna-dotnet-model-tag-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         try
         {
@@ -88,7 +88,7 @@ public class CompatModelTagTests
     [global::CNA.Integration.Tests.NativeFact]
     public void Model_WhoseTagHoldsXnaMathValues_ReturnsThemAsXnaTypes()
     {
-        string root = Path.Combine(Path.GetTempPath(), "cna-cs-model-tag-" + Guid.NewGuid().ToString("N"));
+        string root = Path.Combine(Path.GetTempPath(), "cna-dotnet-model-tag-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         try
         {

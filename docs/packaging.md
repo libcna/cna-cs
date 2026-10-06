@@ -78,7 +78,7 @@ refuses a package whose consumer does not carry `Windows.v4.0.HiDef`
 ## Measured linux-x64 experiment
 
 The isolated generated `dotnet new cna-game` project restored from the local feed and built with no
-`CnaCsRoot`, `CNA_CS_ROOT`, sibling `ProjectReference`, developer absolute path, or source-checkout
+`CnaDotnetRoot`, `CNA_DOTNET_ROOT`, sibling `ProjectReference`, developer absolute path, or source-checkout
 reference. Its package-native library resolved from the RID asset with both `CNA_NATIVE_LIBRARY`
 and `CNA_NATIVE_DIR` unset. It completed 60 frames and 600 frames with the OPENGLES3 renderer.
 

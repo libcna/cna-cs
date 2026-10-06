@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Net;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace CnaCs.GamerServices.IntegrationTests;
+namespace CnaDotnet.GamerServices.IntegrationTests;
 
 [Collection(GamerServicesCollection.Name)]
 public class NetTests(GamerServicesGameFixture fixture, ITestOutputHelper output)

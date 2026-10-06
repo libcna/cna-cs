@@ -3,7 +3,7 @@ using Xunit;
 using XnaGame = Microsoft.Xna.Framework.Game;
 
 // NOT under CNA, for the reason CompatLayerIntegrationTests records.
-namespace CnaCs.Integration.Tests.Compat;
+namespace CnaDotnet.Integration.Tests.Compat;
 
 /// <summary>
 /// CSX-138: a component signals a change of <c>Visible</c>, <c>DrawOrder</c>, <c>Enabled</c> or

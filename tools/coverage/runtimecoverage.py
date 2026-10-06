@@ -17,7 +17,7 @@ import sys
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 COMPAT = REPO + '/src/CNA.XnaCompat'
 FRAMEWORK = REPO + '/src/CNA.Framework'
-EXERCISED = [REPO + '/tests/CNA.Integration.Tests', REPO + '/../cna-cs-template']
+EXERCISED = [REPO + '/tests/CNA.Integration.Tests', REPO + '/../cna-dotnet-template']
 
 
 # KNOWN LIMITATION, stated because it hid a real gap for the whole of this work.

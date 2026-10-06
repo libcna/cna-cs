@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.GamerServices;
 using Xunit;
 
-namespace CnaCs.GamerServices.IntegrationTests;
+namespace CnaDotnet.GamerServices.IntegrationTests;
 
 [CollectionDefinition(Name)]
 public sealed class GamerServicesCollection : ICollectionFixture<GamerServicesGameFixture>

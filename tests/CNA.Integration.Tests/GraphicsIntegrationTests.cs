@@ -156,7 +156,7 @@ public class GraphicsIntegrationTests(ITestOutputHelper output, NativeGameFixtur
     /// The capability query, against whichever renderer this run loaded.
     ///
     /// It answers rather than throwing, and answers consistently with the renderer's own name --
-    /// which is the whole point. `cna-cs-template` had no such method to call, guessed `true` when
+    /// which is the whole point. `cna-dotnet-template` had no such method to call, guessed `true` when
     /// its `dynamic` probe failed, and on the 2D-only SDL_RENDERER reported "3D pipeline: yes"
     /// before dying inside `DrawUserPrimitives`. A capability probe whose failure mode is optimism
     /// is worse than none.

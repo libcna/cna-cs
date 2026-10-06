@@ -8,7 +8,7 @@ using Xunit;
 // the `Vector2` in `Load<Vector2[]>` binds to CNA.Vector2 rather than the compat type this file is
 // testing. The failure is a cast exception from deep inside the reader, naming neither the
 // namespace nor the shadowing. It is the same constraint a ported game lives under.
-namespace CnaCs.XnaCompat.Tests.Content;
+namespace CnaDotnet.XnaCompat.Tests.Content;
 
 /// <summary>
 /// XNA's built-in content readers, against hand-built <c>.xnb</c> assets.

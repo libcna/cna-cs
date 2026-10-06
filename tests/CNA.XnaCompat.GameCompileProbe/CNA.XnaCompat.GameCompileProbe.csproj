@@ -6,7 +6,7 @@
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <RootNamespace>CnaCs.GameCompileProbe</RootNamespace>
+    <RootNamespace>CnaDotnet.GameCompileProbe</RootNamespace>
 
     <!--
       A real, unmodified XNA-API game compiled against this facade.

@@ -177,7 +177,7 @@ if (load)
             .OrderBy(entry => entry.relative, StringComparer.Ordinal),
     ];
 
-    using var survey = new CnaCs.ContentSurvey.LoadingSurvey(directory, loadable);
+    using var survey = new CnaDotnet.ContentSurvey.LoadingSurvey(directory, loadable);
     survey.RunOneFrame();
 
     Console.WriteLine($"CONTENT_LOAD_ATTEMPTED={loadable.Count}");

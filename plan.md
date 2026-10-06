@@ -67,7 +67,7 @@ the ABI to 0.20.0: `tools/coverage/baselinediff.py` reports exactly eleven remov
 `CNA_GRAPHICS_RENDERER_*` constants and `CNA_GRAPHICS_RENDERER_MAXIMUM` moving from 50 to 49, with
 no export, prototype, struct or scalar change anywhere.
 
-Nothing in this repository or in `cna-cs-template` may name them, gate on them, or claim support for
+Nothing in this repository or in `cna-dotnet-template` may name them, gate on them, or claim support for
 them. Three consequences, two applied and one structural:
 
 - render-target `ContentLost` documentation says "a renderer family that can genuinely lose a
@@ -1142,7 +1142,7 @@ union.
 
 ## Template
 
-The sibling `cna-cs-template` is now CNA-first and installable as `cna-game`. It uses raw
+The sibling `cna-dotnet-template` is now CNA-first and installable as `cna-game`. It uses raw
 `Texture2D.FromStream` for the PNG, isolates CNA diagnostics, exercises 2D and a guarded 3D path,
 and supports `--smoke-test`, `--stability-test`, and `--frames N`. Development mode preserves the
 sibling project-reference workflow. Package acceptance mode emits only `PackageReference` and has

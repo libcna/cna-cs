@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 repo_root=$(cd -- "$script_dir/.." && pwd)
-template_root=${CNA_TEMPLATE_ROOT:-"$repo_root/../cna-cs-template"}
+template_root=${CNA_TEMPLATE_ROOT:-"$repo_root/../cna-dotnet-template"}
 dotnet_command=${DOTNET_COMMAND:-dotnet}
 native_directory=${CNA_ACCEPTANCE_NATIVE_DIRECTORY:-}
 package_version=${CNA_PACKAGE_VERSION:-0.1.0-local.1}
@@ -125,9 +125,9 @@ for required in runtimes/linux-x64/native/libcna_c_api.so runtimes/linux-x64/nat
   fi
 done
 
-DOTNET_COMMAND="$dotnet_command" CNA_CS_ROOT="$repo_root" \
+DOTNET_COMMAND="$dotnet_command" CNA_DOTNET_ROOT="$repo_root" \
   "$template_root/scripts/verify-template.sh" --mode development
-DOTNET_COMMAND="$dotnet_command" CNA_CS_ROOT="$repo_root" \
+DOTNET_COMMAND="$dotnet_command" CNA_DOTNET_ROOT="$repo_root" \
   "$template_root/scripts/verify-template.sh" --mode package \
     --package-feed "$feed_root" --package-version "$package_version"
 
@@ -143,7 +143,7 @@ config_file="$work_root/nuget.config"
   --packages "$work_root/packages"
 "$dotnet_command" build "$consumer_root/IsolatedConsumer.csproj" -c Release --no-restore -m:1
 
-if rg -n 'CnaCsRoot|CNA_CS_ROOT|ProjectReference' "$consumer_root/IsolatedConsumer.csproj"; then
+if rg -n 'CnaDotnetRoot|CNA_DOTNET_ROOT|ProjectReference' "$consumer_root/IsolatedConsumer.csproj"; then
   echo "Isolated package consumer contains source-reference configuration." >&2
   exit 1
 fi

@@ -210,15 +210,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: libcna/cna-cs-template
-          path: cna-cs-template
+          repository: libcna/cna-dotnet-template
+          path: cna-dotnet-template
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
       - name: Verify repository and generated project-reference modes
         env:
-          CNA_CS_ROOT: ${{ github.workspace }}
-        run: cna-cs-template/scripts/verify-template.sh --mode development
+          CNA_DOTNET_ROOT: ${{ github.workspace }}
+        run: cna-dotnet-template/scripts/verify-template.sh --mode development
 
   package-consumer-managed:
     runs-on: ubuntu-latest
@@ -226,8 +226,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: libcna/cna-cs-template
-          path: cna-cs-template
+          repository: libcna/cna-dotnet-template
+          path: cna-dotnet-template
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -237,9 +237,9 @@ jobs:
       - run: dotnet pack src/CNA.XnaCompat/CNA.XnaCompat.csproj -c Release --no-restore -m:1 -p:CnaPackageAcceptance=true -p:CnaPackageVersion=${CNA_PACKAGE_VERSION} -o /tmp/cna-feed
       - name: Verify generated package consumer without source paths
         env:
-          CNA_CS_ROOT: ${{ github.workspace }}
+          CNA_DOTNET_ROOT: ${{ github.workspace }}
         run: >-
-          cna-cs-template/scripts/verify-template.sh --mode package
+          cna-dotnet-template/scripts/verify-template.sh --mode package
           --package-feed /tmp/cna-feed --package-version ${CNA_PACKAGE_VERSION}
 
   strict-api:
@@ -300,8 +300,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: libcna/cna-cs-template
-          path: cna-cs-template
+          repository: libcna/cna-dotnet-template
+          path: cna-dotnet-template
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
@@ -348,7 +348,7 @@ jobs:
         run: scripts/Capture-CnaSnapshots.sh --output "$RUNNER_TEMP/cna-snapshots" --force
       - name: Local package/RID acceptance (never publishes)
         env:
-          CNA_TEMPLATE_ROOT: ${{ github.workspace }}/cna-cs-template
+          CNA_TEMPLATE_ROOT: ${{ github.workspace }}/cna-dotnet-template
         run: >-
           scripts/Package-Acceptance.sh --native-library "$RUNNER_TEMP/libcna_c_api.so"
           --package-version "${CNA_PACKAGE_VERSION}" --output "$RUNNER_TEMP/package-acceptance"

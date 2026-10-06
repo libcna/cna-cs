@@ -67,7 +67,7 @@ internal static class Program
 
     private sealed class ProbeGame : Game
     {
-        private const string ContainerName = "cna-cs-runtime-probe";
+        private const string ContainerName = "cna-dotnet-runtime-probe";
         private readonly GraphicsDeviceManager _graphics;
         private DynamicSoundEffectInstance? _normalPump;
         private int _normalPumpEvents;

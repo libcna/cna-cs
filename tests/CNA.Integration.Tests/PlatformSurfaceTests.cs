@@ -64,7 +64,7 @@ public class PlatformSurfaceTests(ITestOutputHelper output, NativeGameFixture fi
                 return;
             }
 
-            using StorageContainer container = device.OpenContainer("cna-cs-integration");
+            using StorageContainer container = device.OpenContainer("cna-dotnet-integration");
             output.WriteLine($"container '{container.DisplayName}'");
 
             Assert.NotNull(container.DisplayName);
@@ -83,8 +83,8 @@ public class PlatformSurfaceTests(ITestOutputHelper output, NativeGameFixture fi
                 return;
             }
 
-            const string ordinaryName = "cna-cs-integration-disposing";
-            const string throwingName = "cna-cs-integration-disposing-throw";
+            const string ordinaryName = "cna-dotnet-integration-disposing";
+            const string throwingName = "cna-dotnet-integration-disposing-throw";
             try
             {
                 using (StorageContainer container = device.OpenContainer(ordinaryName))
