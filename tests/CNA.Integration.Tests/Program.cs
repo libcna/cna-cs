@@ -19,6 +19,15 @@ internal static class Program
         {
             using var game = new Microsoft.Xna.Framework.Game();
             Console.WriteLine("constructed");
+            // Which renderer built it (CNA plans/plan_apple_m4.md AM4-224): a renderer that draws on
+            // the CPU needs no display, and the parent has to tell that from a defect.
+            // ApplyChanges creates the device before the run, where XNA's created the device a
+            // game's constructor then reads.
+            var manager = new Microsoft.Xna.Framework.GraphicsDeviceManager(game);
+            manager.ApplyChanges();
+            Console.WriteLine(manager.GraphicsDevice is { } device
+                ? CNA.XnaCompat.Extensions.CnaGraphicsDeviceExtensions.GetCnaRendererName(device)
+                : "no-device");
         }
         catch (Exception exception)
         {

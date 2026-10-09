@@ -40,6 +40,17 @@ public class CompatGameCreationTests
             Assert.True(child.WaitForExit(60_000), "the child process did not finish");
             Assert.True(child.ExitCode == 0, $"exit {child.ExitCode}: {error.Result}");
 
+            if (lines[0] == "constructed")
+            {
+                // A renderer that draws on the CPU creates its device without a window server, so
+                // "no display" does not make it fail -- measured with SOFTWARE on macOS, where SDL
+                // also has neither x11 nor wayland (CNA plans/plan_apple_m4.md AM4-224). The claim
+                // this test makes is about a renderer that cannot, which every other one is held to.
+                Assert.True(lines.Length > 1, "the child constructed a game but named no renderer");
+                Assert.Contains(lines[1], new[] { "SOFTWARE", "HEADLESS" });
+                return;
+            }
+
             Assert.Equal(typeof(Microsoft.Xna.Framework.Graphics.NoSuitableGraphicsDeviceException).FullName, lines[0]);
             Assert.StartsWith("Unable to create the graphics device. ", lines[1]);
         }
