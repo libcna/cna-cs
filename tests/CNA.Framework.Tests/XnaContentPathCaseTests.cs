@@ -41,12 +41,12 @@ public class XnaContentPathCaseTests : IDisposable
     {
         string onDisk = Write("Map1.xnb");
 
-        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, "map1", ".xnb"));
-        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, "MAP1", ".xnb"));
+        FileSystemCase.AssertNamesFile(onDisk, XnaContentPath.ToFilePath(_root, "map1", ".xnb"));
+        FileSystemCase.AssertNamesFile(onDisk, XnaContentPath.ToFilePath(_root, "MAP1", ".xnb"));
         Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, "Map1", ".xnb"));
     }
 
-    [Fact]
+    [CaseSensitiveFileSystemFact]
     public void AnExactMatchIsPreferredAndCostsNoScan()
     {
         // Both exist; the exactly-named one must win rather than whichever the scan met first.
@@ -62,7 +62,7 @@ public class XnaContentPathCaseTests : IDisposable
         string onDisk = Write(Path.Combine("Textures", "Rock.xnb"));
 
         // XNA spells asset names with a backslash; the resolver translates the separator.
-        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, @"Textures\rock", ".xnb"));
+        FileSystemCase.AssertNamesFile(onDisk, XnaContentPath.ToFilePath(_root, @"Textures\rock", ".xnb"));
     }
 
     [Fact]
@@ -71,8 +71,8 @@ public class XnaContentPathCaseTests : IDisposable
         // The Racing Game Kit asks for "models\Cube"; XNA's own build wrote Models/Cube.xnb.
         string onDisk = Write(Path.Combine("Models", "Cube.xnb"));
 
-        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, @"models\Cube", ".xnb"));
-        Assert.Equal(onDisk, XnaContentPath.ToFilePath(_root, @"MODELS\cube", ".xnb"));
+        FileSystemCase.AssertNamesFile(onDisk, XnaContentPath.ToFilePath(_root, @"models\Cube", ".xnb"));
+        FileSystemCase.AssertNamesFile(onDisk, XnaContentPath.ToFilePath(_root, @"MODELS\cube", ".xnb"));
     }
 
     [Fact]

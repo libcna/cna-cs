@@ -41,7 +41,7 @@ public sealed class XnaContentPathTitleTests : IDisposable
         try { Directory.Delete(_elsewhere, recursive: true); } catch (IOException) { }
     }
 
-    [Fact]
+    [CaseSensitiveFileSystemFact]
     public void ARelativeRootIsProbedUnderTheTitleNotTheWorkingDirectory()
     {
         // The re-cased name proves the probe found the file: it only exists under the title.
@@ -53,7 +53,7 @@ public sealed class XnaContentPathTitleTests : IDisposable
     {
         string path = XnaContentPath.ToTitleFilePath(_rootName, "map1", ".xnb");
 
-        Assert.Equal(Path.Combine(_titleRoot, "Map1.xnb"), path);
+        FileSystemCase.AssertNamesFile(Path.Combine(_titleRoot, "Map1.xnb"), path);
         Assert.True(File.Exists(path));
     }
 

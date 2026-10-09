@@ -45,19 +45,19 @@ public class XnaContentPathHostTests : IDisposable
     public void EverySegmentMatchesIgnoringCase()
     {
         Write(Host("Content", "Sounds", "sounds.xgs"));
-        Assert.Equal(Host("Content", "Sounds", "sounds.xgs"),
-            XnaContentPath.ToHostPath("content/sounds/SOUNDS.xgs", _root));
+        FileSystemCase.AssertNamesFile(Host("Content", "Sounds", "sounds.xgs"),
+            XnaContentPath.ToHostPath("content/sounds/SOUNDS.xgs", _root), existsUnder: _root);
     }
 
     [Fact]
     public void AnAbsolutePathIsReCasedBelowItsRoot()
     {
         Write(Host("Content", "Audio", "Wave.xwb"));
-        Assert.Equal(Path.Combine(_root, "Content", "Audio", "Wave.xwb"),
+        FileSystemCase.AssertNamesFile(Path.Combine(_root, "Content", "Audio", "Wave.xwb"),
             XnaContentPath.ToHostPath(Path.Combine(_root, "content", "AUDIO", "wave.xwb")));
     }
 
-    [Fact]
+    [CaseSensitiveFileSystemFact]
     public void AnExistingPathIsReturnedAsWritten()
     {
         Write(Host("Data", "a.txt"));
