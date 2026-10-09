@@ -39,18 +39,27 @@ while (($# > 0)); do
   esac
 done
 
-if [[ "$(uname -s)" != Linux ]]; then
-  echo "The shared-library fixture gate currently requires Linux; this host is $(uname -s)." >&2
-  exit 2
-fi
+# CNA plan_apple_m4.md AM4-216: the fixtures are ordinary shared libraries, so the gate runs wherever
+# one can be compiled and loaded -- Linux (`.so`) and macOS (`.dylib`, which the resolver loads by
+# path just the same).
+case "$(uname -s)" in
+  Linux) fixture_suffix=so ;;
+  Darwin) fixture_suffix=dylib ;;
+  *)
+    echo "The shared-library fixture gate runs on Linux and macOS; this host is $(uname -s)." >&2
+    exit 2
+    ;;
+esac
 
 cleanup_output=0
 if [[ -z "$output_root" ]]; then
   output_root=$(mktemp -d)
   cleanup_output=1
 else
-  output_root=$(realpath -m "$output_root")
+  # Not `realpath -m`: macOS's realpath has no -m, and creating the directory first makes the
+  # plain resolution valid everywhere.
   mkdir -p "$output_root"
+  output_root=$(cd -- "$output_root" && pwd -P)
 fi
 trap 'if [[ "$cleanup_output" == 1 ]]; then rm -rf "$output_root"; fi' EXIT
 
@@ -108,13 +117,13 @@ compile_fixture()
   shift
   cc -std=c11 -shared -fPIC -Wall -Wextra -Werror \
     -I "$script_dir/abi-fixtures" "$@" \
-    "$script_dir/abi-fixtures/cna_abi_fixture.c" -o "$fixtures_root/$name.so"
+    "$script_dir/abi-fixtures/cna_abi_fixture.c" -o "$fixtures_root/$name.$fixture_suffix"
 }
 
 run_accept()
 {
   local name=$1
-  if ! env -u CNA_NATIVE_DIR CNA_NATIVE_LIBRARY="$fixtures_root/$name.so" \
+  if ! env -u CNA_NATIVE_DIR CNA_NATIVE_LIBRARY="$fixtures_root/$name.$fixture_suffix" \
       "$dotnet_command" "$probe_dll" >"$logs_root/$name.log" 2>&1; then
     echo "ABI fixture '$name' was rejected but should be accepted." >&2
     sed -n '1,100p' "$logs_root/$name.log" >&2
@@ -127,7 +136,7 @@ run_reject()
 {
   local name=$1
   local diagnostic=$2
-  if env -u CNA_NATIVE_DIR CNA_NATIVE_LIBRARY="$fixtures_root/$name.so" \
+  if env -u CNA_NATIVE_DIR CNA_NATIVE_LIBRARY="$fixtures_root/$name.$fixture_suffix" \
       "$dotnet_command" "$probe_dll" >"$logs_root/$name.log" 2>&1; then
     echo "ABI fixture '$name' was accepted but should be rejected." >&2
     exit 1
