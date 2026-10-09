@@ -98,7 +98,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+      # Both projects are built with --no-restore, so both are restored: the tool has no project
+      # reference that would restore the library for it (AM4-257).
       - run: dotnet restore tools/api-compat/CNA.ApiCompat.csproj
+      - run: dotnet restore src/CNA.XnaCompat/CNA.XnaCompat.csproj
       - run: dotnet build src/CNA.XnaCompat/CNA.XnaCompat.csproj -c Release --no-restore -m:1
       - run: dotnet build tools/api-compat/CNA.ApiCompat.csproj -c Release --no-restore -m:1
       - name: Require zero CNA public/protected leaks
