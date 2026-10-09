@@ -1145,6 +1145,18 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
     {
         // The XNA 4.0 Racing Game Kit's BaseGame constructor does exactly this to hide its form.
         using var game = new FormInConstructorGame();
+        if (game.Window.Handle == IntPtr.Zero)
+        {
+            // A windowless run: SDL's offscreen or dummy video driver gives the game no native
+            // window -- on macOS that is what a game created off the main thread gets (CNA
+            // plans/plan_apple_m4.md AM4-223). There is then nothing for a form to stand for, and
+            // Windows Forms answers null for a handle it did not create; the windowed claims below
+            // need a window to be about.
+            Assert.Null(game.FormInConstructor);
+            Assert.Null(System.Windows.Forms.Control.FromHandle(game.Window.Handle));
+            game.RunOneFrame();
+            return;
+        }
         Assert.NotNull(game.FormInConstructor);
         Assert.Same(game.FormInConstructor, System.Windows.Forms.Control.FromHandle(game.Window.Handle));
         Assert.Equal(0.0, game.FormInConstructor!.Opacity);
