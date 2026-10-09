@@ -138,7 +138,10 @@ jobs:
             report: linux-x64
           - os: windows-latest
             report: windows-x64
-          - os: macos-13
+          # x86_64 macOS: macos-13 was retired on 2025-12-04 and a job naming it waits in the
+          # queue for ever; macos-15-intel is GitHub's Intel image until fall 2027 (CNA
+          # plans/plan_apple_m4.md AM4-288).
+          - os: macos-15-intel
             report: osx-x64
           - os: macos-14
             report: osx-arm64
