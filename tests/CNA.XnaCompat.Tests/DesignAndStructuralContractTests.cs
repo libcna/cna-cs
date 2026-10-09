@@ -152,6 +152,21 @@ public class DesignAndStructuralContractTests
         Assert.Equal(type, type.GetMethod(nameof(GamerServicesComponent.Update), [typeof(GameTime)])!.DeclaringType);
     }
 
+    /// <summary>
+    /// The corpus records every float as its bits, and a NaN's sign bit is the hardware's choice:
+    /// IEEE 754 leaves the sign of a generated NaN unspecified, x86 -- where XNA ran and this corpus
+    /// was first recorded -- sets it (FFC00000), ARM64 clears it (7FC00000), and negating or
+    /// propagating one then flips or keeps whichever it got. No XNA program can observe that sign
+    /// short of reading the bits, so the corpus is compared with both quiet-NaN encodings read as
+    /// "NaN"; every other bit pattern is still compared exactly (CNA plans/plan_apple_m4.md AM4-220).
+    /// The determinism check stays on the raw bits.
+    /// </summary>
+    private static string CanonicalNaN(string line) =>
+        System.Text.RegularExpressions.Regex.Replace(line, "(?<=[=,])(?:7FC00000|FFC00000)(?=,|$)", "NaN");
+
+    private static void AssertCorpusContains(string expected, IReadOnlyList<string> corpus) =>
+        Assert.Contains(CanonicalNaN(expected), corpus.Select(CanonicalNaN));
+
     [Fact]
     public void MathBehaviorCorpus_IsDeterministicAndCoversCriticalEdges()
     {
@@ -160,95 +175,95 @@ public class DesignAndStructuralContractTests
 
         Assert.Equal(first, second);
         Assert.Equal(83, first.Count);
-        Assert.Contains("v2.normalize.zero=FFC00000,FFC00000", first);
-        Assert.Contains("vector.divide.scalar=3EDB6DB8,40155556,458099CA,3EAAAAAB", first);
-        Assert.Contains("q.inverse.zero=FFC00000,FFC00000,FFC00000,FFC00000", first);
-        Assert.Contains("q.multiply.grouped=CE47A05E,CF03EDF7,4FC9C4DD,5011D115", first);
-        Assert.Contains(
+        AssertCorpusContains("v2.normalize.zero=FFC00000,FFC00000", first);
+        AssertCorpusContains("vector.divide.scalar=3EDB6DB8,40155556,458099CA,3EAAAAAB", first);
+        AssertCorpusContains("q.inverse.zero=FFC00000,FFC00000,FFC00000,FFC00000", first);
+        AssertCorpusContains("q.multiply.grouped=CE47A05E,CF03EDF7,4FC9C4DD,5011D115", first);
+        AssertCorpusContains(
             "matrix.inverse.product=3F800000,00000000,B2000000,00000000," +
             "00000000,3F800000,00000000,00000000,33000000,00000000,3F800000,00000000," +
             "34000000,00000000,00000000,3F800000",
             first);
-        Assert.Contains("viewport.project=43D42808,43AC9F3C,3F63AFF4", first);
-        Assert.Contains("viewport.unproject=3E7FFE10,BEFFF906,3FA00111", first);
-        Assert.Contains("viewport.unproject.singular=FFC00000,FFC00000,FFC00000", first);
-        Assert.Contains("color.pack=00FF0080", first);
-        Assert.Contains("color.lerp=7F7F7F7F", first);
-        Assert.Contains("color.nonpremultiplied.extreme=FFFFFFFF", first);
-        Assert.Contains("box.contains.edge=1", first);
-        Assert.Contains("box.nan=0,1", first);
-        Assert.Contains("sphere.contains.edge=0", first);
-        Assert.Contains("sphere.points=3F800000,40800000,40000000,4101FC10", first);
-        Assert.Contains("ray.sphere=40810421", first);
-        Assert.Contains("v2.equals.nan=0,0", first);
-        Assert.Contains("matrix.equals.nan=0,0", first);
-        Assert.Contains("v3.hash=-1077936128", first);
-        Assert.Contains("matrix.identity.hash=-33554432", first);
-        Assert.Contains("integer.hash=3,10", first);
-        Assert.Contains("sphere.negative=ArgumentException", first);
-        Assert.Contains("math.clamp.reversed=40000000", first);
-        Assert.Contains("math.wrap.large=BFC2E06C", first);
-        Assert.Contains("math.splines=C1218313,C1351EBA", first);
-        Assert.Contains("math.hermite.endpoint.nan=1", first);
-        Assert.Contains("sphere.intersects.tangent=0", first);
-        Assert.Contains("box.ray.nearparallel=none", first);
-        Assert.Contains("ray.plane.nearparallel=none", first);
-        Assert.Contains("ray.plane.overloads=00000000,00000000", first);
-        Assert.Contains("v3.transform.negative.length=none", first);
-        Assert.Contains("v3.transform.negative.index=IndexOutOfRangeException", first);
-        Assert.Contains("v3.min.nan=40E00000,FFC00000,FFC00000", first);
-        Assert.Contains("v3.clamp.reversed=40000000,40000000,40000000", first);
-        Assert.Contains("q.slerp=BD9A16EC,3E60D7E7,00000000,3F79023D", first);
-        Assert.Contains("q.axis.large=00000000,3F30464F,00000000,BF39A48F", first);
-        Assert.Contains("q.from.matrix=00000000,3EAF904C,00000000,3F707ABB", first);
-        Assert.Contains("matrix.rotation.large=3D53E807,BF7FA83D", first);
-        Assert.Contains("matrix.perspective.infinity=FFC00000,FFC00000", first);
-        Assert.Contains("matrix.fov.invalid=ArgumentOutOfRangeException", first);
-        Assert.Contains(
+        AssertCorpusContains("viewport.project=43D42808,43AC9F3C,3F63AFF4", first);
+        AssertCorpusContains("viewport.unproject=3E7FFE10,BEFFF906,3FA00111", first);
+        AssertCorpusContains("viewport.unproject.singular=FFC00000,FFC00000,FFC00000", first);
+        AssertCorpusContains("color.pack=00FF0080", first);
+        AssertCorpusContains("color.lerp=7F7F7F7F", first);
+        AssertCorpusContains("color.nonpremultiplied.extreme=FFFFFFFF", first);
+        AssertCorpusContains("box.contains.edge=1", first);
+        AssertCorpusContains("box.nan=0,1", first);
+        AssertCorpusContains("sphere.contains.edge=0", first);
+        AssertCorpusContains("sphere.points=3F800000,40800000,40000000,4101FC10", first);
+        AssertCorpusContains("ray.sphere=40810421", first);
+        AssertCorpusContains("v2.equals.nan=0,0", first);
+        AssertCorpusContains("matrix.equals.nan=0,0", first);
+        AssertCorpusContains("v3.hash=-1077936128", first);
+        AssertCorpusContains("matrix.identity.hash=-33554432", first);
+        AssertCorpusContains("integer.hash=3,10", first);
+        AssertCorpusContains("sphere.negative=ArgumentException", first);
+        AssertCorpusContains("math.clamp.reversed=40000000", first);
+        AssertCorpusContains("math.wrap.large=BFC2E06C", first);
+        AssertCorpusContains("math.splines=C1218313,C1351EBA", first);
+        AssertCorpusContains("math.hermite.endpoint.nan=1", first);
+        AssertCorpusContains("sphere.intersects.tangent=0", first);
+        AssertCorpusContains("box.ray.nearparallel=none", first);
+        AssertCorpusContains("ray.plane.nearparallel=none", first);
+        AssertCorpusContains("ray.plane.overloads=00000000,00000000", first);
+        AssertCorpusContains("v3.transform.negative.length=none", first);
+        AssertCorpusContains("v3.transform.negative.index=IndexOutOfRangeException", first);
+        AssertCorpusContains("v3.min.nan=40E00000,FFC00000,FFC00000", first);
+        AssertCorpusContains("v3.clamp.reversed=40000000,40000000,40000000", first);
+        AssertCorpusContains("q.slerp=BD9A16EC,3E60D7E7,00000000,3F79023D", first);
+        AssertCorpusContains("q.axis.large=00000000,3F30464F,00000000,BF39A48F", first);
+        AssertCorpusContains("q.from.matrix=00000000,3EAF904C,00000000,3F707ABB", first);
+        AssertCorpusContains("matrix.rotation.large=3D53E807,BF7FA83D", first);
+        AssertCorpusContains("matrix.perspective.infinity=FFC00000,FFC00000", first);
+        AssertCorpusContains("matrix.fov.invalid=ArgumentOutOfRangeException", first);
+        AssertCorpusContains(
             "matrix.decompose.mirror=1,40000000,40400000,C0800000," +
             "00000000,3F7E00AA,00000000,BDFF5579,40A00000,40C00000,40E00000",
             first);
-        Assert.Contains("matrix.billboard.axis=BF800000,40000000,BF800000", first);
-        Assert.Contains("matrix.shadow.zero.nan=1,1", first);
-        Assert.Contains("matrix.reflection.ref=3F800000,40000000,BF800000,C0800000", first);
-        Assert.Contains(
+        AssertCorpusContains("matrix.billboard.axis=BF800000,40000000,BF800000", first);
+        AssertCorpusContains("matrix.shadow.zero.nan=1,1", first);
+        AssertCorpusContains("matrix.reflection.ref=3F800000,40000000,BF800000,C0800000", first);
+        AssertCorpusContains(
             "matrix.lookat.degenerate=FFC00000,FFC00000,FFC00000,00000000," +
             "FFC00000,FFC00000,FFC00000,00000000,FFC00000,FFC00000,FFC00000,00000000," +
             "7FC00000,7FC00000,7FC00000,3F800000",
             first);
-        Assert.Contains("matrix.transform.infinity=3F800000,7F800000,0", first);
-        Assert.Contains("negate.signedzero=80000000,80000000,80000000", first);
-        Assert.Contains(
+        AssertCorpusContains("matrix.transform.infinity=3F800000,7F800000,0", first);
+        AssertCorpusContains("negate.signedzero=80000000,80000000,80000000", first);
+        AssertCorpusContains(
             "matrix.tostring={ {M11:1 M12:0 M13:0 M14:0} " +
             "{M21:0 M22:1 M23:0 M24:0} {M31:0 M32:0 M33:1 M34:0} " +
             "{M41:0 M42:0 M43:0 M44:1} }",
             first);
-        Assert.Contains("plane.points.degenerate=FFC00000,FFC00000,FFC00000,7FC00000", first);
-        Assert.Contains("plane.normalize.nearunit=3F19999A,3F4CCCCC,00000000,40000000", first);
-        Assert.Contains("plane.box.coplanar=2", first);
-        Assert.Contains("curve.key.hash=4194305", first);
-        Assert.Contains("curve.key.compare=1,1,NullReferenceException", first);
-        Assert.Contains("curve.collection.reposition=40000000,40400000", first);
-        Assert.Contains(
+        AssertCorpusContains("plane.points.degenerate=FFC00000,FFC00000,FFC00000,7FC00000", first);
+        AssertCorpusContains("plane.normalize.nearunit=3F19999A,3F4CCCCC,00000000,40000000", first);
+        AssertCorpusContains("plane.box.coplanar=2", first);
+        AssertCorpusContains("curve.key.hash=4194305", first);
+        AssertCorpusContains("curve.key.compare=1,1,NullReferenceException", first);
+        AssertCorpusContains("curve.collection.reposition=40000000,40400000", first);
+        AssertCorpusContains(
             "curve.collection.oob=ArgumentOutOfRangeException,ArgumentOutOfRangeException",
             first);
-        Assert.Contains("curve.tangent.epsilon=00000000,00000000", first);
-        Assert.Contains("curve.cycle.preboundary=41A00000", first);
-        Assert.Contains("curve.step.nan=41A00000", first);
-        Assert.Contains("packed.unorm.midpoint=00,0000", first);
-        Assert.Contains("packed.unsigned.rounding=04020200", first);
-        Assert.Contains("packed.snorm.rounding=0000", first);
-        Assert.Contains("packed.snorm.minimum=BF800000,BF800000", first);
-        Assert.Contains("packed.signed.rounding=00020000", first);
-        Assert.Contains("packed.half.saturation=7FFF,7FFF,47800000", first);
-        Assert.Contains("packed.tostring=0A,000A,0000000A", first);
-        Assert.Contains("frustum.near=80000000,80000000,3F800000,C0800000", first);
-        Assert.Contains("frustum.top=00000000,3F6C835F,3EC3EF16,BFF4EADB", first);
-        Assert.Contains("frustum.corner0=BF0D6289,3ED413CB,40800000", first);
-        Assert.Contains("frustum.corner6=40B0BB28,C0848C5D,C09FFFF8", first);
-        Assert.Contains("frustum.contains=1,0,1,1", first);
-        Assert.Contains("frustum.gjk=1,0,1,0,0", first);
-        Assert.Contains("frustum.ray=41800000", first);
+        AssertCorpusContains("curve.tangent.epsilon=00000000,00000000", first);
+        AssertCorpusContains("curve.cycle.preboundary=41A00000", first);
+        AssertCorpusContains("curve.step.nan=41A00000", first);
+        AssertCorpusContains("packed.unorm.midpoint=00,0000", first);
+        AssertCorpusContains("packed.unsigned.rounding=04020200", first);
+        AssertCorpusContains("packed.snorm.rounding=0000", first);
+        AssertCorpusContains("packed.snorm.minimum=BF800000,BF800000", first);
+        AssertCorpusContains("packed.signed.rounding=00020000", first);
+        AssertCorpusContains("packed.half.saturation=7FFF,7FFF,47800000", first);
+        AssertCorpusContains("packed.tostring=0A,000A,0000000A", first);
+        AssertCorpusContains("frustum.near=80000000,80000000,3F800000,C0800000", first);
+        AssertCorpusContains("frustum.top=00000000,3F6C835F,3EC3EF16,BFF4EADB", first);
+        AssertCorpusContains("frustum.corner0=BF0D6289,3ED413CB,40800000", first);
+        AssertCorpusContains("frustum.corner6=40B0BB28,C0848C5D,C09FFFF8", first);
+        AssertCorpusContains("frustum.contains=1,0,1,1", first);
+        AssertCorpusContains("frustum.gjk=1,0,1,0,0", first);
+        AssertCorpusContains("frustum.ray=41800000", first);
 
         Matrix singular = Matrix.Invert(default);
         Assert.True(float.IsNaN(singular.M11));
