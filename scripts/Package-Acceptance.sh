@@ -30,22 +30,49 @@ while (($# > 0)); do
   esac
 done
 
-if [[ "$(uname -s)" != Linux || "$(uname -m)" != x86_64 ]]; then
-  echo "This native-package experiment is evidence-scoped to linux-x64; this host is $(uname -s)/$(uname -m)." >&2
-  exit 2
-fi
+# The experiment is evidence-scoped to one RID per host: linux-x64, and since CNA
+# plans/plan_apple_m4.md AM4-227 osx-arm64. Everything that differs between them is decided here --
+# the library suffix and SDL soname the package carries, how the library says it looks beside
+# itself, the video driver a windowless run uses and how a wrong-architecture library is made.
+case "$(uname -s)/$(uname -m)" in
+  Linux/x86_64)
+    rid=linux-x64
+    library_suffix=so
+    sdl_library=libSDL3.so.0
+    windowless_video_driver=offscreen
+    wrong_architecture_flags=(-m32 -nostdlib)
+    ;;
+  Darwin/arm64)
+    rid=osx-arm64
+    library_suffix=dylib
+    sdl_library=libSDL3.0.dylib
+    # SDL's offscreen driver creates its contexts through EGL, which macOS does not have.
+    windowless_video_driver=dummy
+    wrong_architecture_flags=(-arch x86_64)
+    ;;
+  *)
+    echo "This native-package experiment is evidence-scoped to linux-x64 and osx-arm64; this host is $(uname -s)/$(uname -m)." >&2
+    exit 2
+    ;;
+esac
 # The installed CNACApi component, not a build tree: `cmake --install <tree> --component CNACApi
 # --prefix <dir>` and pass <dir>/lib. A build-tree library carries an absolute RUNPATH into that
 # tree, so a package made from it loads only on the machine that built it.
-if [[ -z "$native_directory" || ! -f "$native_directory/libcna_c_api.so" ]]; then
-  echo "Pass --native-directory with the lib directory of an installed, ABI-matched linux-x64 CNACApi component." >&2
+if [[ -z "$native_directory" || ! -f "$native_directory/libcna_c_api.$library_suffix" ]]; then
+  echo "Pass --native-directory with the lib directory of an installed, ABI-matched $rid CNACApi component." >&2
   exit 2
 fi
-native_directory=$(realpath "$native_directory")
-native_library="$native_directory/libcna_c_api.so"
-native_runpath=$(readelf -d "$native_library" | sed -n 's/.*(RUNPATH).*\[\(.*\)\]/\1/p')
-if [[ "$native_runpath" != '$ORIGIN' ]]; then
-  echo "The native library's RUNPATH is '$native_runpath', not \$ORIGIN; install the CNACApi component instead of packing a build tree." >&2
+native_directory=$(cd -- "$native_directory" && pwd -P)
+native_library="$native_directory/libcna_c_api.$library_suffix"
+if [[ "$library_suffix" == so ]]; then
+  native_runpath=$(readelf -d "$native_library" | sed -n 's/.*(RUNPATH).*\[\(.*\)\]/\1/p')
+  expected_runpath='$ORIGIN'
+else
+  native_runpath=$(otool -l "$native_library" | awk '/LC_RPATH/ { getline; getline; print $2 }')
+  expected_runpath='@loader_path'
+fi
+if [[ "$native_runpath" != "$expected_runpath" ]]; then
+  echo "The native library's run path is '$native_runpath', not $expected_runpath; install the CNACApi component instead of packing a build tree." >&2
   exit 2
 fi
 if [[ ! -f "$template_root/.template.config/template.json" ]]; then
@@ -60,7 +87,11 @@ if [[ -z "$output_root" ]]; then
   rm -rf "$output_root"
   mkdir -p "$output_root"
 else
-  output_root=$(realpath -m "$output_root")
+  # Not `realpath -m`, which macOS's realpath lacks: the directory does not exist yet.
+  case "$output_root" in
+    /*) output_root="${output_root%/}" ;;
+    *) output_root="$PWD/${output_root%/}" ;;
+  esac
   if [[ -e "$output_root" ]]; then
     echo "Acceptance output already exists: $output_root" >&2
     exit 2
@@ -96,7 +127,7 @@ pack_project()
 }
 
 pack_project src/CNA.Interop/CNA.Interop.csproj \
-  -p:CnaNativeRid=linux-x64 -p:CnaNativeDirectory="$native_directory"
+  -p:CnaNativeRid="$rid" -p:CnaNativeDirectory="$native_directory"
 pack_project src/CNA.Framework/CNA.Framework.csproj
 pack_project src/CNA.XnaCompat/CNA.XnaCompat.csproj
 
@@ -118,7 +149,7 @@ for package_id in CNA.Interop CNA.Framework CNA.XnaCompat; do
 done
 
 interop_entries=$(unzip -Z1 "$feed_root/CNA.Interop.$package_version.nupkg")
-for required in runtimes/linux-x64/native/libcna_c_api.so runtimes/linux-x64/native/libSDL3.so.0; do
+for required in "runtimes/$rid/native/libcna_c_api.$library_suffix" "runtimes/$rid/native/$sdl_library"; do
   if ! grep -Fxq "$required" <<<"$interop_entries"; then
     echo "CNA.Interop package is missing $required." >&2
     exit 1
@@ -143,11 +174,15 @@ config_file="$work_root/nuget.config"
   --packages "$work_root/packages"
 "$dotnet_command" build "$consumer_root/IsolatedConsumer.csproj" -c Release --no-restore -m:1
 
-if rg -n 'CnaDotnetRoot|CNA_DOTNET_ROOT|ProjectReference' "$consumer_root/IsolatedConsumer.csproj"; then
+# grep rather than rg, which a macOS host does not ship.
+if grep -n -E 'CnaDotnetRoot|CNA_DOTNET_ROOT|ProjectReference' "$consumer_root/IsolatedConsumer.csproj"; then
   echo "Isolated package consumer contains source-reference configuration." >&2
   exit 1
 fi
-if rg -n -F "$repo_root" "$consumer_root" -g '*.csproj' -g 'project.assets.json'; then
+# The checkout's source tree: a default output directory is build-consumer/ inside the checkout, so
+# the checkout root alone would match the consumer's own paths (rg skipped that git-ignored
+# directory and so read nothing).
+if grep -r -n -F --include='*.csproj' --include='project.assets.json' "$repo_root/src/" "$consumer_root"; then
   echo "Isolated package consumer contains a CNA.NET source checkout path." >&2
   exit 1
 fi
@@ -165,7 +200,7 @@ fi
 
 consumer_output="$consumer_root/bin/Release/net8.0"
 consumer_dll="$consumer_output/IsolatedConsumer.dll"
-packaged_native="$consumer_output/runtimes/linux-x64/native/libcna_c_api.so"
+packaged_native="$consumer_output/runtimes/$rid/native/libcna_c_api.$library_suffix"
 [[ -f "$consumer_dll" && -f "$packaged_native" ]] || {
   echo "The isolated consumer output is missing its managed or packaged native runtime." >&2
   exit 1
@@ -180,7 +215,7 @@ run_consumer()
   local log=$1
   shift
   env -u CNA_NATIVE_LIBRARY -u CNA_NATIVE_DIR \
-    XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=offscreen \
+    XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER="$windowless_video_driver" \
     "$dotnet_command" "$consumer_dll" "$@" >"$log" 2>&1
 }
 
@@ -189,18 +224,18 @@ run_consumer "$logs_root/frames-600.log" --frames 600
 grep -Fq 'drew 60 frames' "$logs_root/frames-60.log"
 grep -Fq 'drew 600 frames' "$logs_root/frames-600.log"
 
-mv "$packaged_native" "$work_root/libcna_c_api.saved.so"
+mv "$packaged_native" "$work_root/libcna_c_api.saved.$library_suffix"
 if run_consumer "$logs_root/missing-native.log" --frames 1; then
   echo "Missing-native diagnostic case unexpectedly succeeded." >&2
   exit 1
 fi
-mv "$work_root/libcna_c_api.saved.so" "$packaged_native"
+mv "$work_root/libcna_c_api.saved.$library_suffix" "$packaged_native"
 grep -Fq 'No CNA C API native library was found' "$logs_root/missing-native.log"
 grep -Fq 'Platform/RID:' "$logs_root/missing-native.log"
 
-cc -m32 -shared -nostdlib -fPIC -Wall -Wextra -Werror \
-  "$script_dir/package-fixtures/wrong_architecture.c" -o "$work_root/wrong-architecture.so"
-if CNA_NATIVE_LIBRARY="$work_root/wrong-architecture.so" \
+cc "${wrong_architecture_flags[@]}" -shared -fPIC -Wall -Wextra -Werror \
+  "$script_dir/package-fixtures/wrong_architecture.c" -o "$work_root/wrong-architecture.$library_suffix"
+if CNA_NATIVE_LIBRARY="$work_root/wrong-architecture.$library_suffix" \
    "$dotnet_command" "$consumer_dll" --frames 1 >"$logs_root/wrong-architecture.log" 2>&1; then
   echo "Wrong-architecture diagnostic case unexpectedly succeeded." >&2
   exit 1
@@ -209,9 +244,9 @@ grep -Fq 'wrong architecture or binary format' "$logs_root/wrong-architecture.lo
 grep -Fq 'Platform/RID:' "$logs_root/wrong-architecture.log"
 
 cc -shared -fPIC -Wall -Wextra -Werror "$script_dir/package-fixtures/wrong_abi.c" \
-  -o "$work_root/wrong-abi.so"
-if CNA_NATIVE_LIBRARY="$work_root/wrong-abi.so" CNA_NATIVE_DIR=/deliberately/ignored \
-   XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=offscreen \
+  -o "$work_root/wrong-abi.$library_suffix"
+if CNA_NATIVE_LIBRARY="$work_root/wrong-abi.$library_suffix" CNA_NATIVE_DIR=/deliberately/ignored \
+   XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER="$windowless_video_driver" \
    "$dotnet_command" "$consumer_dll" --frames 1 >"$logs_root/wrong-abi.log" 2>&1; then
   echo "Wrong-ABI diagnostic case unexpectedly succeeded." >&2
   exit 1
@@ -221,14 +256,14 @@ consumer_abi=$(jq -r .consumerAbi "$repo_root/eng/cna-native-abi-policy.json")
 grep -Fq "consumer ABI $consumer_abi" "$logs_root/wrong-abi.log"
 grep -Fq 'explicit CNA_NATIVE_LIBRARY' "$logs_root/wrong-abi.log"
 
-if CNA_NATIVE_LIBRARY="$abi_compatibility_root/fixtures/missing-required-symbol.so" \
+if CNA_NATIVE_LIBRARY="$abi_compatibility_root/fixtures/missing-required-symbol.$library_suffix" \
    "$dotnet_command" "$consumer_dll" --frames 1 >"$logs_root/missing-symbol.log" 2>&1; then
   echo "Missing-symbol diagnostic case unexpectedly succeeded." >&2
   exit 1
 fi
 grep -Fq "required symbol 'cna_game_destroy' is missing" "$logs_root/missing-symbol.log"
 
-if CNA_NATIVE_LIBRARY="$work_root/does-not-exist.so" \
+if CNA_NATIVE_LIBRARY="$work_root/does-not-exist.$library_suffix" \
    "$dotnet_command" "$consumer_dll" --frames 1 >"$logs_root/invalid-explicit-path.log" 2>&1; then
   echo "Invalid explicit-path diagnostic case unexpectedly succeeded." >&2
   exit 1
@@ -238,8 +273,8 @@ grep -Fq 'no fallback is attempted' "$logs_root/invalid-explicit-path.log"
 
 conflict_dir="$work_root/conflict"
 mkdir -p "$conflict_dir"
-cp "$packaged_native" "$conflict_dir/libcna_c_api.so"
-cp "$packaged_native" "$conflict_dir/libcna-native.so"
+cp "$packaged_native" "$conflict_dir/libcna_c_api.$library_suffix"
+cp "$packaged_native" "$conflict_dir/libcna-native.$library_suffix"
 if env -u CNA_NATIVE_LIBRARY CNA_NATIVE_DIR="$conflict_dir" \
    "$dotnet_command" "$consumer_dll" --frames 1 >"$logs_root/conflict.log" 2>&1; then
   echo "Conflicting-library diagnostic case unexpectedly succeeded." >&2
@@ -251,14 +286,17 @@ grep -Fq 'Conflicting CNA native libraries were found' "$logs_root/conflict.log"
 explicit_dir="$work_root/explicit-native"
 mkdir -p "$explicit_dir"
 cp "$(dirname "$packaged_native")"/* "$explicit_dir/"
-valid_override="$explicit_dir/libcna_c_api.so"
+valid_override="$explicit_dir/libcna_c_api.$library_suffix"
 CNA_NATIVE_LIBRARY="$valid_override" CNA_NATIVE_DIR=/deliberately/ignored \
-  XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=offscreen \
+  XDG_RUNTIME_DIR="$runtime_dir" SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER="$windowless_video_driver" \
   "$dotnet_command" "$consumer_dll" --frames 60 >"$logs_root/explicit-override.log" 2>&1
 grep -Fq 'drew 60 frames' "$logs_root/explicit-override.log"
 
 jq -n \
   --arg version "$package_version" \
+  --arg rid "$rid" \
+  --arg nativeLibrary "libcna_c_api.$library_suffix" \
+  --arg sdlLibrary "$sdl_library" \
   --arg nativeSource "$native_directory" \
   --arg interop "CNA.Interop.$package_version.nupkg" \
   --arg framework "CNA.Framework.$package_version.nupkg" \
@@ -266,11 +304,11 @@ jq -n \
   '{
     schemaVersion: 1,
     status: "passed",
-    qualifiedEvidenceScope: "linux-x64 local experiment only",
+    qualifiedEvidenceScope: ($rid + " local experiment only"),
     packageVersion: $version,
     nativeSource: $nativeSource,
     packages: [$interop, $framework, $compat],
-    contents: ["managed DLLs", "XML documentation", "LICENSE", "NOTICE.md", "README.md", "portable PDB symbol packages", "runtimes/linux-x64/native/libcna_c_api.so", "runtimes/linux-x64/native/libSDL3*.so.0"],
+    contents: ["managed DLLs", "XML documentation", "LICENSE", "NOTICE.md", "README.md", "portable PDB symbol packages", ("runtimes/" + $rid + "/native/" + $nativeLibrary), ("runtimes/" + $rid + "/native/" + $sdlLibrary)],
     isolatedRestore: "passed",
     isolatedBuild: "passed",
     sourceOrSiblingPaths: "absent",
@@ -285,7 +323,7 @@ jq -n \
     conflictingLibrariesDiagnostic: "passed",
     explicitOverridePrecedence: "passed",
     nativeAbiPolicy: "cna-cs-native-abi/1",
-    nativeAbiCompatibilityFixtures: "2 accepted / 10 rejected",
+    nativeAbiCompatibilityFixtures: "2 accepted / 11 rejected",
     nativeAbiSelectedLibrary: "passed",
     published: false,
     supportedRidClaim: false
