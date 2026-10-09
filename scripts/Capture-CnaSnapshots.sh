@@ -10,7 +10,12 @@ pure_only=0
 while (($#)); do
   case "$1" in
     --output)
-      output_directory="$(realpath -m "$2")"
+      # Not `realpath -m`, which macOS's realpath lacks (CNA plans/plan_apple_m4.md AM4-225): the
+      # directory may not exist yet, so an absolute path is made by hand.
+      case "$2" in
+        /*) output_directory="${2%/}" ;;
+        *) output_directory="$PWD/${2%/}" ;;
+      esac
       shift 2
       ;;
     --force)
@@ -73,7 +78,8 @@ run_probe() {
   local snapshot_file="$3"
   local raw_file="$capture_root/$probe_id.raw.txt"
 
-  "${runner[@]}" "$dotnet_command" run --project "$project" -c Release --no-build -- \
+  # `${runner[@]+...}`: bash 3.2 (macOS's /bin/bash) treats an empty array as unset under set -u.
+  ${runner[@]+"${runner[@]}"} "$dotnet_command" run --project "$project" -c Release --no-build -- \
     --output "$raw_file"
   "$dotnet_command" run --project "$behavior_tool" -c Release --no-build -- \
     validate --probe "$probe_id" --input "$raw_file" \
