@@ -169,5 +169,13 @@ So the offscreen SDL video driver and CNA's `SDL_RENDERER` backend do not combin
 own default is the configuration to keep using. Pass `--native-directory` a renderer that works
 headless.
 
+On macOS (CNA `plans/plan_apple_m4.md` `AM4-230`, `AM4-231`) the same symptoms -- a renderer
+named after the display, a claimed 3D pipeline, then an abort -- traced to two defects rather than
+to the video driver. `dotnet new` removed the template's `#if ENGINE_CNA` branch, so every
+generated game reported `Adapter.Description` and claimed 3D and depth; and `Clear(Color)` asked
+SDL_RENDERER, which has no depth plane, to clear one. With both fixed, the generated game reports
+`SDL_RENDERER`, "2D only", and draws its 60 frames under `dummy`. Whether the Linux `offscreen`
+abort had the same two causes has not been re-measured on Linux.
+
 On macOS it uses `dummy` instead: SDL's `offscreen` driver creates its contexts through EGL, which
 macOS does not have, and a windowless SOFTWARE library draws under `dummy`.

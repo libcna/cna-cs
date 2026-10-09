@@ -51,7 +51,7 @@ SOFTWARE with `CNA_DEVICES=ON` and `CNA_SOFTWARE_COMPILED_EFFECTS=ON`, SDL's dum
   errors;
 - managed tests in each configuration: 652/655 Framework (3 skip by name on a case-insensitive
   filesystem), 319/319 XNA-compat, 5/5 BrowserCompat;
-- native integration tests in each configuration: 260/260, plus 24/24 GamerServices, Avatar and
+- native integration tests in each configuration: 261/261, plus 24/24 GamerServices, Avatar and
   Net integration tests; the ownership stress program, 100 cycles in Debug and Release;
 - ABI: `Verify-Abi` 0 mismatches, the fixture matrix 2 accepted and 11 rejected, the macOS
   `libcna_c_api.dylib` passes the runtime contract;

@@ -206,25 +206,44 @@ public class GraphicsDevice : IDisposable
     /// active depth format is not <see cref="DepthFormat.None"/>, plus <c>Stencil</c> for
     /// <see cref="DepthFormat.Depth24Stencil8"/>. The active format is the first bound render
     /// target's, or the back buffer's when none is bound.
+    ///
+    /// For the back buffer a plane also has to exist, as in CNA's C++
+    /// <c>GraphicsDevice::GetDefaultClearOptions</c>: a renderer without
+    /// <see cref="GraphicsCapability.DepthStencilBuffer"/> (SDL_RENDERER) keeps the requested
+    /// format in its presentation parameters but has no depth plane, and
+    /// <c>cna_graphics_device_clear_options</c> refuses a clear of one. Asking by the format alone
+    /// made every <c>Clear(Color)</c> throw there (CNA plans/plan_apple_m4.md AM4-231).
     /// </summary>
     private ClearOptions DefaultClearOptions
     {
         get
         {
-            DepthFormat format = _boundRenderTargets.Length > 0
-                ? _boundRenderTargets[0].RenderTarget switch
+            if (_boundRenderTargets.Length > 0)
+            {
+                return OptionsFor(_boundRenderTargets[0].RenderTarget switch
                 {
                     RenderTarget2D target => target.DepthStencilFormat,
                     RenderTargetCube cube => cube.DepthStencilFormat,
                     _ => DepthFormat.None,
-                }
-                : PresentationParameters.DepthStencilFormat;
-            return format switch
+                }, hasDepthPlane: true, hasStencilPlane: true);
+            }
+
+            DepthFormat format = PresentationParameters.DepthStencilFormat;
+            return format == DepthFormat.None
+                ? ClearOptions.Target
+                : OptionsFor(format,
+                    hasDepthPlane: SupportsCapability(GraphicsCapability.DepthStencilBuffer),
+                    hasStencilPlane: SupportsCapability(GraphicsCapability.StencilBuffer));
+
+            static ClearOptions OptionsFor(DepthFormat format, bool hasDepthPlane, bool hasStencilPlane)
             {
-                DepthFormat.None => ClearOptions.Target,
-                DepthFormat.Depth24Stencil8 => ClearOptions.Target | ClearOptions.DepthBuffer | ClearOptions.Stencil,
-                _ => ClearOptions.Target | ClearOptions.DepthBuffer,
-            };
+                ClearOptions options = ClearOptions.Target;
+                if (format != DepthFormat.None && hasDepthPlane)
+                    options |= ClearOptions.DepthBuffer;
+                if (format == DepthFormat.Depth24Stencil8 && hasStencilPlane)
+                    options |= ClearOptions.Stencil;
+                return options;
+            }
         }
     }
 

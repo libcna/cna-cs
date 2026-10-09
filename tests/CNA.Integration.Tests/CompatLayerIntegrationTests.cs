@@ -1278,6 +1278,35 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
     }
 
     /// <summary>
+    /// <c>Clear(Color)</c> in a game that asks for XNA's default <see cref="DepthFormat.Depth24"/>
+    /// back buffer, on any renderer -- including one without a depth plane.
+    ///
+    /// SDL_RENDERER has no <c>DepthStencilBuffer</c> but keeps the requested format in its
+    /// presentation parameters, and <c>cna_graphics_device_clear_options</c> refuses a plane the
+    /// device does not have. The binding chose the planes from the format alone, so the overload
+    /// every game calls once per frame threw there and the CNA game template died in its first
+    /// <c>Draw</c> (CNA plans/plan_apple_m4.md AM4-231). Where the plane is missing an explicit depth
+    /// clear must still be refused, which shows the default chose fewer planes rather than the
+    /// device accepting anything.
+    /// </summary>
+    [global::CNA.Integration.Tests.NativeFact]
+    public void CompatGame_ClearColorWithTheDefaultDepthFormatOnAnyRenderer()
+    {
+        using var game = new DefaultDepthClearGame();
+        game.RunOneFrame();
+
+        output.WriteLine(
+            $"{game.RendererName}: depth plane {game.HasDepthPlane}, format {game.Format}");
+        Assert.Equal(DepthFormat.Depth24, game.Format);
+        Assert.Null(game.ClearFailure);
+        Assert.True(game.Cleared);
+        if (!game.HasDepthPlane)
+            Assert.IsType<global::CNA.CnaException>(game.ExplicitDepthClearFailure);
+        else
+            Assert.Null(game.ExplicitDepthClearFailure);
+    }
+
+    /// <summary>
     /// dsplaisted/Disentanglement keeps <c>Keyboard.GetState()</c> as a field initializer, which runs
     /// before the Game constructor and so before any CNA game exists (cna-cs CSX-123). XNA answered
     /// from the thread's key state: nothing pressed. Once the game runs, input reads through it.
@@ -1453,6 +1482,43 @@ public class CompatLayerIntegrationTests(ITestOutputHelper output)
             _ = Mouse.GetState();
             ReadInputInUpdate = true;
             base.Update(gameTime);
+        }
+    }
+
+    private sealed class DefaultDepthClearGame : XnaGame
+    {
+        public DefaultDepthClearGame()
+        {
+            _ = new GraphicsDeviceManager(this)
+            {
+                PreferredBackBufferWidth = 64,
+                PreferredBackBufferHeight = 64,
+                PreferredDepthStencilFormat = DepthFormat.Depth24,
+            };
+        }
+
+        public string RendererName { get; private set; } = "";
+
+        public bool HasDepthPlane { get; private set; }
+
+        public DepthFormat Format { get; private set; }
+
+        public bool Cleared { get; private set; }
+
+        public Exception? ClearFailure { get; private set; }
+
+        public Exception? ExplicitDepthClearFailure { get; private set; }
+
+        protected override void Draw(GameTime gameTime)
+        {
+            RendererName = GraphicsDevice.GetCnaRendererName();
+            HasDepthPlane = GraphicsDevice.SupportsCnaCapability(CnaGraphicsCapability.DepthStencilBuffer);
+            Format = GraphicsDevice.PresentationParameters.DepthStencilFormat;
+            ClearFailure = Record.Exception(() => GraphicsDevice.Clear(Color.CornflowerBlue));
+            Cleared = ClearFailure is null;
+            ExplicitDepthClearFailure = Record.Exception(() => GraphicsDevice.Clear(
+                ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0));
+            base.Draw(gameTime);
         }
     }
 
