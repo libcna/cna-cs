@@ -213,9 +213,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The template branch named like this one when it exists, else its default branch: a change
+      # made in both repositories is tested together, as CNA does for its siblings (AM4-262).
+      - name: Choose the template branch
+        id: template_branch
+        run: |
+          branch="${{ github.head_ref || github.ref_name }}"
+          if git ls-remote --exit-code --heads https://github.com/libcna/cna-dotnet-template.git "$branch" >/dev/null 2>&1; then
+            echo "ref=$branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
         with:
           repository: libcna/cna-dotnet-template
+          ref: ${{ steps.template_branch.outputs.ref }}
           path: cna-dotnet-template
       - uses: actions/setup-dotnet@v4
         with:
@@ -229,9 +241,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The template branch named like this one when it exists, else its default branch: a change
+      # made in both repositories is tested together, as CNA does for its siblings (AM4-262).
+      - name: Choose the template branch
+        id: template_branch
+        run: |
+          branch="${{ github.head_ref || github.ref_name }}"
+          if git ls-remote --exit-code --heads https://github.com/libcna/cna-dotnet-template.git "$branch" >/dev/null 2>&1; then
+            echo "ref=$branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
         with:
           repository: libcna/cna-dotnet-template
+          ref: ${{ steps.template_branch.outputs.ref }}
           path: cna-dotnet-template
       - uses: actions/setup-dotnet@v4
         with:
@@ -303,9 +327,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # The template branch named like this one when it exists, else its default branch: a change
+      # made in both repositories is tested together, as CNA does for its siblings (AM4-262).
+      - name: Choose the template branch
+        id: template_branch
+        run: |
+          branch="${{ github.head_ref || github.ref_name }}"
+          if git ls-remote --exit-code --heads https://github.com/libcna/cna-dotnet-template.git "$branch" >/dev/null 2>&1; then
+            echo "ref=$branch" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
         with:
           repository: libcna/cna-dotnet-template
+          ref: ${{ steps.template_branch.outputs.ref }}
           path: cna-dotnet-template
       - uses: actions/setup-dotnet@v4
         with:
