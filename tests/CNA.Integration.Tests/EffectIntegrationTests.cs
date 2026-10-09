@@ -103,6 +103,18 @@ public class EffectIntegrationTests(ITestOutputHelper output, NativeGameFixture 
     /// The source is written for whichever dialect the device names, because the header is explicit
     /// that guessing from the renderer's identity is unsafe. An unknown dialect skips rather than
     /// guesses.
+
+    /// <summary>
+    /// What a renderer without CustomEffects says about source it was handed, per the C ABI
+    /// (`cna_shader_effect_is_valid`): `CNA_TRUE` means *nothing rejected this source*, and "the
+    /// software rasterizer accepts any non-empty text". SOFTWARE and HEADLESS keep drawing with
+    /// their own fixed path and never inspect source, so on them a valid verdict for text that
+    /// cannot draw is the documented answer; the renderer measured here before (SDL_RENDERER) looks
+    /// at it and refuses. Asserting refusal everywhere read the first case as a defect (CNA
+    /// plans/plan_apple_m4.md AM4-222, measured on SOFTWARE on macOS).
+    /// </summary>
+    private static bool RendererInspectsNoSource(string rendererName) =>
+        rendererName is "SOFTWARE" or "HEADLESS";
     /// </summary>
     [NativeFactRequiring(GraphicsCapability.CustomEffects)]
     public void Effect_FromShaderSource_CompilesOnARendererThatSupportsIt()
@@ -127,9 +139,11 @@ public class EffectIntegrationTests(ITestOutputHelper output, NativeGameFixture 
                     $"ABSENT BRANCH EXERCISED: renderer '{device.RendererName}' does not report " +
                     $"CustomEffects; valid source reports IsSourceValid={refused.IsSourceValid}");
 
-                Assert.False(
-                    refused.IsSourceValid,
-                    "A renderer without CustomEffects must not claim it compiled a custom effect.");
+                Assert.True(
+                    refused.IsSourceValid == RendererInspectsNoSource(device.RendererName),
+                    $"'{device.RendererName}' lacks CustomEffects and reported IsSourceValid=" +
+                    $"{refused.IsSourceValid}; the C ABI's verdict for it is " +
+                    $"{RendererInspectsNoSource(device.RendererName)}.");
                 return;
             }
 
@@ -291,7 +305,7 @@ public class EffectIntegrationTests(ITestOutputHelper output, NativeGameFixture 
                     $"ABSENT BRANCH EXERCISED: '{device.RendererName}' lacks CustomEffects; " +
                     $"valid={refused.IsSourceValid} parameters={refused.Parameters.Count}");
 
-                Assert.False(refused.IsSourceValid);
+                Assert.Equal(RendererInspectsNoSource(device.RendererName), refused.IsSourceValid);
                 Assert.Empty(refused.Parameters);
                 return;
             }
