@@ -1,4 +1,5 @@
 using System.IO.IsolatedStorage;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace CNA.BrowserCompat.Tests;
@@ -12,19 +13,47 @@ namespace CNA.BrowserCompat.Tests;
 /// </summary>
 public sealed class IsolatedStorageFileTests : IDisposable
 {
+    [DllImport("libc", EntryPoint = "setenv")]
+    private static extern int NativeSetEnv(
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string value,
+        int overwrite);
+
     private readonly string _data = Directory.CreateTempSubdirectory("cna-isostore-").FullName;
     private readonly string? _previousData = Environment.GetEnvironmentVariable("XDG_DATA_HOME");
 
     public IsolatedStorageFileTests()
     {
-        // The store lives under LocalApplicationData; keep it out of the developer's own.
+        // The store lives under LocalApplicationData; keep it out of the developer's own. Linux
+        // derives that folder from XDG_DATA_HOME. macOS asks Foundation for Application Support,
+        // which ignores XDG and HOME but honours CFFIXED_USER_HOME -- read from the process's
+        // native environment, which Environment.SetEnvironmentVariable does not reach, hence
+        // setenv (CNA plans/plan_apple_m4.md AM4-219). Measured, then refused: if this platform
+        // still resolves the folder elsewhere, the tests stop here instead of writing into a real
+        // user's store.
         Environment.SetEnvironmentVariable("XDG_DATA_HOME", _data);
+        if (OperatingSystem.IsMacOS())
+        {
+            NativeSetEnv("CFFIXED_USER_HOME", _data, 1);
+        }
+        string resolved = Environment.GetFolderPath(
+            Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify);
+        if (!resolved.StartsWith(_data, StringComparison.Ordinal))
+        {
+            Dispose();
+            throw new InvalidOperationException(
+                $"LocalApplicationData resolves to '{resolved}', outside the test's '{_data}'; " +
+                "isolated storage cannot be kept out of the user's own folder on this platform.");
+        }
     }
 
     public void Dispose()
     {
         Environment.SetEnvironmentVariable("XDG_DATA_HOME", _previousData);
-        Directory.Delete(_data, recursive: true);
+        if (Directory.Exists(_data))
+        {
+            Directory.Delete(_data, recursive: true);
+        }
     }
 
     [Fact]
