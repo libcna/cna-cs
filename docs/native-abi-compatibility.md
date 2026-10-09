@@ -24,12 +24,21 @@ It cannot express CNA's documented experimental-0.x exception by itself.
 
 | CNA.NET consumer | Native library | CNA.NET result | Evidence |
 | --- | --- | --- | --- |
-| 0.44.0 | 0.44.0 | Accept | Consumer baseline at CNA `next` `ed885a8ae`. |
-| 0.44.0 | Any other 0.x | Reject | No audited matrix entry. |
-| 0.44.0 | Any 1.x+ | Reject | Different ABI major. |
+| 0.46.0 | 0.46.0 | Accept | Consumer baseline at CNA `apple/m4-stabilization` `a3da0a5bb`. |
+| 0.46.0 | Any other 0.x | Reject | No audited matrix entry. |
+| 0.46.0 | Any 1.x+ | Reject | Different ABI major. |
 
 One accepted entry is not a simplification of the policy; it is what the policy produces when the
-consumer moves. There is no `>= 0.44` rule and there never was a `>= 0.6` one.
+consumer moves. There is no `>= 0.46` rule and there never was a `>= 0.6` one.
+
+0.46.0 replaced 0.44.0 on 2026-10-09 (CNA `plans/plan_apple_m4.md` AM4-217), crossing 0.45.0, which
+was never admitted. `tools/coverage/baselinediff.py` measured 1419 consumed exports with 0 absent
+and 0 changed prototypes, no struct, scalar or string difference, and five integer-constant
+differences, each reviewed in `eng/cna-upstream-abi-allowlist.txt`: RRC-018 retired four renderer
+identities (their values stay reserved; a library never reports them and CNA.NET names none) and
+AM4-037 added `CNA_NATIVE_WINDOW_SYSTEM_UIKIT`, which moves that family's maximum from 8 to 9 (CNA.NET
+does not consume native window handles). The generation is the one the macOS runtime qualification
+runs against.
 
 `ed885a8ae` is 0.44.0 as CNA first published it, and carries everything this binding needs from
 the earlier lines: CBIND-128/129 (component callbacks), CBIND-130 (packet-reader copy), CBIND-131

@@ -9,7 +9,17 @@
 # eng/cna-native-abi-policy.json against the one proposed to replace it -- because a finding is a
 # statement about one step and matches nothing in the next.
 #
-# 2026-10-01, ABI 0.38.0 (CNA f445fef8c) -> 0.39.0 (CNA 0a57ccad2), CAMPAIGN.md CSX-101.
-# The step adds one export, cna_game_set_foreign_thread_calls_ext (CBIND-141), and changes nothing
-# else: 1412 consumed exports, 0 absent, 0 changed prototype; 0 struct, scalar, constant or string
-# differences. There is nothing to review away, so this file holds no entries.
+# 2026-10-09, ABI 0.44.0 (CNA ed885a8ae) -> 0.46.0 (CNA a3da0a5bb), CNA plans/plan_apple_m4.md AM4-217.
+# 0.45.0 (RRC-018) was never admitted; this step crosses it. 1419 consumed exports, 0 absent, 0
+# changed prototype; 3210 -> 3210 exports; 0 struct, scalar or string differences. The five
+# integer-constant findings below were reviewed, and none reaches this binding:
+#
+# - RRC-018 retired four renderer identities. Their values stay reserved and are never reassigned,
+#   a library of this generation never reports them, and CNA.NET names no renderer constant.
+integer constants: CNA_GRAPHICS_RENDERER_CANVAS was removed
+integer constants: CNA_GRAPHICS_RENDERER_DIRECTX12 was removed
+integer constants: CNA_GRAPHICS_RENDERER_OPENGLES2 was removed
+integer constants: CNA_GRAPHICS_RENDERER_WEBGL1 was removed
+# - AM4-037 added CNA_NATIVE_WINDOW_SYSTEM_UIKIT (9) for iOS, which moves the family's MAXIMUM.
+#   CNA.NET does not consume native window handles or the window-system family.
+integer constants: CNA_NATIVE_WINDOW_SYSTEM_MAXIMUM changed 8 -> 9
