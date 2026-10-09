@@ -46,7 +46,7 @@
     {
       "rid": "osx-arm64",
       "status": "measured-local-evidence; not an official shipping claim",
-      "nativeEvidence": "SOFTWARE ABI-compatible local build (C ABI 0.46.0, CNA_DEVICES and CNA_SOFTWARE_COMPILED_EFFECTS on), run under SDL's dummy video driver on an Apple-silicon Mac (CNA plans/plan_apple_m4.md AM4-216..AM4-229)",
+      "nativeEvidence": "SOFTWARE ABI-compatible local build (C ABI 0.46.0, CNA_DEVICES and CNA_SOFTWARE_COMPILED_EFFECTS on) for every test suite, under SDL's dummy video driver; METAL local build (CNA_METAL_COMPILED_EFFECTS on) for a main-thread C# game with pixel readback, the game template and the samples, in Cocoa windows; both on an Apple-silicon Mac (CNA plans/plan_apple_m4.md AM4-215..AM4-231)",
       "crossCompilationCountsAsQualification": false
     }
   ]

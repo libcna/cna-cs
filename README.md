@@ -45,7 +45,7 @@ As of 2026-10-04, against CNA `next` `8a7e13ff5` (C ABI 0.44.0), OPENGLES3 with
 
 macOS (Apple silicon, osx-arm64), measured 2026-10-09 against CNA `a3da0a5bb` (C ABI 0.46.0),
 SOFTWARE with `CNA_DEVICES=ON` and `CNA_SOFTWARE_COMPILED_EFFECTS=ON`, SDL's dummy video driver
-(CNA `plans/plan_apple_m4.md` AM4-216..AM4-229):
+(CNA `plans/plan_apple_m4.md` AM4-215..AM4-231):
 
 - Debug and Release solution builds: success with the one existing xUnit analyzer warning, 0
   errors;
@@ -55,7 +55,13 @@ SOFTWARE with `CNA_DEVICES=ON` and `CNA_SOFTWARE_COMPILED_EFFECTS=ON`, SDL's dum
   Net integration tests; the ownership stress program, 100 cycles in Debug and Release;
 - ABI: `Verify-Abi` 0 mismatches, the fixture matrix 2 accepted and 11 rejected, the macOS
   `libcna_c_api.dylib` passes the runtime contract;
-- package acceptance for `osx-arm64` passed (see [`docs/packaging.md`](docs/packaging.md)).
+- package acceptance for `osx-arm64` passed (see [`docs/packaging.md`](docs/packaging.md));
+- METAL, from a Release C API with `CNA_METAL_COMPILED_EFFECTS=ON`: a C# XNA game on the process
+  main thread reads back exactly what it drew (clear, SpriteBatch, render target, BasicEffect); a
+  fresh `dotnet new cna-game` reports METAL and draws 60 and 600 frames; all 84
+  `cna-dotnet-samples` with a project start and keep running in Cocoa windows. The test suites
+  above run windowless because xUnit creates games on worker threads, where macOS refuses a
+  windowed renderer.
 
 The campaign plan and running evidence ledger is [`CAMPAIGN.md`](CAMPAIGN.md). Earlier measurements
 are in [`NEXT.md`](NEXT.md) and Git history; treat them as history, not current state.
