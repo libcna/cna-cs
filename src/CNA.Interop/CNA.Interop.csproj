@@ -14,11 +14,15 @@
        loader then finds beside it. Packing the library alone, out of a build tree, produced a
        package that loaded only on the machine whose build tree its RUNPATH named. Only the soname
        files are packed (libSDL3.so.0, not its versioned target and unversioned link), because
-       DT_NEEDED names the soname and a package has no symlinks. -->
+       DT_NEEDED names the soname and a package has no symlinks. On macOS (CNA plans/plan_apple_m4.md
+       AM4-221) the same holds for libcna_c_api.dylib, whose LC_RPATH is @loader_path: its
+       LC_LOAD_DYLIB entries name libSDL3.0.dylib, libSDL3_image.0.dylib and libSDL3_mixer.0.dylib,
+       so those names, read through their symlinks, are what is packed. -->
   <ItemGroup Condition="'$(CnaPackageAcceptance)' == 'true' and '$(CnaNativeDirectory)' != '' and '$(CnaNativeRid)' != ''">
     <CnaNativeAsset Include="$(CnaNativeDirectory)/libcna_c_api.so" Condition="Exists('$(CnaNativeDirectory)/libcna_c_api.so')" />
     <CnaNativeAsset Include="$(CnaNativeDirectory)/libcna_c_api.dylib" Condition="Exists('$(CnaNativeDirectory)/libcna_c_api.dylib')" />
-    <CnaNativeAsset Include="$(CnaNativeDirectory)/lib*.so.?;$(CnaNativeDirectory)/*.dll" />
+    <CnaNativeAsset Include="$(CnaNativeDirectory)/lib*.so.?;$(CnaNativeDirectory)/lib*.?.dylib;$(CnaNativeDirectory)/*.dll"
+                    Exclude="$(CnaNativeDirectory)/lib*.?.?.?.dylib" />
     <None Include="@(CnaNativeAsset)"
           Pack="true"
           PackagePath="runtimes/$(CnaNativeRid)/native/%(Filename)%(Extension)" />

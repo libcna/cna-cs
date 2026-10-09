@@ -107,7 +107,11 @@ def check_library(path):
     except Exception as exc:
         print(f'\n(could not read {path}: {exc})')
         return
-    exported = {line.split()[-1].split('@@')[0] for line in out.splitlines() if ' cna_' in line}
+    # Mach-O spells every C symbol with a leading underscore (`_cna_game_create`), which `nm -gU`
+    # prints as it is; ELF does not (CNA plans/plan_apple_m4.md AM4-221).
+    names = {line.split()[-1].split('@@')[0] for line in out.splitlines() if line.split()}
+    exported = {name[1:] if name.startswith('_cna_') else name
+                for name in names if name.startswith(('cna_', '_cna_'))}
     absent = sorted(n for n in decls if n not in exported)
     print(f'\n{path}: {len(exported)} exports, {len(absent)} declaration(s) absent')
     for name in absent:

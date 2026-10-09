@@ -377,6 +377,11 @@ public static class NativeLibraryResolver
         message.Contains("wrong ELF class", StringComparison.OrdinalIgnoreCase) ||
         message.Contains("invalid ELF", StringComparison.OrdinalIgnoreCase) ||
         message.Contains("bad CPU type", StringComparison.OrdinalIgnoreCase) ||
+        // dyld's wording (CNA plans/plan_apple_m4.md AM4-221): "mach-o file, but is an incompatible
+        // architecture (have 'x86_64', need 'arm64')" for the wrong slice, "not a mach-o file" for
+        // an ELF or PE library handed to macOS.
+        message.Contains("incompatible architecture", StringComparison.OrdinalIgnoreCase) ||
+        message.Contains("not a mach-o file", StringComparison.OrdinalIgnoreCase) ||
         message.Contains("not a valid Win32", StringComparison.OrdinalIgnoreCase) ||
         message.Contains("incorrect format", StringComparison.OrdinalIgnoreCase);
 
