@@ -33,7 +33,9 @@ scripts/Package-Acceptance.sh --native-directory build-consumer/cna-native-linux
 The native input is mandatory and explicit, and it is a directory: `libcna_c_api.so` with RUNPATH
 `$ORIGIN` plus the SDL libraries CNA builds. The script refuses a library whose RUNPATH is anything
 but `$ORIGIN` -- a build-tree library names that tree, so a package made from it loaded only on the
-machine that built it, which the earlier single-file input did. It refuses a non-Linux-x64 host,
+machine that built it, which the earlier single-file input did. It runs on a linux-x64 or an
+osx-arm64 host and refuses any other (on macOS the library is `libcna_c_api.dylib`, its run path
+`@loader_path`, read with `otool -l`),
 creates an isolated feed and package cache, performs a clean Release solution build, packs,
 inspects, installs, builds and runs a newly generated consumer, and writes
 `acceptance-report.json`. Omitting `--output` writes to `build-consumer/package-acceptance`
@@ -125,6 +127,34 @@ signing, Source Link/reproducible-build policy, the qualified CNA revision/confi
 RID, and clean CI evidence on every claimed OS and architecture. The candidate matrix is
 `eng/platform-matrix.json`; cross-compilation alone is never qualification.
 
+## Measured osx-arm64 experiment
+
+Measured 2026-10-09 on an Apple-silicon Mac (CNA `plans/plan_apple_m4.md` AM4-227) against CNA
+`a3da0a5bb` (C ABI 0.46.0), SOFTWARE with `CNA_DEVICES=ON` and `CNA_SOFTWARE_COMPILED_EFFECTS=ON`,
+installed with `cmake --install <tree> --component CNACApi --prefix <dir>`:
+
+```bash
+scripts/Package-Acceptance.sh --native-directory <dir>/lib --output <out>
+```
+
+reported `PACKAGE_ACCEPTANCE_STATUS=passed`. The local `CNA.Interop` package carried
+
+```text
+runtimes/osx-arm64/native/libcna_c_api.dylib
+runtimes/osx-arm64/native/libSDL3.0.dylib
+runtimes/osx-arm64/native/libSDL3_image.0.dylib
+runtimes/osx-arm64/native/libSDL3_mixer.0.dylib
+```
+
+-- the names `libcna_c_api.dylib`'s load commands use; the versioned targets they point at are not
+packed. The isolated consumer restored from the local feed, built with no source reference, found
+the packaged library with neither override set and completed 60 and 600 frames; the missing-native,
+wrong-architecture (an x86_64 dylib: dyld says "incompatible architecture", the loader reports
+"the wrong architecture or binary format"), wrong-ABI,
+missing-symbol, invalid-path, conflicting-library and override-precedence cases behaved as on
+Linux, and the ABI fixture matrix accepted 2 and rejected 11. Homebrew's FFmpeg, curl and Opus
+stay system dependencies there, as CNA's `docs/c-api/CONSUMING.md` records for macOS.
+
 ## The acceptance harness forces `SDL_VIDEODRIVER=offscreen`
 
 `scripts/Package-Acceptance.sh` runs the isolated consumer with `SDL_VIDEODRIVER=offscreen` and
@@ -138,3 +168,6 @@ and takes the template's 2D fallback; under `offscreen` the same library reports
 So the offscreen SDL video driver and CNA's `SDL_RENDERER` backend do not combine, and the harness's
 own default is the configuration to keep using. Pass `--native-directory` a renderer that works
 headless.
+
+On macOS it uses `dummy` instead: SDL's `offscreen` driver creates its contexts through EGL, which
+macOS does not have, and a windowless SOFTWARE library draws under `dummy`.

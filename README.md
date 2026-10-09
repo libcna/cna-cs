@@ -43,6 +43,20 @@ As of 2026-10-04, against CNA `next` `8a7e13ff5` (C ABI 0.44.0), OPENGLES3 with
   `cna-cs-native-abi/1` matrix accepts exactly 0.44.0 and 12 isolated fixtures pass (2 accepted, 10
   rejected). See [`docs/native-abi-compatibility.md`](docs/native-abi-compatibility.md).
 
+macOS (Apple silicon, osx-arm64), measured 2026-10-09 against CNA `a3da0a5bb` (C ABI 0.46.0),
+SOFTWARE with `CNA_DEVICES=ON` and `CNA_SOFTWARE_COMPILED_EFFECTS=ON`, SDL's dummy video driver
+(CNA `plans/plan_apple_m4.md` AM4-216..AM4-229):
+
+- Debug and Release solution builds: success with the one existing xUnit analyzer warning, 0
+  errors;
+- managed tests in each configuration: 652/655 Framework (3 skip by name on a case-insensitive
+  filesystem), 319/319 XNA-compat, 5/5 BrowserCompat;
+- native integration tests in each configuration: 260/260, plus 24/24 GamerServices, Avatar and
+  Net integration tests; the ownership stress program, 100 cycles in Debug and Release;
+- ABI: `Verify-Abi` 0 mismatches, the fixture matrix 2 accepted and 11 rejected, the macOS
+  `libcna_c_api.dylib` passes the runtime contract;
+- package acceptance for `osx-arm64` passed (see [`docs/packaging.md`](docs/packaging.md)).
+
 The campaign plan and running evidence ledger is [`CAMPAIGN.md`](CAMPAIGN.md). Earlier measurements
 are in [`NEXT.md`](NEXT.md) and Git history; treat them as history, not current state.
 
@@ -63,6 +77,15 @@ Native integration tests skip cleanly when CNA is unavailable. To run them expli
 ```bash
 CNA_NATIVE_LIBRARY=/path/to/libcna_c_api.so \
   xvfb-run -a dotnet test tests/CNA.Integration.Tests/CNA.Integration.Tests.csproj
+```
+
+On macOS the library is `libcna_c_api.dylib`, and the run stays off the desktop under SDL's dummy
+video driver instead of `xvfb-run` -- a windowless renderer such as SOFTWARE draws there, and xUnit
+creates games on worker threads, where macOS would refuse a windowed renderer anyway:
+
+```bash
+CNA_NATIVE_LIBRARY=/path/to/lib/libcna_c_api.dylib SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  dotnet test tests/CNA.Integration.Tests/CNA.Integration.Tests.csproj
 ```
 
 The loader also accepts `CNA_NATIVE_DIR`. Explicit configuration is fail-fast and takes precedence

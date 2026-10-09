@@ -45,8 +45,8 @@
     },
     {
       "rid": "osx-arm64",
-      "status": "pending native Apple Silicon runner and all executable gates",
-      "nativeEvidence": "none",
+      "status": "measured-local-evidence; not an official shipping claim",
+      "nativeEvidence": "SOFTWARE ABI-compatible local build (C ABI 0.46.0, CNA_DEVICES and CNA_SOFTWARE_COMPILED_EFFECTS on), run under SDL's dummy video driver on an Apple-silicon Mac (CNA plans/plan_apple_m4.md AM4-216..AM4-229)",
       "crossCompilationCountsAsQualification": false
     }
   ]
